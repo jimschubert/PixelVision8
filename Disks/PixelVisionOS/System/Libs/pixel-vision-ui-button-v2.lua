@@ -239,7 +239,6 @@ function EditorUI:RedrawButton(data, stateOverride)
       -- Test to see if the button is disabled. If there is a disabled sprite data, we'll change the state to disabled. By default, always use the up state.
       if(data.enabled == false and data.cachedSpriteData["disabled"] ~= nil and data.selected ~= true) then --_G[spriteName .. "disabled"] ~= nil) then
         state = "disabled"
-
       end
 
     end

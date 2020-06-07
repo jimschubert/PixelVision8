@@ -92,7 +92,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
         8,
         false,
         false,
-        DrawMode.UI,
+        DrawMode.Sprite,
         data.colorOffset
     }
 
@@ -102,7 +102,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
         8,
         8,
         data.colorOffset - 1, -- TODO this is a hack since maskColor ID isn't working so we assume the offset minus 1 is a mask color
-        DrawMode.UI
+        DrawMode.Sprite
     }
 
     data.onOverRender = function(data, tmpX, tmpY)
@@ -172,7 +172,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
 
     end
 
-    if(_G["hsliderhandle"] ~= nil and data.realWidth > data.viewport.width ) then
+    if(data.realWidth > data.viewport.width ) then
 
         data.hSlider = editorUI:CreateSlider(
             { x = rect.x, y = rect.y + rect.h + 1, w = rect.w, h = 10},
@@ -473,7 +473,7 @@ function PixelVisionOS:UpdateItemPicker(data)
         end
 
         -- test to invalidate over sprite data
-        local invalidPixelData = data.lastOverID ~= data.overPos.index
+        -- local invalidPixelData = data.lastOverID ~= data.overPos.index
 
         -- Update the over selection
         data.picker.overDrawArgs[2] = data.overPos.x - data.picker.borderOffset
@@ -697,4 +697,12 @@ function PixelVisionOS:GenerateImage(data)
 
     return NewImage(data.realWidth, data.realHeight, colors, pixelData)
 
+end
+
+function PixelVisionOS:InvalidateItemPickerPageButton(data)
+
+    print(dump(data.pages))
+    for i = 1, #data.pages.buttons do
+        editorUI:Invalidate(data.pages.buttons[i])
+    end
 end

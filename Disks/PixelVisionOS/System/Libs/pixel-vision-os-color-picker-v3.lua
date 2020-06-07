@@ -52,9 +52,12 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
     8,
     false,
     false,
-    DrawMode.UI,
+    DrawMode.Sprite,
     0
   }
+
+  
+
 
   self:ConfigureEmptyDragColorPickerSprites(data)
 
@@ -209,13 +212,14 @@ end
 
 function PixelVisionOS:ColorPickerChangeColor(data, index, color)
 
-  -- print("Change Color", data.name, index, color, data.altColorOffset, index- data.altColorOffset)
-  Color(index, color)
-  
-  self:DrawColorPickerColorItem(data, index- data.altColorOffset)
-  -- self:InvalidateColorPickerCache(data)
 
-  -- self:DrawColorPickerColorItem(data,index- data.altColorOffset + 1)
+  if(data.onChange ~= nil) then
+
+    data.onChange(index, color)
+
+  end
+
+  self:DrawColorPickerColorItem(data, index- data.altColorOffset)
 
   self:InvalidateItemPickerDisplay(data)
 
@@ -229,27 +233,14 @@ end
 
 function PixelVisionOS:DrawColorPickerColorItem(data, id)
 
-  -- print("DrawColorPickerColorItem", data.name, id)
-  -- local totalPixels = data.itemSize.x * data.itemSize.y
-  -- local pixelData = {}
-
   local pos = CalculatePosition(id, data.columns)
-  x = pos.x * data.itemSize.x
-  y = pos.y * data.itemSize.y
+    x = pos.x * data.itemSize.x
+    y = pos.y * data.itemSize.y
 
-  if(id < data.total and (id % data.totalPerPage) < data.visiblePerPage) then
-    local colorID = id + data.altColorOffset
-
-    if(Color(colorID) == self.maskColor) then
-      data.canvas.DrawSprites(emptymaskcolor.spriteIDs, x, y, emptymaskcolor.width, false, false)
-    else
-      data.canvas.Clear(colorID, x, y, data.itemSize.x, data.itemSize.y)
-    end
-    
+  if(data.onDrawColor ~= nil) then 
+    data.onDrawColor(data, id, x ,y)
   else
-
     data.canvas.DrawSprites(emptycolor.spriteIDs, x, y, emptycolor.width, false, false)
-    
   end
 
 end

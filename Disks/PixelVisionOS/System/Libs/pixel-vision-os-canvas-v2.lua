@@ -620,6 +620,7 @@ end
 
 function PixelVisionOS:ResetCanvasStroke(data)
 
+  print("ResetCanvasStroke")
   local tmpColor = data.brushColor
 
   local realBrushColor = tmpColor + data.colorOffset
@@ -632,8 +633,10 @@ function PixelVisionOS:ResetCanvasStroke(data)
 
     -- TODO this is hard coded to look for a palette color picker
 
+    -- TODO this is not finding the palette picker?
+    print("Test", self.paletteColorPickerData)
     -- Shift the value to offset for the palette
-    tmpColor = tmpColor + PaletteOffset(paletteColorPickerData.pages.currentSelection - 1)
+    -- tmpColor = tmpColor + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
 
   end
 

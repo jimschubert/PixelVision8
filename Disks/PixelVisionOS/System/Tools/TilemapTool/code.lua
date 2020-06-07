@@ -85,7 +85,7 @@ function Init()
     _G["pixelVisionOS"] = PixelVisionOS:Init()
 
     -- Reset the undo history so it's ready for the tool
-    pixelVisionOS:ResetUndoHistory()
+    -- pixelVisionOS:ResetUndoHistory()
 
     -- Get a reference to the Editor UI
     -- editorUI = pixelVisionOS.editorUI
@@ -1128,74 +1128,6 @@ function Shutdown()
 
 end
 
-function UpdateHistory(tiles)
-
-    if(#tiles == 0) then
-        return
-    end
-
-    local historyAction = {
-        -- sound = settingsString,
-        Action = function()
-
-            local total = #tiles
-
-            for i = 1, total do
-
-                local tile = tiles[i]
-
-                pixelVisionOS:OnChangeTile(tilePickerData, tile.col, tile.row, tile.spriteID, tile.colorOffset, tile.flag)
-
-            end
-
-        end
-    }
-
-    pixelVisionOS:AddUndoHistory(historyAction)
-
-    -- We only want to update the buttons in some situations
-    -- if(updateButtons ~= false) then
-    UpdateHistoryButtons()
-    -- end
-
-end
-
-function OnUndo()
-
-    local action = pixelVisionOS:Undo()
-
-    if(action ~= nil and action.Action ~= nil) then
-        action.Action()
-    end
-
-    UpdateHistoryButtons()
-end
-
-function OnRedo()
-
-    local action = pixelVisionOS:Redo()
-
-    if(action ~= nil and action.Action ~= nil) then
-        action.Action()
-    end
-
-    UpdateHistoryButtons()
-end
-
-function UpdateHistoryButtons()
-
-    pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
-    pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
-
-end
-
-function ClearHistory()
-
-    -- Reset history
-    pixelVisionOS:ResetUndoHistory()
-    UpdateHistoryButtons()
-
-end
 
 function OnPNGExport()
 
@@ -1249,5 +1181,75 @@ function OnCopyTile()
 end
 
 function OnPasteTile()
+
+end
+
+
+function UpdateHistory(tiles)
+
+    -- if(#tiles == 0) then
+    --     return
+    -- end
+
+    -- local historyAction = {
+    --     -- sound = settingsString,
+    --     Action = function()
+
+    --         local total = #tiles
+
+    --         for i = 1, total do
+
+    --             local tile = tiles[i]
+
+    --             pixelVisionOS:OnChangeTile(tilePickerData, tile.col, tile.row, tile.spriteID, tile.colorOffset, tile.flag)
+
+    --         end
+
+    --     end
+    -- }
+
+    -- pixelVisionOS:AddUndoHistory(historyAction)
+
+    -- -- We only want to update the buttons in some situations
+    -- -- if(updateButtons ~= false) then
+    -- UpdateHistoryButtons()
+    -- end
+
+end
+
+function OnUndo()
+
+    -- local action = pixelVisionOS:Undo()
+
+    -- if(action ~= nil and action.Action ~= nil) then
+    --     action.Action()
+    -- end
+
+    -- UpdateHistoryButtons()
+end
+
+function OnRedo()
+
+    -- local action = pixelVisionOS:Redo()
+
+    -- if(action ~= nil and action.Action ~= nil) then
+    --     action.Action()
+    -- end
+
+    -- UpdateHistoryButtons()
+end
+
+function UpdateHistoryButtons()
+
+    -- pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
+    -- pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
+
+end
+
+function ClearHistory()
+
+    -- Reset history
+    -- pixelVisionOS:ResetUndoHistory()
+    -- UpdateHistoryButtons()
 
 end

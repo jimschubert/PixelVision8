@@ -792,65 +792,30 @@ end
 
 function UpdateHistory(pixelData)
 
-    local historyAction = {
-        -- sound = settingsString,
-        Action = function()
+    -- local historyAction = {
+    --     -- sound = settingsString,
+    --     Action = function()
 
-            canvasData.paintCanvas:SetPixels(pixelData)
+    --         canvasData.paintCanvas:SetPixels(pixelData)
 
-            OnSaveCanvasChanges()
+    --         OnSaveCanvasChanges()
 
 
-        end
-    }
+    --     end
+    -- }
 
-    pixelVisionOS:AddUndoHistory(historyAction)
+    -- pixelVisionOS:AddUndoHistory(historyAction)
 
-    -- We only want to update the buttons in some situations
-    -- if(updateButtons ~= false) then
-    UpdateHistoryButtons()
+    -- -- We only want to update the buttons in some situations
+    -- -- if(updateButtons ~= false) then
+    -- UpdateHistoryButtons()
     -- end
 
 end
 
 -- local historyPos = 1
 
-function OnUndo()
 
-    local action = pixelVisionOS:Undo()
-
-    if(action ~= nil and action.Action ~= nil) then
-        action.Action()
-    end
-
-    UpdateHistoryButtons()
-end
-
-function OnRedo()
-
-    local action = pixelVisionOS:Redo()
-
-    if(action ~= nil and action.Action ~= nil) then
-        action.Action()
-    end
-
-    UpdateHistoryButtons()
-end
-
-function UpdateHistoryButtons()
-
-    pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
-    pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
-
-end
-
-function ClearHistory()
-
-    -- Reset history
-    pixelVisionOS:ResetUndoHistory()
-    UpdateHistoryButtons()
-
-end
 
 function OnRunGame()
     -- TODO should this ask to launch the game first?
@@ -871,5 +836,44 @@ function OnRunGame()
         LoadGame(NewWorkspacePath(rootDirectory))
 
     end
+
+end
+
+-- TODO reconnect undo history
+
+function OnUndo()
+
+    -- local action = pixelVisionOS:Undo()
+
+    -- if(action ~= nil and action.Action ~= nil) then
+    --     action.Action()
+    -- end
+
+    -- UpdateHistoryButtons()
+end
+
+function OnRedo()
+
+    -- local action = pixelVisionOS:Redo()
+
+    -- if(action ~= nil and action.Action ~= nil) then
+    --     action.Action()
+    -- end
+
+    -- UpdateHistoryButtons()
+end
+
+function UpdateHistoryButtons()
+
+    -- pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
+    -- pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
+
+end
+
+function ClearHistory()
+
+    -- Reset history
+    -- pixelVisionOS:ResetUndoHistory()
+    -- UpdateHistoryButtons()
 
 end

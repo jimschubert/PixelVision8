@@ -43,17 +43,19 @@ function EditorUI:CreatePicker(rect, itemWidth, itemHeight, total, spriteName, t
 
   data.borderOffset = 2
 
+  print(data.name, data.spriteName)
+
   if(data.cachedSpriteData.over ~= nil) then
 
     local spriteData = data.cachedSpriteData.selectedup
 
-    local bounds = NewRect(data.rect.x - 8, data.rect.y - 8, data.rect.w + data.rect.x, data.rect.h + data.rect.y)
+    -- local bounds = NewRect(data.rect.x - 8, data.rect.y - 8, data.rect.w + data.rect.x, data.rect.h + data.rect.y)
 
-    data.selectedDrawArgs = {spriteData.spriteIDs, - 1, - 1, spriteData.width, false, false, DrawMode.UI, spriteData.colorOffset, true, false}
+    data.selectedDrawArgs = {spriteData.spriteIDs, - 1, - 1, spriteData.width, false, false, DrawMode.Sprite, spriteData.colorOffset, true, false}
 
     spriteData = data.cachedSpriteData.over
 
-    data.overDrawArgs = {spriteData.spriteIDs, 0, 0, spriteData.width, false, false, DrawMode.UI, spriteData.colorOffset, true, false}
+    data.overDrawArgs = {spriteData.spriteIDs, 0, 0, spriteData.width, false, false, DrawMode.Sprite, spriteData.colorOffset, true, false}
   end
 
 

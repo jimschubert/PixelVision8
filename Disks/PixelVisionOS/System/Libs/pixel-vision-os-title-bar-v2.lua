@@ -373,7 +373,7 @@ function PixelVisionOS:UpdateTitleBar(data, timeDelta)
 
         end
 
-        local mousePos = MousePosition()
+        -- local mousePos = MousePosition()
 
         -- If we are showing the menu, reset the selction and tooltip
         if(menuData.showMenu == true) then
@@ -413,7 +413,7 @@ function PixelVisionOS:UpdateTitleBar(data, timeDelta)
             end
             if(option.enabled ~= false) then
                 -- Test for collision
-                if(menuData.showMenu == true and option.rect ~= nil and option.rect.Contains(mousePos.x, mousePos.y)) then
+                if(menuData.showMenu == true and option.rect ~= nil and option.rect.Contains(editorUI.mouseCursor.pos.x, editorUI.mouseCursor.pos.y)) then
 
                     -- Update menu selection
                     menuData.menuSelection = i

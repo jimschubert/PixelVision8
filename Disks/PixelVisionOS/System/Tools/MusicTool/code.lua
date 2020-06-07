@@ -146,7 +146,7 @@ function Init()
   -- editorUI = pixelVisionOS.editorUI
 
   -- Reset the undo history so it's ready for the tool
-  pixelVisionOS:ResetUndoHistory()
+  -- pixelVisionOS:ResetUndoHistory()
 
   rootDirectory = ReadMetadata("directory", nil)
 
@@ -1031,9 +1031,10 @@ function LoadLoop(id)
   disablePreview = false
 
   -- Reset the undo history so it's ready for the tool
-  pixelVisionOS:ResetUndoHistory()
+  -- TODO configure Undo here
+  -- pixelVisionOS:ResetUndoHistory()
 
-  UpdateHistoryButtons()
+  -- UpdateHistoryButtons()
 
 end
 
@@ -1580,58 +1581,31 @@ end
 
 function UpdateHistory(track, beat, newNote, oldNote)
 
-  local historyAction = {
-    RedoAction = function()
-      SelectTrack(track)
-      SelectBeat(beat)
-      UpdateCurrentNote(newNote, false)
-      -- print("Redo Note", newNote)
-      -- Force the display to update again
-      SelectBeat(beat)
-    end,
-    UndoAction = function()
-      SelectTrack(track)
-      SelectBeat(beat)
-      UpdateCurrentNote(oldNote, false)
-      -- Force the display to update again
-      SelectBeat(beat)
-    end
-  }
+  -- local historyAction = {
+  --   RedoAction = function()
+  --     SelectTrack(track)
+  --     SelectBeat(beat)
+  --     UpdateCurrentNote(newNote, false)
+  --     -- print("Redo Note", newNote)
+  --     -- Force the display to update again
+  --     SelectBeat(beat)
+  --   end,
+  --   UndoAction = function()
+  --     SelectTrack(track)
+  --     SelectBeat(beat)
+  --     UpdateCurrentNote(oldNote, false)
+  --     -- Force the display to update again
+  --     SelectBeat(beat)
+  --   end
+  -- }
 
-  pixelVisionOS:AddUndoHistory(historyAction)
+  -- pixelVisionOS:AddUndoHistory(historyAction)
 
-  UpdateHistoryButtons()
-
-end
-
-function UpdateHistoryButtons()
-
-  pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
-  pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
+  -- UpdateHistoryButtons()
 
 end
 
-function OnUndo()
 
-  local action = pixelVisionOS:Undo()
-
-  if(action ~= nil and action.UndoAction ~= nil) then
-    action.UndoAction()
-  end
-
-  UpdateHistoryButtons()
-end
-
-function OnRedo()
-
-  local action = pixelVisionOS:Redo()
-
-  if(action ~= nil and action.RedoAction ~= nil) then
-    action.RedoAction()
-  end
-
-  UpdateHistoryButtons()
-end
 
 function OnQuit()
 
@@ -1750,4 +1724,34 @@ function OnRunGame()
 
   end
 
+end
+
+-- TODO rewire history
+function UpdateHistoryButtons()
+
+  -- pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable())
+  -- pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable())
+
+end
+
+function OnUndo()
+
+  -- local action = pixelVisionOS:Undo()
+
+  -- if(action ~= nil and action.UndoAction ~= nil) then
+  --   action.UndoAction()
+  -- end
+
+  -- UpdateHistoryButtons()
+end
+
+function OnRedo()
+
+  -- local action = pixelVisionOS:Redo()
+
+  -- if(action ~= nil and action.RedoAction ~= nil) then
+  --   action.RedoAction()
+  -- end
+
+  -- UpdateHistoryButtons()
 end

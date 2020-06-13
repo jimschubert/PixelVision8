@@ -418,8 +418,7 @@ namespace PixelVision8.Runner.Editors
         /// <param name="ignoreEmpty"></param>
         /// <param name="total"></param>
         /// <returns></returns>
-        public int TotalColors(bool ignoreEmpty = false)
-        {
+        public int TotalColors(bool ignoreEmpty = false) {
             //            if (TotalDisks.HasValue)
             //                activeColorChip.maxColors = TotalDisks.Value;
 
@@ -1382,6 +1381,7 @@ namespace PixelVision8.Runner.Editors
         public void ResizeToolColorMemory()
         {
             runner.ActiveEngine.ColorChip.total = 512;
+            runner.ActiveEngine.ColorChip.Invalidate();
         }
 
         /// <summary>

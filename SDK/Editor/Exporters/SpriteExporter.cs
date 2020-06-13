@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using PixelVision8.Engine;
 using PixelVision8.Engine.Chips;
+using PixelVision8.Engine.Utils;
 using PixelVision8.Runner.Parsers;
 
 namespace PixelVision8.Runner.Exporters
@@ -45,9 +46,12 @@ namespace PixelVision8.Runner.Exporters
 
             this.spriteChip = spriteChip ?? engine.SpriteChip;
 
-            var colorMapChip = engine.GetChip(ColorMapParser.chipName, false) as ColorChip;
+            // var colorMapChip = engine.GetChip(ColorMapParser.chipName, false) as ColorChip;
 
-            colors = colorMapChip == null ? engine.ColorChip.colors : colorMapChip.colors;
+            colors = ColorUtils.ConvertColors(engine.ColorChip.hexColors, engine.ColorChip.maskColor, true);
+
+            // TODO removing the color map chip dependency when exporting moving forward
+            // colors = colorMapChip == null ? engine.ColorChip.colors : colorMapChip.colors;
         }
 
         public int totalSteps => exporter.totalSteps;

@@ -172,10 +172,10 @@ namespace PixelVision8.Runner.Exporters
             sb.Append("{");
             JsonUtil.GetLineBreak(sb, 1);
 
-            sb.Append("\"maxColors\":");
-            sb.Append(colorChip.maxColors);
-            sb.Append(",");
-            JsonUtil.GetLineBreak(sb, 1);
+            // sb.Append("\"maxColors\":");
+            // sb.Append(colorChip.maxColors);
+            // sb.Append(",");
+            // JsonUtil.GetLineBreak(sb, 1);
 
             sb.Append("\"backgroundColor\":");
             sb.Append(colorChip.backgroundColor);

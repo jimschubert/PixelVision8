@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using PixelVision8.Engine.Utils;
 
 namespace PixelVision8.Engine.Chips
 {
@@ -369,8 +370,13 @@ namespace PixelVision8.Engine.Chips
 
         public Color[] VisiblePixels()
         {
+
+            // TODO there might be a better way to do this like grabbing the pixel data from somewhere else?
             var pixels = engine.DisplayChip.Pixels;
-            var cachedColors = engine.ColorChip.colors;
+
+            var cachedColors = ColorUtils.ConvertColors(engine.ColorChip.hexColors, engine.ColorChip.maskColor, engine.ColorChip.debugMode, engine.ColorChip.backgroundColor);
+
+            // var cachedColors = engine.ColorChip.colors;
             var displaySize = engine.GameChip.Display();
 
             var visibleWidth = displaySize.X;

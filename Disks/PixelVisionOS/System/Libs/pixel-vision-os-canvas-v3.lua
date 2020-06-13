@@ -33,6 +33,7 @@ function PixelVisionOS:CreateCanvas(rect, size, scale, colorOffset, toolTip, emp
   data.selectionTime = 0
   data.selectRect = nil
   data.selectedPixelData = nil
+  data.brushColorID = 253 -- Second to last color in the tool
 
   -- Create a selection canvas
   data.selectionCanvas = NewCanvas(data.rect.w, data.rect.h)
@@ -42,7 +43,7 @@ function PixelVisionOS:CreateCanvas(rect, size, scale, colorOffset, toolTip, emp
 
   data.overDrawArgs = {spriteData.spriteIDs, 0, 0, spriteData.width, false, false, DrawMode.Sprite, 36, true, false}
 
-  data.brushDrawArgs = {0, 0, 8, 8, 54, DrawMode.Sprite}
+  data.brushDrawArgs = {0, 0, 8, 8, data.brushColorID, DrawMode.Sprite}
   -- DrawRect( 0, 0, 8, 8, 54, DrawMode.Sprite )
 
   data.onClick = function(tmpData)
@@ -119,7 +120,7 @@ function PixelVisionOS:ChangeCanvasTool(data, toolName, cursorID)
 
     data.currentCursorID = cursorID or 7
 
-    ReplaceColor(54, data.emptyColorID)
+    ReplaceColor(data.brushColorID, data.emptyColorID)
 
   else
     data.currentCursorID = 8
@@ -252,16 +253,16 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
       -- TODO this is duplicated below
 
       -- Update over color if using eye picker
-      if(pixelVisionOS.paletteMode == true) then
+      -- if(pixelVisionOS.paletteMode == true) then
 
         -- TODO this is hard coded to look for a palette color picker
 
         -- Shift the value to offset for the palette
-        tmpColor = tmpColor + PaletteOffset(paletteColorPickerData.pages.currentSelection - 1)
+        -- tmpColor = tmpColor + PaletteOffset(paletteColorPickerData.pages.currentSelection - 1)
 
-      end
+      -- end
 
-      ReplaceColor(54, tmpColor + 256)
+      ReplaceColor(data.brushColorID, tmpColor + self.colorOffset)
 
     end
 
@@ -346,7 +347,7 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
     -- Capture keys to switch between different tools and options
     if( Key(Keys.Back, InputState.Released)) then
       
-        print("Selection - Delete", self.selectRect)
+        -- print("Selection - Delete", self.selectRect)
 
         self:CutPixels(data)
 
@@ -457,7 +458,7 @@ function PixelVisionOS:DrawOnCanvas(data, mousePos, toolID)
             if(data.selectedPixelData == nil) then
             
               data.selectedPixelData = self:CutPixels(data)--data.paintCanvas:GetPixels(data.selectRect.Left, data.selectRect.Top, data.selectRect.Right, data.selectRect.Bottom)
-              print("selectedPixelData",  #data.selectedPixelData.pixelData, dump(data.selectedPixelData))
+              -- print("selectedPixelData",  #data.selectedPixelData.pixelData, dump(data.selectedPixelData))
             
             end
             -- print("data.moveOffset", data.moveOffset)
@@ -624,27 +625,28 @@ end
 
 function PixelVisionOS:ResetCanvasStroke(data)
 
-  print("ResetCanvasStroke")
+  -- print("ResetCanvasStroke")
   local tmpColor = data.brushColor
 
   local realBrushColor = tmpColor + data.colorOffset
 
   -- Change the stroke to a single pixel
   data.tmpPaintCanvas:SetStroke({realBrushColor}, 1, 1)
+  data.tmpPaintCanvas:SetPattern({realBrushColor}, 1, 1)
 
   -- Check to see if we are in palete mode
-  if(pixelVisionOS.paletteMode == true) then
+  -- if(pixelVisionOS.paletteMode == true) then
 
-    -- TODO this is hard coded to look for a palette color picker
+  --   -- TODO this is hard coded to look for a palette color picker
 
-    -- TODO this is not finding the palette picker?
-    print("Test", self.paletteColorPickerData)
-    -- Shift the value to offset for the palette
-    -- tmpColor = tmpColor + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
+  --   -- TODO this is not finding the palette picker?
+  --   print("Test", self.paletteColorPickerData)
+  --   -- Shift the value to offset for the palette
+  --   -- tmpColor = tmpColor + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
 
-  end
+  -- end
 
-  ReplaceColor(54, tmpColor + 256)
+  ReplaceColor(data.brushColorID, tmpColor + self.colorOffset)
 
 end
 
@@ -838,7 +840,7 @@ end
 
 function PixelVisionOS:ToggleCanvasFill(data, value)
 
-  data.fill = value or not data.fill
+  data.fill = value
 
   return data.fill
 
@@ -884,27 +886,9 @@ local brushSizes = {16, 8, 8, 4}
 function PixelVisionOS:ChangeCanvasPixelSize(data, size)
 
   data.pixelSelectionSize = size
-  print("size", size)
 
-  -- data.borderOffset = 2
-  -- local spriteData = _G["selectionboxover" .. tostring(size) .."x"]
-
-  
   data.brushDrawArgs[3] = brushSizes[size]
   data.brushDrawArgs[4] = brushSizes[size]
-
-  -- data.brushDrawArgs[3] = ((4 - size) + 1)  * 4
-  -- data.brushDrawArgs[4] = ((4 - size) + 1) * 4
-
-  -- data.overDrawArgs[1] = spriteData.spriteIDs
-  -- data.overDrawArgs[4] = spriteData.width
-
-  -- Not sure why but we need to offset this value
-  -- if(size == 4) then
-  --   data.borderOffset = 3
-  -- else
-  --   data.borderOffset = 2
-  -- end
 
   -- Calculate the gridSize TODO this is off because we don't support scale 3 so clamping
   data.gridSize = Clamp((3 - data.pixelSelectionSize) * 8, 4, 16)

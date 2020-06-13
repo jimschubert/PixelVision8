@@ -88,8 +88,10 @@ namespace PixelVision8.Runner.Parsers
 
         protected virtual void CreateImage()
         {
+            // Get the chip colors and replace any transparent ones with the first color so we don't parse transparency
+            var colorData = ColorUtils.ConvertColors(colorChip.hexColors, colorChip.maskColor);
 
-            colorData = colorChip.colors;
+            // colorData = colorChip.colors;
 
             var colorRefs = colorData.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
 
@@ -103,7 +105,7 @@ namespace PixelVision8.Runner.Parsers
             var orphanColors = new List<string>();
 
             var totalImageColors = imageColors.Length;
-            var totalColorRefs = colorRefs.Length;
+            // var totalColorRefs = colorRefs.Length;
 
             for (int i = 0; i < totalImageColors; i++)
             {

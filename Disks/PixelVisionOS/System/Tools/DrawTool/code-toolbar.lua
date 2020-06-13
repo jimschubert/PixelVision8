@@ -10,6 +10,8 @@ local pos = NewPoint(8, 56)
 
 function DrawTool:CreateToolbar()
 
+    self.lastSelectedToolID = nil
+
     -- Labels for mode changes
     self.editorLabelArgs = {nil, 4, 2, nil, false, false, DrawMode.Tile}
 
@@ -20,7 +22,7 @@ function DrawTool:CreateToolbar()
     self.lastColorID = 0
 
     self.modeButton = editorUI:CreateToggleButton({x=pos.X, y=pos.y - 32}, "editormode", "Change into color edit mode.")
-    self.modeButton.onAction = function(value) self:ChangeEditMode(value and ColorMode or SpriteMode) end
+    self.modeButton.onAction = function(value) self:ChangeEditMode(value) end
 
     self.toolBtnData = editorUI:CreateToggleGroup()
     self.toolBtnData.onAction = function(value) self:OnSelectTool(value) end
@@ -92,6 +94,10 @@ end
 
 function DrawTool:ChangeEditMode(mode)
 
+    if(mode == self.mode) then
+        return
+    end
+
     self.mode = mode
 
     -- Clear bottom of the main window
@@ -101,43 +107,55 @@ function DrawTool:ChangeEditMode(mode)
 
     if(self.mode == ColorMode) then
 
+        
+        -- Make sure the mode button is selected
+        if(self.modeButton.selected == false) then
+            editorUI:ToggleButton(self.modeButton, true, false)
+        end
+
+
         self:ShowColorPanel()
-        self:HideCanvasPanel()
-        -- Disable sprite selector
-        -- Disable the tools
-        -- Invalidate the color picker
-        editorUI:NewDraw("DrawSprites", {pickerbottompageedge.spriteIDs, 20, 20, pickerbottompageedge.width, false, false,  DrawMode.Tile})
+        -- self:HideCanvasPanel()
+        -- -- Disable sprite selector
+        -- -- Disable the tools
+        -- -- Invalidate the color picker
+        -- editorUI:NewDraw("DrawSprites", {pickerbottompageedge.spriteIDs, 20, 20, pickerbottompageedge.width, false, false,  DrawMode.Tile})
 
         self:ToggleToolBar(false)
 
         self.editorLabelArgs[1] = systemcolorlabel.spriteIDs
         self.editorLabelArgs[4] = systemcolorlabel.width
 
-        pixelVisionOS:EnableItemPicker(self.spritePickerData, false, true)
+        -- pixelVisionOS:EnableItemPicker(self.spritePickerData, false, true)
 
-        self.lastSpriteSelection = self.spritePickerData.currentSelection
+        -- self.lastSpriteSelection = self.spritePickerData.currentSelection
 
-        pixelVisionOS:ClearItemPickerSelection(self.spritePickerData)
+        -- pixelVisionOS:ClearItemPickerSelection(self.spritePickerData)
 
     elseif(self.mode == SpriteMode) then
         
+        -- Make sure the mode button is selected
+        if(self.modeButton.selected == true) then
+            editorUI:ToggleButton(self.modeButton, false, false)
+        end
+
         self:HideColorPanel()
-        self:ShowCanvasPanel()
-        -- Enable sprite selection
-        -- Enable the tools
-        -- Invalidate the canvs
+        -- self:ShowCanvasPanel()
+        -- -- Enable sprite selection
+        -- -- Enable the tools
+        -- -- Invalidate the canvs
 
         self:ToggleToolBar(true)
 
         self.editorLabelArgs[1] = spriteeditorlabel.spriteIDs
         self.editorLabelArgs[4] = spriteeditorlabel.width
 
-        -- The sprite picker shouldn't be selectable on this screen but you can still change pages
-        pixelVisionOS:EnableItemPicker(self.spritePickerData, true, true)
+        -- -- The sprite picker shouldn't be selectable on this screen but you can still change pages
+        -- pixelVisionOS:EnableItemPicker(self.spritePickerData, true, true)
 
-        if(self.lastSpriteSelection ~= nil) then
-            pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, self.lastSpriteSelection)
-        end
+        -- if(self.lastSpriteSelection ~= nil) then
+        --     pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, self.lastSpriteSelection)
+        -- end
 
     end
 
@@ -147,7 +165,7 @@ end
 
 function DrawTool:ToggleToolBar(value)
 
-    if(value == false) then
+    if(value == false and self.toolBtnData.currentSelection > 0) then
 
         -- Save the current tool selection ID
         self.lastSelectedToolID = self.toolBtnData.currentSelection
@@ -168,7 +186,7 @@ function DrawTool:ToggleToolBar(value)
 
     if(value == true and self.lastSelectedToolID ~= nil) then
         
-        print("self.lastSelectedToolID", self.lastSelectedToolID)
+        -- print("self.lastSelectedToolID", self.lastSelectedToolID)
         
         -- Restore last selection
         editorUI:SelectToggleButton(self.toolBtnData, self.lastSelectedToolID, false)
@@ -202,6 +220,22 @@ function DrawTool:OnSelectTool(value)
 
     else
 
+        -- Change to fill mode if shift is down
+        if(Key(Keys.LeftShift) or Key(Keys.RightShift)) then
+
+            -- print("Special mode")
+            self:ToggleFill(true)
+
+
+        else
+
+            self:ToggleFill(false)
+            
+
+        end
+
+        -- print("Fill", self.canvasData.fill)
+
         -- We need to restore the color when switching back to a new tool
 
         -- Make sure the last color is in range
@@ -226,5 +260,57 @@ function DrawTool:OnSelectTool(value)
         pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID)
 
     end
+
+end
+
+function DrawTool:ToggleFill(value)
+    
+    -- TODO need to change the value of the canvas
+    
+
+    local boxButton = self.toolBtnData.buttons[4]
+    local circleButton = self.toolBtnData.buttons[5]
+
+    local resetBoxButton = false
+    local resetCircleButton = false
+
+    if(self.canvasData.tool == "box") then
+        
+        boxButton.spriteName = "box" .. (value == true and "fill" or "")
+        editorUI:RebuildSpriteCache(boxButton)
+
+        resetCircleButton = true
+
+    elseif(self.canvasData.tool == "circle") then
+        
+        circleButton.spriteName = "circle" .. (value == true and "fill" or "")
+        editorUI:RebuildSpriteCache(circleButton)
+
+        resetBoxButton = true
+    else
+        
+        resetBoxButton = true
+        resetCircleButton = true
+        
+        -- Reset the fill value regardless of the value
+        value = false
+    end
+
+    if(boxButton.spriteName == "boxfill" and resetBoxButton == true) then
+        boxButton.spriteName = "box"
+        editorUI:RebuildSpriteCache(boxButton)
+    end
+
+    if(circleButton.spriteName == "circlefill"  and resetCircleButton == true) then
+        circleButton.spriteName = "circle"
+        editorUI:RebuildSpriteCache(circleButton)
+    end
+
+    pixelVisionOS:ToggleCanvasFill(self.canvasData, value)
+    
+
+    -- TODO set fill to match the brush color
+
+    -- pixelVisionOS:ToggleCanvasFill(self.canvasData, false)
 
 end

@@ -47,13 +47,13 @@ function DrawTool:UpdateCanvasUI()
 
     pixelVisionOS:UpdateCanvas(self.canvasData)
 
-    if(self.colorPreviewInvalid == true) then
+    -- if(self.colorPreviewInvalid == true) then
 
-        self:DrawColorPerSpriteDisplay()
+    --     self:DrawColorPerSpriteDisplay()
 
-        self:ResetColorPreviewValidation()
+    --     self:ResetColorPreviewValidation()
 
-    end
+    -- end
 
 end
 
@@ -61,13 +61,13 @@ function DrawTool:SaveCanvasState()
 
     --UpdateHistory(pixelVisionOS:GetCanvasPixelData(canvasData))
 
-    if(self.colorPreviewInvalid == true) then
+    -- if(self.colorPreviewInvalid == true) then
 
-        self:DrawColorPerSpriteDisplay()
+    --     self:DrawColorPerSpriteDisplay()
 
-        self:ResetColorPreviewValidation()
+    --     self:ResetColorPreviewValidation()
 
-    end
+    -- end
 
 end
 
@@ -83,7 +83,7 @@ function DrawTool:ShowCanvasPanel()
     
     pixelVisionOS:InvalidateCanvas(self.canvasData)
 
-    self:InvalidateColorPreview()
+    -- self:InvalidateColorPreview()
 end
 
 function DrawTool:HideCanvasPanel()
@@ -170,7 +170,7 @@ function DrawTool:UpdateCanvas(value, flipH, flipV)
 
     pixelVisionOS:EnableMenuItem(CopyShortcut, true)
 
-    self:InvalidateColorPreview()
+    -- self:InvalidateColorPreview()
 
 end
 
@@ -188,14 +188,14 @@ function DrawTool:IsSpriteEmpty(pixelData)
 
 end
 
-function DrawTool:InvalidateColorPreview()
+-- function DrawTool:InvalidateColorPreview()
 
-    self.colorPreviewInvalid = true
-end
+--     self.colorPreviewInvalid = true
+-- end
 
-function DrawTool:ResetColorPreviewValidation()
-    self.colorPreviewInvalid = false
-end
+-- function DrawTool:ResetColorPreviewValidation()
+--     self.colorPreviewInvalid = false
+-- end
 
 function DrawTool:DrawColorPerSpriteDisplay()
 
@@ -275,11 +275,11 @@ function DrawTool:DrawColorPerSpriteDisplay()
 
     local colorOffset = pixelVisionOS.colorOffset
     --
-    if(pixelVisionOS.paletteMode) then
+    -- if(pixelVisionOS.paletteMode) then
 
         colorOffset = colorOffset + 128 + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
 
-    end
+    -- end
 
     -- Shift next x over
     nextX = nextX + 4 + shiftOffset
@@ -294,13 +294,13 @@ function DrawTool:DrawColorPerSpriteDisplay()
     end
 
     -- Redraw the palette label over the CPS display background
-    if(usePalettes == true) then
+    -- if(usePalettes == true) then
 
         -- TODO this needs to be differed to the draw queue  
         -- Change color label to palette
         editorUI:NewDraw("DrawSprites", {gamepalettetext.spriteIDs, 32 / 8, 168 / 8, gamepalettetext.width, false, false, DrawMode.Tile})
 
-    end
+    -- end
 
 end
 
@@ -329,7 +329,7 @@ function DrawTool:OnSaveCanvasChanges()
     end
 
     -- Redraw the colors per sprite display
-    self:InvalidateColorPreview()
+    -- self:InvalidateColorPreview()
 
     -- Update the spritePickerData
     if(self.spritePickerData.currentSelection > - 1) then

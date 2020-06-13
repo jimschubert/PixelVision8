@@ -687,167 +687,167 @@ function OnConfig()
 
 end
 
-function TogglePaletteMode(value, callback)
+-- function TogglePaletteMode(value, callback)
 
-    local data = paletteColorPickerData
+--     local data = paletteColorPickerData
 
-    if(value == true) then
+--     if(value == true) then
 
-        -- If we are not using palettes, we need to warn the user before activating it
+--         -- If we are not using palettes, we need to warn the user before activating it
 
-        pixelVisionOS:ShowMessageModal("Activate Palette Mode", "Do you want to activate palette mode? This will split color memory in half and allocate 128 colors to the system and 128 to palettes. The sprites will also be reindexed to the first palette. Saving will rewrite the 'sprite.png' file. This can not be undone.", 160, true,
-            function()
-                if(pixelVisionOS.messageModal.selectionValue == true) then
+--         pixelVisionOS:ShowMessageModal("Activate Palette Mode", "Do you want to activate palette mode? This will split color memory in half and allocate 128 colors to the system and 128 to palettes. The sprites will also be reindexed to the first palette. Saving will rewrite the 'sprite.png' file. This can not be undone.", 160, true,
+--             function()
+--                 if(pixelVisionOS.messageModal.selectionValue == true) then
 
-                    -- Clear any colors in the clipboard
-                    copyValue = nil
+--                     -- Clear any colors in the clipboard
+--                     copyValue = nil
 
-                    local oldCPS = gameEditor:ColorsPerSprite()
+--                     local oldCPS = gameEditor:ColorsPerSprite()
 
-                    -- Cop the colors to memory
-                    pixelVisionOS:CopyToolColorsToGameMemory()
+--                     -- Cop the colors to memory
+--                     pixelVisionOS:CopyToolColorsToGameMemory()
 
-                    -- Update the palette mode in the meta data
-                    gameEditor:WriteMetadata("paletteMode", "true")
+--                     -- Update the palette mode in the meta data
+--                     gameEditor:WriteMetadata("paletteMode", "true")
 
-                    -- TODO this can be done here instead of with the game editor.
-                    -- Reindex the sprites so they will work in palette mode
-                    gameEditor:ReindexSprites()
+--                     -- TODO this can be done here instead of with the game editor.
+--                     -- Reindex the sprites so they will work in palette mode
+--                     gameEditor:ReindexSprites()
 
-                    local defaultColor = gameEditor:Color(0)
+--                     local defaultColor = gameEditor:Color(0)
 
-                    -- Set default color for the rest of the palettes
-                    for i = 1, 7 do
-                        local offset = PaletteOffset( i )
-                        for j = 0, 15 do
-                            gameEditor:Color( offset + j, defaultColor )
-                        end
-                    end
+--                     -- Set default color for the rest of the palettes
+--                     for i = 1, 7 do
+--                         local offset = PaletteOffset( i )
+--                         for j = 0, 15 do
+--                             gameEditor:Color( offset + j, defaultColor )
+--                         end
+--                     end
 
-                    -- Import the colors again
-                    pixelVisionOS:ImportColorsFromGame()
+--                     -- Import the colors again
+--                     pixelVisionOS:ImportColorsFromGame()
 
-                    -- Update the system color picker to match the new total colors
-                    pixelVisionOS:ChangeColorPickerTotal(systemColorPickerData, pixelVisionOS.totalSystemColors)
+--                     -- Update the system color picker to match the new total colors
+--                     pixelVisionOS:ChangeColorPickerTotal(systemColorPickerData, pixelVisionOS.totalSystemColors)
 
-                    -- Make GPU chip custom if CPS changed
-                    if(gameEditor:ColorsPerSprite() ~= oldCPS) then
-                        gameEditor:WriteMetadata("gpuChip", "Custom")
-                    end
+--                     -- Make GPU chip custom if CPS changed
+--                     if(gameEditor:ColorsPerSprite() ~= oldCPS) then
+--                         gameEditor:WriteMetadata("gpuChip", "Custom")
+--                     end
 
-                    spritesInvalid = true
+--                     spritesInvalid = true
 
-                    -- TODO this needs to be routed to the Sprite Picker and clear the cache
-                    pixelVisionOS:ChangeItemPickerColorOffset(spritePickerData, pixelVisionOS.colorOffset + 128)
+--                     -- TODO this needs to be routed to the Sprite Picker and clear the cache
+--                     pixelVisionOS:ChangeItemPickerColorOffset(spritePickerData, pixelVisionOS.colorOffset + 128)
 
-                    pixelVisionOS:RebuildSpritePickerCache(spritePickerData)
+--                     pixelVisionOS:RebuildSpritePickerCache(spritePickerData)
 
-                    -- Redraw the sprite picker to they will display the correct colors
-                    -- pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
+--                     -- Redraw the sprite picker to they will display the correct colors
+--                     -- pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
 
-                    -- Clear focus
-                    ForcePickerFocus()
+--                     -- Clear focus
+--                     ForcePickerFocus()
 
-                    -- Redraw the UI
-                    pixelVisionOS:RebuildColorPickerCache(systemColorPickerData)
-                    -- pixelVisionOS:SelectColorPage(systemColorPickerData, 1)
+--                     -- Redraw the UI
+--                     pixelVisionOS:RebuildColorPickerCache(systemColorPickerData)
+--                     -- pixelVisionOS:SelectColorPage(systemColorPickerData, 1)
 
-                    -- Update the palette picker
-                    paletteColorPickerData.total = 128
-                    paletteColorPickerData.altColorOffset = pixelVisionOS.colorOffset + 128
+--                     -- Update the palette picker
+--                     paletteColorPickerData.total = 128
+--                     paletteColorPickerData.altColorOffset = pixelVisionOS.colorOffset + 128
 
-                    -- Force the palette picker to only display the total colors per sprite
-                    paletteColorPickerData.visiblePerPage = gameEditor:ColorsPerSprite()
+--                     -- Force the palette picker to only display the total colors per sprite
+--                     paletteColorPickerData.visiblePerPage = gameEditor:ColorsPerSprite()
 
-                    pixelVisionOS:RebuildColorPickerCache(paletteColorPickerData)
+--                     pixelVisionOS:RebuildColorPickerCache(paletteColorPickerData)
 
-                    -- Set use palettes to true
-                    usePalettes = true
-
-
-
-                    -- Invalidate the data so the tool can save
-                    InvalidateData()
-
-                    -- Trigger any callback after this is done
-                    if(callback ~= nil) then
-                        callback()
-                    end
-
-                end
-
-            end
-        )
-
-
-    else
-
-        pixelVisionOS:ShowMessageModal("Disable Palette Mode", "Disabeling the palette mode will return the game to 'Direct Color Mode'. Sprites will only display if they can match their colors to 'color.png' file. This process will also remove the palette colors and restore the system colors to support 256.", 160, true,
-            function()
-                if(pixelVisionOS.messageModal.selectionValue == true) then
-
-                    usePalettes = false
-
-                    -- Copy the colors to memory
-                    pixelVisionOS:CopyToolColorsToGameMemory()
-
-                    -- Update the palette mode in the meta data
-                    gameEditor:WriteMetadata("paletteMode", "false")
-
-                    -- Get the game colors
-                    local oldColors = gameEditor:Colors()
-
-                    local tmpIndex = 0
-
-                    -- Copy the first palette to the top of the color table
-                    for i = 1, 16 do
-                        gameEditor:Color(tmpIndex, oldColors[i + 128])
-                        tmpIndex = tmpIndex + 1
-                    end
-
-                    -- Copy the old system colors over after the first palette
-                    for i = 1, 128 do
-                        gameEditor:Color(16 + (i - 1), oldColors[i])
-                    end
+--                     -- Set use palettes to true
+--                     usePalettes = true
 
 
 
-                    -- Import the colors again
-                    pixelVisionOS:ImportColorsFromGame()
+--                     -- Invalidate the data so the tool can save
+--                     InvalidateData()
 
-                    -- Redraw the sprite picker
-                    spritePickerData.colorOffset = pixelVisionOS.colorOffset
-                    pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
+--                     -- Trigger any callback after this is done
+--                     if(callback ~= nil) then
+--                         callback()
+--                     end
 
+--                 end
 
-                    -- systemColorPickerData.total = pixelVisionOS.systemColorsPerPage
-
-                    pixelVisionOS:RebuildColorPickerCache(systemColorPickerData)
-
-                    pixelVisionOS:RemoveColorPicker(paletteColorPickerData)
-
-                    systemColorPickerData.lastSelectedPage = 1
-
-                    -- Clear focus
-                    ForcePickerFocus()
+--             end
+--         )
 
 
-                    InvalidateData()
-                    -- Update the game editor palette modes
-                    -- gameEditor:PaletteMode(usePalettes)
+--     else
 
-                    -- TODO remove color pages
+--         pixelVisionOS:ShowMessageModal("Disable Palette Mode", "Disabeling the palette mode will return the game to 'Direct Color Mode'. Sprites will only display if they can match their colors to 'color.png' file. This process will also remove the palette colors and restore the system colors to support 256.", 160, true,
+--             function()
+--                 if(pixelVisionOS.messageModal.selectionValue == true) then
 
-                    if(callback ~= nil) then
-                        callback()
-                    end
+--                     usePalettes = false
 
-                end
+--                     -- Copy the colors to memory
+--                     pixelVisionOS:CopyToolColorsToGameMemory()
 
-            end
-        )
+--                     -- Update the palette mode in the meta data
+--                     gameEditor:WriteMetadata("paletteMode", "false")
 
-    end
+--                     -- Get the game colors
+--                     local oldColors = gameEditor:Colors()
+
+--                     local tmpIndex = 0
+
+--                     -- Copy the first palette to the top of the color table
+--                     for i = 1, 16 do
+--                         gameEditor:Color(tmpIndex, oldColors[i + 128])
+--                         tmpIndex = tmpIndex + 1
+--                     end
+
+--                     -- Copy the old system colors over after the first palette
+--                     for i = 1, 128 do
+--                         gameEditor:Color(16 + (i - 1), oldColors[i])
+--                     end
 
 
-end
+
+--                     -- Import the colors again
+--                     pixelVisionOS:ImportColorsFromGame()
+
+--                     -- Redraw the sprite picker
+--                     spritePickerData.colorOffset = pixelVisionOS.colorOffset
+--                     pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
+
+
+--                     -- systemColorPickerData.total = pixelVisionOS.systemColorsPerPage
+
+--                     pixelVisionOS:RebuildColorPickerCache(systemColorPickerData)
+
+--                     pixelVisionOS:RemoveColorPicker(paletteColorPickerData)
+
+--                     systemColorPickerData.lastSelectedPage = 1
+
+--                     -- Clear focus
+--                     ForcePickerFocus()
+
+
+--                     InvalidateData()
+--                     -- Update the game editor palette modes
+--                     -- gameEditor:PaletteMode(usePalettes)
+
+--                     -- TODO remove color pages
+
+--                     if(callback ~= nil) then
+--                         callback()
+--                     end
+
+--                 end
+
+--             end
+--         )
+
+--     end
+
+
+-- end

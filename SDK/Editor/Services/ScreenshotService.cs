@@ -99,7 +99,9 @@ namespace PixelVision8.Runner.Services
 
             try
             {
-                var cachedColors = engine.ColorChip.colors;
+                // var cachedColors = engine.ColorChip.colors;
+
+                var cachedColors =ColorUtils.ConvertColors(engine.ColorChip.hexColors);
 
                 var pixels = engine.DisplayChip.Pixels;
 

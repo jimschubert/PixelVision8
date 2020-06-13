@@ -14,9 +14,9 @@ function DrawTool:CreatePalettePanel()
         {x = 32, y = 184, w = 128, h = 32},
         {x = 16, y = 16},
         self.totalColors,
-        16, -- Total per page
-        16, -- Max pages
-        pixelVisionOS.colorOffset,
+        pixelVisionOS.colorsPerSprite, -- Total per page
+        8, -- Max pages
+        pixelVisionOS.colorOffset + 128,
         "itempicker",
         self.usePalettes == true and "Select palette color " or "Select system color ",
         false,
@@ -27,22 +27,38 @@ function DrawTool:CreatePalettePanel()
     -- TODO this shouldn't have to be called?
     pixelVisionOS:RebuildColorPickerCache(self.paletteColorPickerData)
 
-    print("paletteColorPickerData")
-    self.paletteColorPickerData.onAction = function(value)
-        self:ForcePickerFocus(paletteColorPickerData)
+    -- print("paletteColorPickerData")
+    self.paletteColorPickerData.onAction = function(value, doubleClick)
+
+        if(doubleClick == true and self.canEdit == true) then
+
+            editorUI:ToggleButton(self.modeButton, true)
+            self:ChangeEditMode(ColorMode)
+            -- TODO find and select color in picker
+            return
+        end
+
+        self:ForcePickerFocus(self.paletteColorPickerData)
 
         self:OnSelectPaletteColor(value)
 
+        -- tmpColor = tmpColor + PaletteOffset(paletteColorPickerData.pages.currentSelection - 1)
+
+
         -- TODO if in draw mode
         -- if we are in palette mode, just get the currents selection. If we are in direct color mode calculate the real color index
-        if(self.usePalettes) then
-            value = self.paletteColorPickerData.picker.selected
-        end
+        -- if(self.usePalettes) then
+            value =  value + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
+
+            
+        -- end
 
         -- Make sure if we select the last color, we mark it as the mask color
-        if(value == self.paletteColorPickerData.total) then
-            value = -1
-        end
+        -- if(value == self.paletteColorPickerData.total) then
+        --     value = -1
+        -- end
+
+        print("Brush Color", value)
 
         self.lastColorID = value
 
@@ -69,7 +85,40 @@ function DrawTool:CreatePalettePanel()
     -- Wire up the picker to change the color offset of the sprite picker
     self.paletteColorPickerData.onPageAction = function(value)
 
-        -- pixelVisionOS:ChangeItemPickerColorOffset(self.spritePickerData, pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + ((value - 1) * 16))
+        
+        -- If we are not in palette mode, don't change the sprite color offset
+        -- if(self.usePalettes == true) then
+            
+            local pageOffset = ((value - 1) * 16)
+
+            -- Calculate the new color offset
+            local newColorOffset = pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + pageOffset
+
+            pixelVisionOS:ChangeItemPickerColorOffset(self.spritePickerData, newColorOffset)
+
+            -- Update the canvas color offset
+            -- self.canvasData.colorOffset = newColorOffset
+
+            -- pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
+
+            -- self:UpdateCanvas(self.lastSelection)
+
+            -- Need to reselect the current color in the new palette if we are in draw mode
+            if(self.canvasData.tool ~= "eraser" or self.canvasData.tool ~= "eyedropper") then
+
+                self.lastColorID = Clamp(self.lastColorID, 0, 15)
+
+                pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID + pageOffset)
+
+                pixelVisionOS:CanvasBrushColor(self.canvasData, self.lastColorID)
+                -- pixelVisionOS:SelectItemPickerIndex(paletteColorPickerData, lastColorID + pageOffset, true, false)
+
+            end
+
+            -- Make sure we shift the colors by the new page number
+            -- self:InvalidateColorPreview()
+
+        -- end
 
     end
 
@@ -128,26 +177,27 @@ function DrawTool:OnPalettePickerDrop(src, dest)
 
     if(src.name == self.systemColorPickerData.name) then
 
-        -- Get the index and add 1 to offset it correctly
+        -- print("copy colors")
+        -- -- Get the index and add 1 to offset it correctly
         local id = pixelVisionOS:CalculateItemPickerPosition(dest).index
 
-        -- Get the correct hex value
+        -- -- Get the correct hex value
         local srcHex = Color(src.pressSelection.index + src.altColorOffset)
 
-        -- print("srcHex", srcHex, "id", id, "ColorID", (src.pressSelection.index + src.altColorOffset))
+        -- -- print("srcHex", srcHex, "id", id, "ColorID", (src.pressSelection.index + src.altColorOffset))
 
-        if(self.usePalettes == false) then
+        -- if(self.usePalettes == false) then
 
-            if(self.canEdit == true) then
-                -- We want to manually toggle the palettes before hand so we can add the first color before calling the AddPalettePage()
-                self:TogglePaletteMode(true, function() self:OnAddDroppedColor(id, dest, srcHex) end)
-            end
+        --     if(self.canEdit == true) then
+        --         -- We want to manually toggle the palettes before hand so we can add the first color before calling the AddPalettePage()
+        --         self:TogglePaletteMode(true, function() self:OnAddDroppedColor(id, dest, srcHex) end)
+        --     end
 
-        else
-            self:BeginUndo()
+        -- else
+        --     self:BeginUndo()
             self:OnAddDroppedColor(id, dest, srcHex)
-            self:EndUndo()
-        end
+        --     self:EndUndo()
+        -- end
     else
         -- print("Swap colors")
 
@@ -168,21 +218,5 @@ function DrawTool:OnSelectPaletteColor(value)
     editorUI:Enable(self.colorIDInputData, false)
 
     editorUI:ChangeInputField(self.colorIDInputData, tostring(value + 128), false)
-
-    local colorHex = Color(value + self.paletteColorPickerData.altColorOffset):sub(2, - 1)
-
-    -- Update the selected color hex value
-    editorUI:ChangeInputField(self.colorHexInputData, colorHex, false)
-
-    -- Update menu menu items
-    pixelVisionOS:EnableMenuItem(AddShortcut, false)
-    pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
-    pixelVisionOS:EnableMenuItem(EditShortcut, false)
-    pixelVisionOS:EnableMenuItem(ClearShortcut, true)
-
-    pixelVisionOS:EnableMenuItem(CopyShortcut, true)
-
-    -- Only enable the paste button if there is a copyValue and we are not in palette mode
-    pixelVisionOS:EnableMenuItem(PasteShortcut, self.copyValue ~= nil and self.usePalettes == true)
-
+    
 end

@@ -1,7 +1,6 @@
 {
     "ColorChip":
     {
-        "maxColors":256,
         "backgroundColor":0,
         "maskColor":"#FF00FF",
         "unique":false,

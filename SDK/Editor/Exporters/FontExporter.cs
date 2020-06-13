@@ -20,6 +20,7 @@
 
 using PixelVision8.Engine;
 using PixelVision8.Engine.Chips;
+using PixelVision8.Engine.Utils;
 using PixelVision8.Runner.Parsers;
 
 namespace PixelVision8.Runner.Exporters
@@ -64,11 +65,15 @@ namespace PixelVision8.Runner.Exporters
                     spriteChip.height, tmpPixelData);
             }
 
-            var colors = !(engine.GetChip(ColorMapParser.chipName, false) is ColorChip colorMapChip)
-                ? engine.ColorChip.colors
-                : colorMapChip.colors;
+            // var convertedColors = ColorUtils.ConvertColors(engine.ColorChip.hexColors, engine.ColorChip.maskColor, true);
+
+            // var colors = !(engine.GetChip(ColorMapParser.chipName, false) is ColorChip colorMapChip)
+            //     ? engine.ColorChip.colors
+            //     : colorMapChip.colors;
 
             var imageExporter = new PNGWriter();
+
+            // TODO use the colors from the sprite parser this class extends?
 
             exporter = new PixelDataExporter(fullFileName, textureData.pixels, width, height, colors, imageExporter,
                 engine.ColorChip.maskColor);

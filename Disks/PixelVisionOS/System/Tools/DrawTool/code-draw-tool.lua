@@ -8,10 +8,9 @@
 	distributing is allowed.
 ]]--
 
-LoadScript("sb-sprites")
-LoadScript("pixel-vision-os-item-picker-v1")
+LoadScript("pixel-vision-os-item-picker-v2")
 LoadScript("pixel-vision-os-color-picker-v3")
-LoadScript("pixel-vision-os-sprite-picker-v3")
+LoadScript("pixel-vision-os-sprite-picker-v4")
 LoadScript("pixel-vision-os-canvas-v3")
 
 -- Create table to store the workspace tool logic
@@ -21,7 +20,7 @@ DrawTool.__index = DrawTool
 LoadScript("code-color-editor-modal")
 LoadScript("code-drop-down-menu")
 LoadScript("code-color-panel")
-LoadScript("code-color-selector")
+-- LoadScript("code-color-selector")
 LoadScript("code-palette-panel")
 LoadScript("code-sprite-panel")
 LoadScript("code-canvas-panel")
@@ -41,8 +40,9 @@ function DrawTool:Init()
         invalid = true,
         success = false,
         canEdit = EditColorModal ~= nil,
-        debugMode = true,
-        colorOffset = 0
+        debugMode = false,
+        colorOffset = 0,
+        lastMode = nil
     }
 
     -- Reset the undo history so it's ready for the tool
@@ -82,13 +82,13 @@ end
 function DrawTool:LoadError()
 
     -- Left panel
-    DrawRect(8, 32, 128, 128, 0, DrawMode.TilemapCache)
-    DrawRect(152, 32, 96, 128, 0, DrawMode.TilemapCache)
-    DrawRect(152, 208, 24, 8, 0, DrawMode.TilemapCache)
-    DrawRect(200, 208, 48, 8, 0, DrawMode.TilemapCache)
-    DrawRect(136, 164, 3, 9, BackgroundColor(), DrawMode.TilemapCache)
-    DrawRect(248, 180, 3, 9, BackgroundColor(), DrawMode.TilemapCache)
-    DrawRect(136, 220, 3, 9, BackgroundColor(), DrawMode.TilemapCache)
+    DrawRect(32, 32, 128, 128, 0, DrawMode.TilemapCache)
+    DrawRect(152+24, 32, 64, 128, 0, DrawMode.TilemapCache)
+    DrawRect(152+24, 208, 32, 8, 0, DrawMode.TilemapCache)
+    DrawRect(32, 192-8, 128, 32, 0, DrawMode.TilemapCache)
+    DrawRect(8, 17, 16, 200, BackgroundColor(), DrawMode.TilemapCache)
+    DrawRect(176, 16, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
+    DrawRect(216, 192, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
 
     pixelVisionOS:ChangeTitle(self.toolName, "toolbaricontool")
 
@@ -107,24 +107,21 @@ function DrawTool:LoadSuccess()
     -- The first thing we need to do is rebuild the tool's color table to include the game's system and game colors.
     pixelVisionOS:ImportColorsFromGame()
 
-    self.totalColors = pixelVisionOS.totalSystemColors
+    -- Get the target file
+    local targetFile = ReadMetadata("file", nil)
 
-    -- Get the palette mode
-    self.usePalettes = pixelVisionOS.paletteMode
+    -- if(targetFile ~= nil) then
 
-    if(self.usePalettes == true) then
+    local targetFilePath = NewWorkspacePath(targetFile)
 
-        -- Change the total colors when in palette mode
-        self.totalColors = 128
-        self.colorOffset = self.colorOffset + 128
+    local colorMode = targetFilePath.EntityName == "colors.png"
 
-    end
+    local pathSplit = string.split(targetFile, "/")
 
-    -- Split the root directory path
-    local pathSplit = string.split(self.rootDirectory, "/")
-
-    -- save the title with file path
-    self.toolTitle = pathSplit[#pathSplit] .. "/colors.png"
+    -- Update title with file path
+    self.toolTitle = pathSplit[#pathSplit - 1] .. "/" .. pathSplit[#pathSplit]
+        
+    print("colorMode", colorMode)
 
 
     self:CreateDropDownMenu()
@@ -133,57 +130,61 @@ function DrawTool:LoadSuccess()
     
     self:CreateColorPanel()
 
-    self:CreatePalettePanel()
+    -- self:CreatePalettePanel()
 
-    self:CreateColorSelector()
+    -- self:CreateColorSelector()
 
-    self:CreateCanvas()
+    -- self:CreateCanvas()
 
     self:CreateToolbar()
 
-    self.selectionIDLabelArgs = {coloridlabel.spriteIDs, 21, 24, coloridlabel.width, false, false, DrawMode.Tile}
+    -- self.selectionIDLabelArgs = {coloridlabel.spriteIDs, 21, 24, coloridlabel.width, false, false, DrawMode.Tile}
 
 
     
-    -- Restore last state
-    local selectedSpritePage = 1
-    local paletteColorPicker = 1
+    -- -- Restore last state
+    -- local selectedSpritePage = 1
+    -- local paletteColorPicker = 1
 
-    if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
+    -- if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
 
-        selectedSpritePage = tonumber(ReadSaveData("selectedSpritePage", "1"))
-        paletteColorPicker = tonumber(ReadSaveData("selectedPalettePage", "1"))
+    --     selectedSpritePage = tonumber(ReadSaveData("selectedSpritePage", "1"))
+    --     paletteColorPicker = tonumber(ReadSaveData("selectedPalettePage", "1"))
 
-    end
+    -- end
 
-    pixelVisionOS:OnSpritePickerPage(self.spritePickerData, selectedSpritePage)
-    pixelVisionOS:OnColorPickerPage(self.paletteColorPickerData, paletteColorPicker)
+    -- pixelVisionOS:OnSpritePickerPage(self.spritePickerData, selectedSpritePage)
+    -- pixelVisionOS:OnColorPickerPage(self.paletteColorPickerData, paletteColorPicker)
 
-    -- Setup default mode
-    self:ChangeEditMode(SpriteMode)
+    -- -- Setup default mode
+    -- self:ChangeEditMode(SpriteMode)
 
-    -- Reset the validation to update the title and set the validation flag correctly for any changes
-    self:ResetDataValidation()
+    -- -- Reset the validation to update the title and set the validation flag correctly for any changes
+    -- self:ResetDataValidation()
 
-    -- Set the focus mode to none
-    self:ForcePickerFocus()
+    -- -- Set the focus mode to none
+    -- self:ForcePickerFocus()
 
-    -- TODO only do this when it's in draw mode
-    editorUI:SelectToggleButton(self.toolBtnData, 1)
-    pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, 0)
-    pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, 0)
+    -- -- TODO only do this when it's in draw mode
+    -- editorUI:SelectToggleButton(self.toolBtnData, 1)
+    -- pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, 0)
+    -- pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, 0)
     
     local startSprite = 0
 
     if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
         startSprite = tonumber(ReadSaveData("selectedSprite", "0"))
-        self.spriteSize = tonumber(ReadSaveData("spriteSize", "1")) - 1
-        self:OnNextSpriteSize()
+        self.spriteMode = tonumber(ReadSaveData("spriteMode", "1")) - 1
+        
     end
 
+    -- Change the sprite mode
+    self:OnNextSpriteSize()
+
+    -- Select the start sprite
     self:ChangeSpriteID(startSprite)
 
-    pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.spriteSize)
+    -- pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.spriteMode)
     
 
     if(self.debugMode == true) then
@@ -199,6 +200,11 @@ function DrawTool:LoadSuccess()
 
         pixelVisionOS:RegisterUI({name = "DebugPanel"}, "DrawDebugPanel", self)
     end
+
+    self:ResetDataValidation()
+
+    -- Set default mode
+    self:ChangeEditMode(colorMode == true and ColorMode or SpriteMode)
 
 end
 
@@ -244,69 +250,78 @@ end
 -- Changes the focus of the currently selected color picker
 function DrawTool:ForcePickerFocus(src)
 
-    
-   
     -- Only one picker can be selected at a time so remove the selection from the opposite one.
     if(src == nil) then
 
         -- Save the mode
         self.selectionMode = NoColorMode
 
-        -- Disable input fields
-        -- editorUI:Enable(self.colorIDInputData, false)
-        -- self:ToggleHexInput(false)
+    --     -- Disable input fields
+    --     -- editorUI:Enable(self.colorIDInputData, false)
+    --     -- self:ToggleHexInput(false)
 
-        pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
-        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
+    --     pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
+    --     pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
-        -- Disable all option
-        pixelVisionOS:EnableMenuItem(AddShortcut, false)
-        pixelVisionOS:EnableMenuItem(ClearShortcut, false)
-        pixelVisionOS:EnableMenuItem(EditShortcut, false)
-        pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
-        pixelVisionOS:EnableMenuItem(BGShortcut, false)
-        pixelVisionOS:EnableMenuItem(CopyShortcut, false)
-        pixelVisionOS:EnableMenuItem(PasteShortcut, false)
+    --     -- Disable all option
+    --     pixelVisionOS:EnableMenuItem(AddShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(ClearShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(EditShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(BGShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(CopyShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(PasteShortcut, false)
 
     elseif(src.name == self.systemColorPickerData.name and self.lastMode ~= SystemColorMode) then
 
         -- Change the color mode to system color mode
         self.selectionMode = SystemColorMode
 
-        -- Clear the picker selection
-        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
+    --     -- Clear the picker selection
+    --     pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
-        self.selectionIDLabelArgs[1] = coloridlabel.spriteIDs
-        -- Enable the hex input field
-        -- self:ToggleHexInput(true)
+    --     self.selectionIDLabelArgs[1] = coloridlabel.spriteIDs
+    --     -- Enable the hex input field
+    --     -- self:ToggleHexInput(true)
 
-        self.posScale = 1
+    --     self.posScale = 1
 
-    elseif(src.name == self.paletteColorPickerData.name and self.lastMode ~= PaletteMode) then
+    -- elseif(src.name == self.paletteColorPickerData.name and self.lastMode ~= PaletteMode) then
 
-        -- Change the selection mode to palette mode
-        self.selectionMode = PaletteMode
+    --     -- Change the selection mode to palette mode
+    --     self.selectionMode = PaletteMode
 
-        pixelVisionOS:EnableMenuItem(AddShortcut, false)
-        pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
-        -- Clear the system color picker selection
-        pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
+    --     pixelVisionOS:EnableMenuItem(AddShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
+    --     -- Clear the system color picker selection
+    --     pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
 
-        -- Disable the hex input since you can't change palette colors directly
-        -- self:ToggleHexInput(false)
+    --     -- Disable the hex input since you can't change palette colors directly
+    --     -- self:ToggleHexInput(false)
 
-        self.selectionIDLabelArgs[1] = paletteidlabel.spriteIDs
+    --     self.selectionIDLabelArgs[1] = paletteidlabel.spriteIDs
         
-        self.posScale = 1
+    --     self.posScale = 1
+
+    --     -- Update menu menu items
+    --     pixelVisionOS:EnableMenuItem(AddShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(EditShortcut, false)
+    --     pixelVisionOS:EnableMenuItem(ClearShortcut, true)
+
+    --     pixelVisionOS:EnableMenuItem(CopyShortcut, true)
+
+    --     -- Only enable the paste button if there is a copyValue and we are not in palette mode
+    --     pixelVisionOS:EnableMenuItem(PasteShortcut, self.copyValue ~= nil and self.usePalettes == true)
+
 
     elseif(src.name == self.spritePickerData.name and self.lastMode ~= SpriteMode) then
-        print("Focus", src == nil and "none" or src.name)
         self.selectionMode = SpriteMode
 
-        -- Clear the system color picker selection
-        pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
+    --     -- Clear the system color picker selection
+    --     pixelVisionOS:ClearItemPickerSelection(self.systemColorPickerData)
 
-        self.selectionIDLabelArgs[1] = spriteidlabel.spriteIDs
+    --     self.selectionIDLabelArgs[1] = spriteidlabel.spriteIDs
 
     end
 
@@ -315,7 +330,7 @@ function DrawTool:ForcePickerFocus(src)
     -- Save the last mode
     self.lastMode = self.selectionMode
 
-    editorUI:NewDraw("DrawSprites", self.selectionIDLabelArgs)
+    -- editorUI:NewDraw("DrawSprites", self.selectionIDLabelArgs)
 
 end
 
@@ -341,10 +356,12 @@ function DrawTool:OnEditColor()
     -- TODO need to get the currently selected color
     self.editColorModal:SetColor(colorID)
 
+    local currentColor = Color(colorID)
+
     pixelVisionOS:OpenModal(self.editColorModal,
         function()
 
-            if(self.editColorModal.selectionValue == true) then
+            if(self.editColorModal.selectionValue == true and currentColor ~= "#" .. self.editColorModal.colorHexInputData.text) then
 
                 self:UpdateHexColor(self.editColorModal.colorHexInputData.text)
                 
@@ -353,170 +370,6 @@ function DrawTool:OnEditColor()
 
         end
     )
-
-end
-
-function DrawTool:TogglePaletteMode(value, callback)
-
-    local data = self.paletteColorPickerData
-
-    if(value == true) then
-
-        -- If we are not using palettes, we need to warn the user before activating it
-
-        pixelVisionOS:ShowMessageModal("Activate Palette Mode", "Do you want to activate palette mode? This will split color memory in half and allocate 128 colors to the system and 128 to palettes. The sprites will also be reindexed to the first palette. Saving will rewrite the 'sprite.png' file. This can not be undone.", 160, true,
-            function()
-                if(pixelVisionOS.messageModal.selectionValue == true) then
-
-                    -- TODO this is a big change, do we want to allow undoing it?
-                    -- self:BeginUndo()
-
-                    -- Clear any colors in the clipboard
-                    self.copyValue = nil
-
-                    local oldCPS = gameEditor:ColorsPerSprite()
-
-                    -- Cop the colors to memory
-                    pixelVisionOS:CopyToolColorsToGameMemory()
-
-                    -- Update the palette mode in the meta data
-                    gameEditor:WriteMetadata("paletteMode", "true")
-
-                    -- TODO this can be done here instead of with the game editor.
-                    -- Reindex the sprites so they will work in palette mode
-                    gameEditor:ReindexSprites()
-
-                    local defaultColor = gameEditor:Color(0)
-
-                    -- Set default color for the rest of the palettes
-                    for i = 1, 7 do
-                        local offset = PaletteOffset( i )
-                        for j = 0, 15 do
-                            gameEditor:Color( offset + j, defaultColor )
-                        end
-                    end
-
-                    -- Import the colors again
-                    pixelVisionOS:ImportColorsFromGame()
-
-                    -- Update the system color picker to match the new total colors
-                    pixelVisionOS:ChangeColorPickerTotal(self.systemColorPickerData, pixelVisionOS.totalSystemColors)
-
-                    -- Make GPU chip custom if CPS changed
-                    if(gameEditor:ColorsPerSprite() ~= oldCPS) then
-                        gameEditor:WriteMetadata("gpuChip", "Custom")
-                    end
-
-                    self.spritesInvalid = true
-
-                    -- TODO this needs to be routed to the Sprite Picker and clear the cache
-                    pixelVisionOS:ChangeItemPickerColorOffset(self.spritePickerData, pixelVisionOS.colorOffset + 128)
-
-                    pixelVisionOS:RebuildSpritePickerCache(self.spritePickerData)
-
-                    -- Redraw the sprite picker to they will display the correct colors
-                    -- pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
-
-                    -- Clear focus
-                    self:ForcePickerFocus()
-
-                    -- Redraw the UI
-                    pixelVisionOS:RebuildColorPickerCache(self.systemColorPickerData)
-                    -- pixelVisionOS:SelectColorPage(systemColorPickerData, 1)
-
-                    -- Update the palette picker
-                    self.paletteColorPickerData.total = 128
-                    self.paletteColorPickerData.altColorOffset = pixelVisionOS.colorOffset + 128
-
-                    -- Force the palette picker to only display the total colors per sprite
-                    self.paletteColorPickerData.visiblePerPage = gameEditor:ColorsPerSprite()
-
-                    self.pixelVisionOS:RebuildColorPickerCache(self.paletteColorPickerData)
-
-                    -- Set use palettes to true
-                    self.usePalettes = true
-
-
-
-                    -- Invalidate the data so the tool can save
-                    self:InvalidateData()
-
-                    -- Trigger any callback after this is done
-                    if(callback ~= nil) then
-                        callback()
-                    end
-
-                    -- self:EndUndo()
-
-                end
-
-            end
-        )
-
-
-    else
-
-        pixelVisionOS:ShowMessageModal("Disable Palette Mode", "Disabling the palette mode will return the game to 'Direct Color Mode'. Sprites will only display if they can match their colors to 'color.png' file. This process will also remove the palette colors and restore the system colors to support 256.", 160, true,
-            function()
-                if(pixelVisionOS.messageModal.selectionValue == true) then
-
-                    self.usePalettes = false
-
-                    -- Copy the colors to memory
-                    pixelVisionOS:CopyToolColorsToGameMemory()
-
-                    -- Update the palette mode in the meta data
-                    gameEditor:WriteMetadata("paletteMode", "false")
-
-                    -- Get the game colors
-                    local oldColors = gameEditor:Colors()
-
-                    local tmpIndex = 0
-
-                    -- Copy the first palette to the top of the color table
-                    for i = 1, 16 do
-                        gameEditor:Color(tmpIndex, oldColors[i + 128])
-                        tmpIndex = tmpIndex + 1
-                    end
-
-                    -- Copy the old system colors over after the first palette
-                    for i = 1, 128 do
-                        gameEditor:Color(16 + (i - 1), oldColors[i])
-                    end
-
-                    -- Import the colors again
-                    pixelVisionOS:ImportColorsFromGame()
-
-                    -- Redraw the sprite picker
-                    self.spritePickerData.colorOffset = pixelVisionOS.colorOffset
-                    pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
-
-                    pixelVisionOS:RebuildColorPickerCache(self.systemColorPickerData)
-
-                    pixelVisionOS:RemoveColorPicker(self.paletteColorPickerData)
-
-                    self.systemColorPickerData.lastSelectedPage = 1
-
-                    -- Clear focus
-                    self:ForcePickerFocus()
-
-                    self:InvalidateData()
-                    -- Update the game editor palette modes
-                    -- gameEditor:PaletteMode(usePalettes)
-
-                    -- TODO remove color pages
-
-                    if(callback ~= nil) then
-                        callback()
-                    end
-
-                end
-
-            end
-        )
-
-    end
-
 
 end
 
@@ -534,7 +387,7 @@ function DrawTool:Shutdown()
 
     WriteSaveData("selectedSprite", self.spritePickerData.currentSelection)
 
-    WriteSaveData("spriteSize", self.spriteSize)
+    WriteSaveData("spriteMode", self.spriteMode)
 
     --     -- Save the current session ID
 --     WriteSaveData("sessionID", SessionID())

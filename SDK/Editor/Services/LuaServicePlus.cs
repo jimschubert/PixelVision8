@@ -142,7 +142,7 @@ namespace PixelVision8.Runner.Services
 
         public void ResizeColorMemory(int newSize, int maxColors = -1)
         {
-            runner.ActiveEngine.ColorChip.maxColors = maxColors;
+            // runner.ActiveEngine.ColorChip.maxColors = maxColors;
             runner.ActiveEngine.ColorChip.total = newSize;
         }
 

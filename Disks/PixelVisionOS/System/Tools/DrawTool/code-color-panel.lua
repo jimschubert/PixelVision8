@@ -1,10 +1,10 @@
 local colorPanelID = "ColorPanelUI"
 
 -- Now we need to create the item picker over sprite by using the color selection spriteIDs and changing the color offset
-_G["itempickerover"] = {spriteIDs = colorselection.spriteIDs, width = colorselection.width, colorOffset = 28}
+_G["itempickerover"] = {spriteIDs = selection2x2over.spriteIDs, width = selection2x2over.width, colorOffset = 0}
 
 -- Next we need to create the item picker selected up sprite by using the color selection spriteIDs and changing the color offset
-_G["itempickerselectedup"] = {spriteIDs = colorselection.spriteIDs, width = colorselection.width, colorOffset = (_G["itempickerover"].colorOffset + 2)}
+_G["itempickerselectedup"] = {spriteIDs = selection2x2selected.spriteIDs, width = selection2x2selected.width, colorOffset = 0}
 
 
 function DrawTool:CreateColorPanel()
@@ -49,6 +49,8 @@ function DrawTool:CreateColorPanel()
 
     end
 
+    self.systemColorPickerData.picker.borderOffset = 8
+
     -- Force the BG color to draw for the first time
     self.systemColorPickerData.onPageAction(1)
 
@@ -77,7 +79,7 @@ function DrawTool:CreateColorPanel()
 
     self.systemColorPickerData.onChange = function(index, color)
     
-        print("Color Change", index, color)
+        -- print("Color Change", index, color)
         Color(index, color)
 
         -- TODO need to go through all of the colors and make sure they are unique
@@ -106,6 +108,26 @@ function DrawTool:CreateColorPanel()
 
 end
 
+function DrawTool:OnSelectSystemColor(value)
+
+    -- Update menu menu items
+
+    -- TODO need to enable this when the color editor pop-up is working
+    pixelVisionOS:EnableMenuItem(EditShortcut, self.canEdit)
+
+    -- These are only available based on the palette mode
+    pixelVisionOS:EnableMenuItem(AddShortcut, self.canEdit)
+    pixelVisionOS:EnableMenuItem(DeleteShortcut, self.canEdit)
+    -- pixelVisionOS:EnableMenuItem(BGShortcut, ("#"..colorHex) ~= pixelVisionOS.maskColor)
+
+    -- You can only copy a color when in direct color mode
+    pixelVisionOS:EnableMenuItem(CopyShortcut, true)
+
+    -- Only enable the paste button if there is a copyValue and we are not in palette mode
+    pixelVisionOS:EnableMenuItem(PasteShortcut, self.copyValue ~= nil)
+
+end
+
 -- function DrawTool:UpdateBGIconPosition(id)
 
 --     local pos = CalculatePosition(id % 64, 8)
@@ -116,7 +138,7 @@ end
 -- end
 
 function DrawTool:ShowColorPanel()
-    print("Show")
+    -- print("Show")
     if(self.colorPanelActive == true) then
         return
     end
@@ -156,6 +178,79 @@ function DrawTool:UpdateColorPanel()
     end
 end
 
+function DrawTool:UpdateHexColor(value)
+
+    if(self.selectionMode == PaletteMode) then
+        return false
+    end
+
+    value = "#".. value
+
+
+    if(value == pixelVisionOS.maskColor) then
+
+        pixelVisionOS:ShowMessageModal(self.toolName .." Error", self.maskColorError, 160, false)
+
+        return false
+
+    else
+
+        local realColorID = self.systemColorPickerData.currentSelection + self.systemColorPickerData.altColorOffset
+
+        local currentColor = Color(realColorID)
+
+        -- Make sure the color isn't duplicated when in palette mode
+        for i = 1, 128 do
+
+            -- Test the new color against all of the existing system colors
+            if(value == Color(pixelVisionOS.colorOffset + (i - 1))) then
+
+                -- TODO need to move this to the config at the top
+                pixelVisionOS:ShowMessageModal(self.toolName .." Error", "'".. value .."' the same as system color ".. (i - 1) ..", enter a new color.", 160, false)
+
+                -- Exit out of the update function
+                return false
+
+            end
+
+        end
+
+        -- Test if the color is at the end of the picker and the is room to add a new color
+        if(self.colorID == self.systemColorPickerData.total - 1 and self.systemColorPickerData.total < 255) then
+
+            -- Select the current color we are editing
+            pixelVisionOS:SelectColorPickerColor(self.systemColorPickerData, realColorID)
+
+        end
+
+        -- Update the editor's color
+        pixelVisionOS:ColorPickerChangeColor(self.systemColorPickerData, realColorID, value)
+
+        -- Loop through the palette color memory to remove replace all matching colors
+        for i = 127, pixelVisionOS.totalColors do
+
+            local index = (i - 1) + pixelVisionOS.colorOffset
+
+            -- Get the current color in the tool's memory
+            local tmpColor = Color(index)
+
+            -- See if that color matches the old color
+            if(tmpColor == currentColor and tmpColor ~= pixelVisionOS.maskColor) then
+
+                -- Set the color to equal the new color
+                pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, index, value)
+
+            end
+
+        end
+
+        self:InvalidateData()
+
+        return true
+    end
+
+end
+
 function DrawTool:OnSystemColorDropTarget(src, dest)
 
     -- If the src and the dest are the same, we want to swap colors
@@ -181,7 +276,7 @@ function DrawTool:OnSystemColorDropTarget(src, dest)
             local destColor = src.copyDrag == true and srcColor or Color(realDestID)
             
             if(Key(Keys.LeftControl) == true or Key(Keys.RightControl) == true) then
-                print("Copy")
+                -- print("Copy")
             end
 
             -- Make sure we are not moving a transparent color

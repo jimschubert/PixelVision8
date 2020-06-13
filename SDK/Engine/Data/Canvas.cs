@@ -495,9 +495,18 @@ namespace PixelVision8.Engine
                 SetStrokePixel(x1 + 1, y1--);
             }
 
-            // if (fill)
-            //     if (Math.Abs(w) > stroke.width && Math.Abs(h) > stroke.height)
-            //         FloodFill(center.X, center.Y);
+            if (fill)
+            {
+                var w = x1 - x0;
+                var h = y1 - y0;
+                
+                var centerX = x0 + w / 2;
+                var centerY = y0 + h / 2;
+
+                if (Math.Abs(w) > stroke.width && Math.Abs(h) > stroke.height)
+                    FloodFill(centerX, centerY);
+            }
+            
         }
 
         /// <summary>

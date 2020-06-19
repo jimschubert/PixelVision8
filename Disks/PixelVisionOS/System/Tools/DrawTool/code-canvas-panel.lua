@@ -19,10 +19,11 @@ function DrawTool:CreateCanvas()
             y = 128
         },
         1,
-        self.colorOffset,
+        256,
         "Draw on the canvas",
         pixelVisionOS.emptyColorID
     )
+    
 
     self.canvasData.onPress = function()
             
@@ -39,6 +40,16 @@ function DrawTool:CreateCanvas()
     self.canvasData.onDropTarget = function(src, dest) self:OnCanvasDrop(src, dest) end
 
     self.canvasData.onAction = function() self:OnSaveCanvasChanges() end
+
+    self.clearBackgroundPattern = {}
+
+    local totalTiles = 128/8 * 128/8
+    local tileID = emptycolor.spriteIDs[1]
+    
+    for i = 1, totalTiles do
+        table.insert(self.clearBackgroundPattern, tileID)
+    end
+
 
 end
 
@@ -134,14 +145,21 @@ end
 
 function DrawTool:UpdateCanvas(value, flipH, flipV)
 
+    -- Need to draw immediately since the canvas doesn't run through the UI draw queue
+    DrawSprites( self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
+
     flipH = flipH or false
     flipV = flipV or false
 
-    -- Save the original pixel data from the selection
-    local tmpPixelData = gameEditor:ReadGameSpriteData(value, self.spriteSize, self.spriteSize, flipH, flipV)--
-    self.lastCanvasScale = Clamp(8 * (3 - self.spriteSize), 4, 16)
+    local spriteSelection = self.selectionSizes[self.spriteMode]
 
-    self.lastCanvasSize = NewPoint(8 * self.spriteSize, 8 * self.spriteSize)
+    -- Save the original pixel data from the selection
+    local tmpPixelData = gameEditor:ReadGameSpriteData(value, spriteSelection.x, spriteSelection.y, flipH, flipV)--
+    
+    print("Test", self.spriteMode)
+    self.lastCanvasScale = spriteSelection.scale--Clamp(8 * spriteSelection.scale, 4, 16)
+
+    self.lastCanvasSize = NewPoint((8 * spriteSelection.x), (8 * spriteSelection.y))
 
     pixelVisionOS:ResizeCanvas(self.canvasData, self.lastCanvasSize, self.lastCanvasScale, tmpPixelData)
 
@@ -201,7 +219,7 @@ function DrawTool:DrawColorPerSpriteDisplay()
 
     -- TODO create unique colors
 
-    local pixelData = gameEditor:ReadGameSpriteData(self.spritePickerData.currentSelection, editorUI.spriteSize.x, editorUI.spriteSize.y)
+    local pixelData = gameEditor:ReadGameSpriteData(self.spritePickerData.currentSelection, editorUI.spriteMode.x, editorUI.spriteMode.y)
 
     -- Clear unique color list
 
@@ -337,7 +355,7 @@ function DrawTool:OnSaveCanvasChanges()
     end
 
     -- Update the current sprite in the picker
-    gameEditor:WriteSpriteData(self.spritePickerData.currentSelection, pixelData, self.spriteSize, self.spriteSize)
+    gameEditor:WriteSpriteData(self.spritePickerData.currentSelection, pixelData, self.spriteMode, self.spriteMode)
 
     -- Test to see if the canvas is invalid
     if(self.canvasData.invalid == true) then

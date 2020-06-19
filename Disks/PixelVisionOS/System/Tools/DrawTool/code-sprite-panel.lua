@@ -1,6 +1,15 @@
 local spritePanelID = "SpritePanelUI"
 
 function DrawTool:CreateSpritePanel()
+   
+    self.selectionSizes = {
+        {x = 1, y = 1, scale = 16},
+        {x = 1, y = 2, scale = 8},
+        {x = 2, y = 1, scale = 8},
+        {x = 2, y = 2, scale = 8},
+        -- {x = 3, y = 3, scale = 4},
+        {x = 4, y = 4, scale = 4}
+    }
 
     self:ConfigureSpritePickerSelector(1)
 
@@ -40,8 +49,10 @@ function DrawTool:CreateSpritePanel()
     self.maxSpriteSize = 4
 
     -- Create size button
-    self.sizeBtnData = editorUI:CreateButton({x = 224, y = 200}, "sprite1x", "Pick the sprite size.")
+    self.sizeBtnData = editorUI:CreateButton({x = 224, y = 200}, "spritemode1", "Pick the sprite size.")
     self.sizeBtnData.onAction = function() self:OnNextSpriteSize() end
+
+    
 
     pixelVisionOS:RegisterUI({name = spritePanelID}, "UpdateSpritePanel", self)
 
@@ -96,14 +107,7 @@ function DrawTool:UpdateSpritePanel()
 
 end
 
-local selectionSizes = {
-    NewPoint(1,1),
-    NewPoint(2,1),
-    NewPoint(1,2),
-    NewPoint(2,2),
-    NewPoint(3,3),
-    NewPoint(4,4)
-}
+
 
 function DrawTool:OnNextSpriteSize(reverse)
 
@@ -119,7 +123,7 @@ function DrawTool:OnNextSpriteSize(reverse)
         -- end
 
         if(self.spriteMode < 1) then
-            self.spriteMode = #selectionSizes
+            self.spriteMode = #self.selectionSizes
         end
 
         -- Loop forward through the button sizes
@@ -131,7 +135,7 @@ function DrawTool:OnNextSpriteSize(reverse)
         --     self.spriteMode = 4
         -- end
 
-        if(self.spriteMode > #selectionSizes) then
+        if(self.spriteMode > #self.selectionSizes) then
             self.spriteMode = 1
         end
     end
@@ -139,6 +143,7 @@ function DrawTool:OnNextSpriteSize(reverse)
     -- Find the next sprite for the button
     local spriteName = "spritemode"..tostring(self.spriteMode)
 
+    print("spriteName", spriteName, _G[spriteName .. "disabled"] == nil)
     -- Change sprite button graphic
     self.sizeBtnData.cachedSpriteData = {
         up = _G[spriteName .. "up"],
@@ -153,17 +158,20 @@ function DrawTool:OnNextSpriteSize(reverse)
 
     self:ConfigureSpritePickerSelector(self.spriteMode)
 
-    -- Need to clear any sprite data that is in the clipboard
-    self.copiedSpriteData = nil
-    pixelVisionOS:EnableMenuItem(PasteShortcut, false)
+    -- -- Need to clear any sprite data that is in the clipboard
+    -- self.copiedSpriteData = nil
+    -- pixelVisionOS:EnableMenuItem(PasteShortcut, false)
 
     editorUI:Invalidate(self.sizeBtnData)
 
+    -- DrawSprites(_G[spriteName .. "up"].spriteIDs, 0, 0, _G[spriteName .. "up"].width, false, false, DrawMode.TilemapCache)
+
+    -- print("self.selectionSizes", self.selectionSizes[self.spriteMode].scale)
     -- TODO need to rewire this
-    -- pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.spriteMode)
+    pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.selectionSizes[self.spriteMode].scale)
 
     -- -- Force the sprite editor to update to the new selection from the sprite picker
-    -- self:ChangeSpriteID(self.spritePickerData.currentSelection)
+    self:ChangeSpriteID(self.spritePickerData.currentSelection)
 
     -- ClearHistory()
 
@@ -178,16 +186,16 @@ end
 
 function DrawTool:ConfigureSpritePickerSelector(size)
     
-    local x = selectionSizes[size].X
-    local y = selectionSizes[size].Y
+    local x = self.selectionSizes[size].x
+    local y = self.selectionSizes[size].y
 
     local spriteName = "selection"..x.."x" .. y
-    print("spriteName", size, spriteName)
+    print("pre-scale", self.selectionSizes[size].scale)
     _G["spritepickerover"] = {spriteIDs = _G[spriteName .. "over"].spriteIDs, width = _G[spriteName .. "over"].width, colorOffset = 0}
 
     _G["spritepickerselectedup"] = {spriteIDs = _G[spriteName .. "selected"].spriteIDs, width = _G[spriteName .. "selected"].width, colorOffset = 0}
 
-    pixelVisionOS:ChangeItemPickerScale(self.spritePickerData, size)
+    pixelVisionOS:ChangeItemPickerScale(self.spritePickerData, size, self.selectionSizes[size])
 
 end
 
@@ -202,7 +210,7 @@ function DrawTool:ChangeSpriteID(value)
 
     -- -- ClearHistory()
 
-    -- self:UpdateCanvas(self.spritePickerData.currentSelection)
+    self:UpdateCanvas(self.spritePickerData.currentSelection)
 
     self.spritePickerData.dragging = false
 
@@ -223,7 +231,7 @@ function DrawTool:OnSelectSprite(value)
     -- Update the input field
     editorUI:ChangeInputField(self.spriteIDInputData, value, false)
 
-    -- self:UpdateCanvas(value)
+    self:UpdateCanvas(value)
 
     -- ResetColorInvalidation()
 
@@ -259,19 +267,22 @@ function DrawTool:OnSpritePickerDrop(src, dest)
             -- TODO need to account for the scroll offset?
             -- print("Swap sprite", srcSpriteID, destSpriteID)
 
-            local srcSprite = gameEditor:ReadGameSpriteData(srcSpriteID, self.spriteMode, self.spriteMode)
-            local destSprite = gameEditor:ReadGameSpriteData(destSpriteID, self.spriteMode, self.spriteMode)
+            local selection = self.selectionSizes[self.spriteMode]
+
+            local srcSprite = gameEditor:ReadGameSpriteData(srcSpriteID, selection.x, selection.y)
+            local destSprite = gameEditor:ReadGameSpriteData(destSpriteID, selection.x, selection.y)
 
             -- Swap the sprite in the tool's color memory
-            gameEditor:WriteSpriteData(srcSpriteID, destSprite, self.spriteMode, self.spriteMode)
-            gameEditor:WriteSpriteData(destSpriteID, srcSprite, self.spriteMode, self.spriteMode)
+            gameEditor:WriteSpriteData(srcSpriteID, destSprite, selection.x, selection.y)
+            gameEditor:WriteSpriteData(destSpriteID, srcSprite, selection.x, selection.y)
 
             -- Update the pixel data in the spritePicker
 
-            local itemSize = self.spriteMode * 8
+            local itemSizeX = selection.x * 8
+            local itemSizeY = selection.y * 8
 
-            pixelVisionOS:UpdateItemPickerPixelDataAt(self.spritePickerData, srcSpriteID, destSprite, itemSize, itemSize)
-            pixelVisionOS:UpdateItemPickerPixelDataAt(self.spritePickerData, destSpriteID, srcSprite, itemSize, itemSize)
+            pixelVisionOS:UpdateItemPickerPixelDataAt(self.spritePickerData, srcSpriteID, destSprite, itemSizeX, itemSizeY)
+            pixelVisionOS:UpdateItemPickerPixelDataAt(self.spritePickerData, destSpriteID, srcSprite, itemSizeX, itemSizeY)
 
             pixelVisionOS:InvalidateItemPickerDisplay(src)
 

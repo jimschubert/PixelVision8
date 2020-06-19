@@ -881,16 +881,16 @@ function PixelVisionOS:ClearCanvas(data)
 end
 
 
-local brushSizes = {16, 8, 8, 4}
+local brushSizes = {16, 8, 8, 8, 4}
 
 function PixelVisionOS:ChangeCanvasPixelSize(data, size)
 
-  data.pixelSelectionSize = size
+  -- data.pixelSelectionSize = size
 
-  data.brushDrawArgs[3] = brushSizes[size]
-  data.brushDrawArgs[4] = brushSizes[size]
+  data.brushDrawArgs[3] = size-- brushSizes[size]
+  data.brushDrawArgs[4] = size --brushSizes[size]
 
   -- Calculate the gridSize TODO this is off because we don't support scale 3 so clamping
-  data.gridSize = Clamp((3 - data.pixelSelectionSize) * 8, 4, 16)
+  data.gridSize = size--Clamp((3 - data.pixelSelectionSize) * 8, 4, 16)
 
 end

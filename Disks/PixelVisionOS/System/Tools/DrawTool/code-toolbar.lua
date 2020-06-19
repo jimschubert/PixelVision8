@@ -92,8 +92,10 @@ function DrawTool:UpdateToolbar()
 end
 
 
-function DrawTool:ChangeEditMode(mode)
+function DrawTool:ChangeEditMode(value)
 
+    local mode = value and ColorMode or SpriteMode
+    
     if(mode == self.mode) then
         return
     end
@@ -115,7 +117,7 @@ function DrawTool:ChangeEditMode(mode)
 
 
         self:ShowColorPanel()
-        -- self:HideCanvasPanel()
+        self:HideCanvasPanel()
         -- -- Disable sprite selector
         -- -- Disable the tools
         -- -- Invalidate the color picker
@@ -126,11 +128,15 @@ function DrawTool:ChangeEditMode(mode)
         self.editorLabelArgs[1] = systemcolorlabel.spriteIDs
         self.editorLabelArgs[4] = systemcolorlabel.width
 
-        -- pixelVisionOS:EnableItemPicker(self.spritePickerData, false, true)
+        pixelVisionOS:EnableItemPicker(self.spritePickerData, false, true)
 
-        -- self.lastSpriteSelection = self.spritePickerData.currentSelection
+        self.lastSpriteSelection = self.spritePickerData.currentSelection
 
-        -- pixelVisionOS:ClearItemPickerSelection(self.spritePickerData)
+        pixelVisionOS:ClearItemPickerSelection(self.spritePickerData)
+
+        editorUI:Enable(self.sizeBtnData,false)
+        editorUI:Enable(self.spriteIDInputData,false)
+        editorUI:ChangeInputField(self.spriteIDInputData, "", false)
 
     elseif(self.mode == SpriteMode) then
         
@@ -140,7 +146,7 @@ function DrawTool:ChangeEditMode(mode)
         end
 
         self:HideColorPanel()
-        -- self:ShowCanvasPanel()
+        self:ShowCanvasPanel()
         -- -- Enable sprite selection
         -- -- Enable the tools
         -- -- Invalidate the canvs
@@ -150,12 +156,19 @@ function DrawTool:ChangeEditMode(mode)
         self.editorLabelArgs[1] = spriteeditorlabel.spriteIDs
         self.editorLabelArgs[4] = spriteeditorlabel.width
 
-        -- -- The sprite picker shouldn't be selectable on this screen but you can still change pages
-        -- pixelVisionOS:EnableItemPicker(self.spritePickerData, true, true)
 
-        -- if(self.lastSpriteSelection ~= nil) then
-        --     pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, self.lastSpriteSelection)
-        -- end
+        -- The sprite picker shouldn't be selectable on this screen but you can still change pages
+        pixelVisionOS:EnableItemPicker(self.spritePickerData, true, true)
+
+        editorUI:Enable(self.sizeBtnData, true)
+        editorUI:Enable(self.spriteIDInputData, true)
+
+        editorUI:ChangeInputField(self.spriteIDInputData, self.lastSpriteSelection)
+
+
+        if(self.lastSpriteSelection ~= nil) then
+            pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, self.lastSpriteSelection)
+        end
 
     end
 
@@ -208,10 +221,10 @@ function DrawTool:OnSelectTool(value)
     if(toolName == "eraser") then
 
         --  Clear the current color selection
-        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
+        -- pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
         -- Disable the color picker
-        pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, false)
+        -- pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, false)
 
         -- Make sure the canvas is enabled
         editorUI:Enable(self.canvasData, true)
@@ -242,22 +255,22 @@ function DrawTool:OnSelectTool(value)
         if(self.lastColorID == nil or self.lastColorID == -1) then
 
             -- For palette mode, we set the color to the last color per sprite but for direct color mode we set it to the last system color
-            self.lastColorID = self.usePalettes and gameEditor:ColorsPerSprite() or self.paletteColorPickerData.total - 1
+            -- self.lastColorID = self.usePalettes and gameEditor:ColorsPerSprite() or self.paletteColorPickerData.total - 1
 
         end
 
         -- Enable co
-        pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
+        -- pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
 
         -- Need to find the right color if we are in palette mode
         if(self.usePalettes == true) then
 
             -- Need to offset the last color id by the current palette page
-            self.lastColorID = self.lastColorID + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
+            -- self.lastColorID = self.lastColorID + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
 
         end
 
-        pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID)
+        -- pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID)
 
     end
 

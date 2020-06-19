@@ -8,7 +8,7 @@
 	distributing is allowed.
 ]]--
 
-LoadScript("pixel-vision-os-item-picker-v2")
+LoadScript("pixel-vision-os-item-picker-v3")
 LoadScript("pixel-vision-os-color-picker-v3")
 LoadScript("pixel-vision-os-sprite-picker-v4")
 LoadScript("pixel-vision-os-canvas-v3")
@@ -134,7 +134,7 @@ function DrawTool:LoadSuccess()
 
     -- self:CreateColorSelector()
 
-    -- self:CreateCanvas()
+    self:CreateCanvas()
 
     self:CreateToolbar()
 

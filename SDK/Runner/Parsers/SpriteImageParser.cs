@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using PixelVision8.Engine.Chips;
@@ -103,6 +104,7 @@ namespace PixelVision8.Runner.Parsers
             var colorMap = new string[colorRefs.Length];
 
             var orphanColors = new List<string>();
+            var uniqueColorIDs = new List<int>();
 
             var totalImageColors = imageColors.Length;
             // var totalColorRefs = colorRefs.Length;
@@ -116,6 +118,12 @@ namespace PixelVision8.Runner.Parsers
                 if (color == colorChip.maskColor) continue;
 
                 var id = Array.IndexOf(colorRefs, color);
+
+                // Keep track of colors in and out of range
+                if (uniqueColorIDs.IndexOf(id) == -1)
+                {
+                    uniqueColorIDs.Add(id);
+                }
 
                 if (id > -1)
                 {
@@ -139,6 +147,11 @@ namespace PixelVision8.Runner.Parsers
                 // }
 
             }
+
+            // Sort colors
+            uniqueColorIDs.Sort();
+
+            Debug.WriteLine(Parser.FileName + " Unique Colors " + string.Join(",", uniqueColorIDs.ToArray()));
 
             var indexes = new List<int>();
             

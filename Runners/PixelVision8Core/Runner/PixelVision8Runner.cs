@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -841,6 +842,7 @@ namespace PixelVision8.Runner
         public override bool Load(string path, RunnerMode newMode = RunnerMode.Playing,
             Dictionary<string, string> metaData = null)
         {
+
             // Make sure we stop recording when loading a new game
             if (Recording) StopRecording();
 

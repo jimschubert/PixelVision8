@@ -1272,103 +1272,98 @@ namespace PixelVision8.Runner.Editors
         #region Colors
 
         /// <summary>
-        ///     Convert sprites in memory to palette colors, clamping the TotalDisks colors in each sprite to 16
+        ///     Convert sprites in memory to palette colors, clamping the total colors in each sprite to 16
         /// </summary>
         public void ReindexSprites()
         {
             // TODO each sprite needs to be clamped between the max colors per sprite
 
-            var rawSpriteData = spriteChip.texture.GetPixels();
-
-            var colorMap = new List<int>();
-
-            var total = rawSpriteData.Length;
-
-            var i = 0;
-            var j = 0;
-
-            var spritePixelTotal = gameChip.SpriteSize().X * gameChip.SpriteSize().Y;
-
-            var totalSprites = spriteChip.totalSprites;
-
-            var tmpPixelData = new int[spritePixelTotal];
-            var pixel = -1;
-            var tmpIndex = -1;
-            // Loop through each sprite
-            for (i = 0; i < totalSprites; i++)
-            {
-                // Read the sprite data
-                spriteChip.ReadSpriteAt(i, ref tmpPixelData);
-
-                // Clear the color map
-                //                colorMap.Clear();
-
-                // Index the pixel data
-                for (j = 0; j < spritePixelTotal; j++)
-                {
-                    pixel = tmpPixelData[j];
-
-                    if (pixel > -1)
-                    {
-                        tmpIndex = colorMap.IndexOf(pixel);
-                        if (tmpIndex == -1)
-                        {
-                            colorMap.Add(pixel);
-                            tmpIndex = colorMap.Count - 1;
-                        }
-
-                        tmpPixelData[j] = tmpIndex;
-                    }
-                }
-
-                spriteChip.UpdateSpriteAt(i, tmpPixelData);
-            }
-
-            // Update the CPS to reflect the indexed colors
-            spriteChip.colorsPerSprite = colorMap.Count == 0 ? spriteChip.colorsPerSprite : colorMap.Count;
-
-            // Copy the colors to the first palette
-            for (i = 0; i < spriteChip.colorsPerSprite; i++)
-                colorChip.UpdateColorAt(128 + i, colorChip.ReadColorAt(colorMap.Count == 0 ? i : colorMap[i]));
-
-            // Create the 16 colors the sprites will be remapped to
-            string[] colorMapColors =
-            {
-                "#000000",
-                "#111111",
-                "#222222",
-                "#333333",
-                "#444444",
-                "#555555",
-                "#666666",
-                "#777777",
-                "#888888",
-                "#999999",
-                "#AAAAAA",
-                "#BBBBBB",
-                "#CCCCCC",
-                "#DDDDDD",
-                "#EEEEEE",
-                "#FFFFFF"
-            };
-
-            // Set the new color TotalDisks
-            total = colorMapColors.Length;
-
-            // Create a color map chip
-            var colorMapChip = new ColorChip { total = colorMapColors.Length };
-
-            // Clear the color map chip and rebuild the pages
-            //            colorMapChip.TotalDisks = TotalDisks;
-            colorMapChip.Clear();
-
-            // Add the colors to the color map chip
-            for (i = 0; i < total; i++) colorMapChip.UpdateColorAt(i, colorMapColors[i]);
-
-            //            colorChip.paletteMode = true;
-
-            // Add the chip to the engine
-            targetGame.ActivateChip(ColorMapParser.chipName, colorMapChip, false);
+            // var colorMap = new List<int>();
+            //
+            // // var total = rawSpriteData.Length;
+            //
+            // var spritePixelTotal = gameChip.SpriteSize().X * gameChip.SpriteSize().Y;
+            //
+            // var totalSprites = spriteChip.totalSprites;
+            //
+            // var tmpPixelData = new int[spritePixelTotal];
+            // int pixel,tmpIndex, i, j;
+            //
+            // // Loop through each sprite
+            // for (i = 0; i < totalSprites; i++)
+            // {
+            //     // Read the sprite data
+            //     spriteChip.ReadSpriteAt(i, ref tmpPixelData);
+            //
+            //     // Clear the color map
+            //     //                colorMap.Clear();
+            //
+            //     // Index the pixel data
+            //     for (j = 0; j < spritePixelTotal; j++)
+            //     {
+            //         pixel = tmpPixelData[j];
+            //
+            //         if (pixel > -1)
+            //         {
+            //             tmpIndex = colorMap.IndexOf(pixel);
+            //             if (tmpIndex == -1)
+            //             {
+            //                 colorMap.Add(pixel);
+            //                 tmpIndex = colorMap.Count - 1;
+            //             }
+            //
+            //             tmpPixelData[j] = tmpIndex;
+            //         }
+            //     }
+            //
+            //     spriteChip.UpdateSpriteAt(i, tmpPixelData);
+            // }
+            //
+            // // Update the CPS to reflect the indexed colors
+            // spriteChip.colorsPerSprite = colorMap.Count == 0 ? spriteChip.colorsPerSprite : colorMap.Count;
+            //
+            // // Copy the colors to the first palette
+            // for (i = 0; i < spriteChip.colorsPerSprite; i++)
+            //     colorChip.UpdateColorAt(128 + i, colorChip.ReadColorAt(colorMap.Count == 0 ? i : colorMap[i]));
+            //
+            // // Create the 16 colors the sprites will be remapped to
+            // string[] colorMapColors =
+            // {
+            //     "#000000",
+            //     "#111111",
+            //     "#222222",
+            //     "#333333",
+            //     "#444444",
+            //     "#555555",
+            //     "#666666",
+            //     "#777777",
+            //     "#888888",
+            //     "#999999",
+            //     "#AAAAAA",
+            //     "#BBBBBB",
+            //     "#CCCCCC",
+            //     "#DDDDDD",
+            //     "#EEEEEE",
+            //     "#FFFFFF"
+            // };
+            //
+            // // Set the new color TotalDisks
+            // total = colorMapColors.Length;
+            //
+            // // Create a color map chip
+            // var colorMapChip = new ColorChip { total = colorMapColors.Length };
+            //
+            // // Clear the color map chip and rebuild the pages
+            // //            colorMapChip.TotalDisks = TotalDisks;
+            // colorMapChip.Clear();
+            //
+            // // Add the colors to the color map chip
+            // for (i = 0; i < total; i++) colorMapChip.UpdateColorAt(i, colorMapColors[i]);
+            //
+            // //            colorChip.paletteMode = true;
+            //
+            // // Add the chip to the engine
+            // targetGame.ActivateChip(ColorMapParser.chipName, colorMapChip, false);
 
             // Set the pixels back into the sprite texture
             //            spriteChip.texture.SetPixels(rawSpriteData);

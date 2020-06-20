@@ -801,6 +801,9 @@ function PixelVisionOS:ResizeCanvas(data, size, scale, pixelData)
     self:CancelCanvasSelection(data, true, false)
   end
   
+  data.rect.w = size.x * scale
+  data.rect.h = size.y * scale
+  
   -- Create a new canvas for drawing into
   data.paintCanvas = NewCanvas(size.x, size.y)
 
@@ -881,7 +884,7 @@ function PixelVisionOS:ClearCanvas(data)
 end
 
 
-local brushSizes = {16, 8, 8, 8, 4}
+-- local brushSizes = {16, 8, 8, 8, 4}
 
 function PixelVisionOS:ChangeCanvasPixelSize(data, size)
 

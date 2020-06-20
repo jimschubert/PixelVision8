@@ -119,8 +119,6 @@ function DrawTool:OnCanvasDrop(src, dest)
         pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
     end
 
-
-
 end
 
 function DrawTool:ToggleBackgroundColor(value)
@@ -145,13 +143,17 @@ end
 
 function DrawTool:UpdateCanvas(value, flipH, flipV)
 
-    -- Need to draw immediately since the canvas doesn't run through the UI draw queue
-    DrawSprites( self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
+    
 
     flipH = flipH or false
     flipV = flipV or false
 
     local spriteSelection = self.selectionSizes[self.spriteMode]
+
+    if(spriteSelection.x ~= spriteSelection.y) then
+        -- Need to draw immediately since the canvas doesn't run through the UI draw queue
+        DrawSprites( self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
+    end
 
     -- Save the original pixel data from the selection
     local tmpPixelData = gameEditor:ReadGameSpriteData(value, spriteSelection.x, spriteSelection.y, flipH, flipV)--
@@ -355,7 +357,7 @@ function DrawTool:OnSaveCanvasChanges()
     end
 
     -- Update the current sprite in the picker
-    gameEditor:WriteSpriteData(self.spritePickerData.currentSelection, pixelData, self.spriteMode, self.spriteMode)
+    gameEditor:WriteSpriteData(self.spritePickerData.currentSelection, pixelData, self.selectionSize.x, self.selectionSize.y)
 
     -- Test to see if the canvas is invalid
     if(self.canvasData.invalid == true) then

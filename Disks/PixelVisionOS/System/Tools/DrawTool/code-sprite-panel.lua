@@ -111,29 +111,16 @@ end
 
 function DrawTool:OnNextSpriteSize(reverse)
 
-    -- local lastID = tonumber(spriteIDInputData.text)
-
     -- Loop backwards through the button sizes
     if(Key(Keys.LeftShift) or reverse == true) then
         self.spriteMode = self.spriteMode - 1
-
-        -- Skip 24 x 24 selections
-        -- if(self.spriteMode == 3) then
-        --     self.spriteMode = 2
-        -- end
 
         if(self.spriteMode < 1) then
             self.spriteMode = #self.selectionSizes
         end
 
-        -- Loop forward through the button sizes
     else
         self.spriteMode = self.spriteMode + 1
-
-        -- Skip 24 x 24 selections
-        -- if(self.spriteMode == 3) then
-        --     self.spriteMode = 4
-        -- end
 
         if(self.spriteMode > #self.selectionSizes) then
             self.spriteMode = 1
@@ -143,7 +130,6 @@ function DrawTool:OnNextSpriteSize(reverse)
     -- Find the next sprite for the button
     local spriteName = "spritemode"..self.selectionSizes[self.spriteMode].x.."x" .. self.selectionSizes[self.spriteMode].y
 
-    print("spriteName", spriteName, _G[spriteName .. "disabled"] == nil)
     -- Change sprite button graphic
     self.sizeBtnData.cachedSpriteData = {
         up = _G[spriteName .. "up"],
@@ -168,7 +154,7 @@ function DrawTool:OnNextSpriteSize(reverse)
 
     -- print("self.selectionSizes", self.selectionSizes[self.spriteMode].scale)
     -- TODO need to rewire this
-    -- pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.selectionSizes[self.spriteMode].scale)
+    pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.selectionSizes[self.spriteMode].scale)
 
     -- -- Force the sprite editor to update to the new selection from the sprite picker
     self:ChangeSpriteID(self.spritePickerData.currentSelection)

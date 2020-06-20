@@ -14,7 +14,7 @@ function DrawTool:CreateSpritePanel()
     self:ConfigureSpritePickerSelector(1)
 
     self.newPos = NewPoint()
-    self.posScale = 1
+    -- self.posScale = 1
     
     -- Get sprite texture dimensions
     local totalSprites = gameEditor:TotalSprites()
@@ -49,7 +49,7 @@ function DrawTool:CreateSpritePanel()
     self.maxSpriteSize = 4
 
     -- Create size button
-    self.sizeBtnData = editorUI:CreateButton({x = 224, y = 200}, "spritemode1", "Pick the sprite size.")
+    self.sizeBtnData = editorUI:CreateButton({x = 224, y = 200}, "spritemode1x1", "Pick the sprite size.")
     self.sizeBtnData.onAction = function() self:OnNextSpriteSize() end
 
     
@@ -80,13 +80,13 @@ function DrawTool:UpdateSpritePanel()
 
         -- Offset the new position by the direction button
         if(Key(Keys.Up, InputState.Released)) then
-            self.newPos.y = -1 * self.posScale
+            self.newPos.y = -1 * self.selectionSize.y
         elseif(Key(Keys.Right, InputState.Released)) then
-            self.newPos.x = 1 * self.posScale
+            self.newPos.x = 1 * self.selectionSize.x
         elseif(Key(Keys.Down, InputState.Released)) then
-            self.newPos.y = 1 * self.posScale
+            self.newPos.y = 1 * self.selectionSize.y
         elseif(Key(Keys.Left, InputState.Released)) then
-            self.newPos.x = -1 * self.posScale
+            self.newPos.x = -1 * self.selectionSize.x
         end
 
         -- Test to see if the new position has changed
@@ -141,7 +141,7 @@ function DrawTool:OnNextSpriteSize(reverse)
     end
 
     -- Find the next sprite for the button
-    local spriteName = "spritemode"..tostring(self.spriteMode)
+    local spriteName = "spritemode"..self.selectionSizes[self.spriteMode].x.."x" .. self.selectionSizes[self.spriteMode].y
 
     print("spriteName", spriteName, _G[spriteName .. "disabled"] == nil)
     -- Change sprite button graphic
@@ -164,21 +164,21 @@ function DrawTool:OnNextSpriteSize(reverse)
 
     editorUI:Invalidate(self.sizeBtnData)
 
-    -- DrawSprites(_G[spriteName .. "up"].spriteIDs, 0, 0, _G[spriteName .. "up"].width, false, false, DrawMode.TilemapCache)
+    -- DrawSprites(_G[spriteName .. "over"].spriteIDs, 0, 0, _G[spriteName .. "up"].width, false, false, DrawMode.TilemapCache)
 
     -- print("self.selectionSizes", self.selectionSizes[self.spriteMode].scale)
     -- TODO need to rewire this
-    pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.selectionSizes[self.spriteMode].scale)
+    -- pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.selectionSizes[self.spriteMode].scale)
 
     -- -- Force the sprite editor to update to the new selection from the sprite picker
     self:ChangeSpriteID(self.spritePickerData.currentSelection)
 
     -- ClearHistory()
 
-    -- self:InvalidateColorPreview()
+    -- self:Invalidate/ColorPreview()
 
     -- Get the scale from the sprite picker
-    self.posScale = self.spriteMode
+    -- self.posScale = self.spriteMode
 
     -- TODO need to reindex the colors?
 
@@ -186,20 +186,25 @@ end
 
 function DrawTool:ConfigureSpritePickerSelector(size)
     
-    local x = self.selectionSizes[size].x
-    local y = self.selectionSizes[size].y
+
+    self.selectionSize = self.selectionSizes[size]
+
+    local x = self.selectionSize.x
+    local y = self.selectionSize.y
 
     local spriteName = "selection"..x.."x" .. y
-    print("pre-scale", self.selectionSizes[size].scale)
+    
     _G["spritepickerover"] = {spriteIDs = _G[spriteName .. "over"].spriteIDs, width = _G[spriteName .. "over"].width, colorOffset = 0}
 
     _G["spritepickerselectedup"] = {spriteIDs = _G[spriteName .. "selected"].spriteIDs, width = _G[spriteName .. "selected"].width, colorOffset = 0}
 
-    pixelVisionOS:ChangeItemPickerScale(self.spritePickerData, size, self.selectionSizes[size])
+    pixelVisionOS:ChangeItemPickerScale(self.spritePickerData, size, self.selectionSize)
 
 end
 
 function DrawTool:ChangeSpriteID(value)
+
+    print("value", value)
 
     -- Need to convert the text into a number
     value = tonumber(value)
@@ -211,7 +216,7 @@ function DrawTool:ChangeSpriteID(value)
     -- -- ClearHistory()
 
     self:UpdateCanvas(self.spritePickerData.currentSelection)
-
+    
     self.spritePickerData.dragging = false
 
 end

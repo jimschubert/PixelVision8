@@ -553,11 +553,11 @@ function PixelVisionOS:UpdateItemPickerSelection(data)
     if(data.viewport.Contains(data.tmpItemRect)) then
 
         -- Adjust for scale
-        spriteSize = spriteSize * data.scale.x
+        -- spriteSize = spriteSize * data.scale.x
         cols = cols / data.scale.x
 
         -- Find the new index value for the picker
-        local newIndex = CalculateIndex(data.tmpItemRect.x / spriteSize, data.tmpItemRect.y / spriteSize, cols)
+        local newIndex = CalculateIndex(data.tmpItemRect.x / (spriteSize * data.scale.x), data.tmpItemRect.y / (spriteSize * data.scale.y), cols)
 
         editorUI:SelectPicker(data.picker, newIndex, false)
 

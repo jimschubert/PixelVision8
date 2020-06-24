@@ -262,7 +262,7 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
 
       -- end
 
-      ReplaceColor(data.brushColorID, tmpColor + self.colorOffset)
+      ReplaceColor(data.brushColorID, tmpColor + data.colorOffset)
 
     end
 
@@ -538,8 +538,9 @@ function PixelVisionOS:DrawOnCanvas(data, mousePos, toolID)
 
     elseif(data.tool == "eyedropper") then
 
+      -- TODO this doesn't appear to do anything
       data.overColor = data.paintCanvas:ReadPixelAt(mousePos.x, mousePos.y) - data.colorOffset
-
+      
     elseif(data.tool == "select") then
 
       -- print("select", data.startPos.x, data.startPos.y)
@@ -635,18 +636,18 @@ function PixelVisionOS:ResetCanvasStroke(data)
   data.tmpPaintCanvas:SetPattern({realBrushColor}, 1, 1)
 
   -- Check to see if we are in palete mode
-  -- if(pixelVisionOS.paletteMode == true) then
+  -- if(se/lf.paletteColorPickerData ~= nil) then
 
   --   -- TODO this is hard coded to look for a palette color picker
 
   --   -- TODO this is not finding the palette picker?
-  --   print("Test", self.paletteColorPickerData)
+    -- print("Test", self.paletteColorPickerData)
   --   -- Shift the value to offset for the palette
-  --   -- tmpColor = tmpColor + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
+    -- tmpColor = tmpColor + PaletteOffset(self.paletteColorPickerData.pages.currentSelection - 1)
 
   -- end
 
-  ReplaceColor(data.brushColorID, tmpColor + self.colorOffset)
+  ReplaceColor(data.brushColorID, tmpColor + data.colorOffset)
 
 end
 
@@ -800,7 +801,7 @@ function PixelVisionOS:ResizeCanvas(data, size, scale, pixelData)
   if(data.selectRect ~= nil) then
     self:CancelCanvasSelection(data, true, false)
   end
-  
+
   data.rect.w = size.x * scale
   data.rect.h = size.y * scale
   
@@ -864,8 +865,15 @@ function PixelVisionOS:CanvasBrushColor(data, value)
   -- print("Value", value)
 
   data.brushColor = value
-
   self:ResetCanvasStroke(data)
+
+end
+
+function PixelVisionOS:CanvasColorOffset(data, value)
+
+  data.colorOffset = value
+
+  -- TODO need to change brush color
 
 end
 

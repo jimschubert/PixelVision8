@@ -40,9 +40,10 @@ function DrawTool:Init()
         invalid = true,
         success = false,
         canEdit = EditColorModal ~= nil,
-        debugMode = false,
+        debugMode = true,
         colorOffset = 0,
-        lastMode = nil
+        lastMode = nil,
+        showBGColor = false
     }
 
     -- Reset the undo history so it's ready for the tool
@@ -130,7 +131,7 @@ function DrawTool:LoadSuccess()
     
     self:CreateColorPanel()
 
-    -- self:CreatePalettePanel()
+    self:CreatePalettePanel()
 
     -- self:CreateColorSelector()
 
@@ -203,8 +204,23 @@ function DrawTool:LoadSuccess()
 
     self:ResetDataValidation()
 
+
+    local defaultToolID = 1
+    local defaultMode = colorMode == true and ColorMode or SpriteMode
+    local defaultPalette = 1
+    local defaultSpriteID = 10
+
+    -- Set default tool
+    editorUI:SelectToggleButton(self.toolBtnData, defaultToolID)
+
+    -- Set default palette color
+    pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, defaultPalette)
+
+    self:ChangeSpriteID(defaultSpriteID)
+
     -- Set default mode
-    self:ChangeEditMode(colorMode == true and ColorMode or SpriteMode)
+    self:ChangeEditMode(defaultMode)
+    
 
 end
 

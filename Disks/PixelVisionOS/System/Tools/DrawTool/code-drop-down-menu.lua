@@ -23,7 +23,7 @@ function DrawTool:CreateDropDownMenu()
         -- TODO toggle between "Edit Sprites" to "Edit Colors"
         {name = "Edit Sprites", enabled = self.spriteEditorPath ~= nil, action = function() self:OnEditSprites() end, toolTip = "Open the sprite editor."},
         -- TODO toggle between "Show BG Color" to "Hide BG Color"
-        {name = "Show BG Color", action = function() ToggleBackgroundColor(not showBGColor) end, key = Keys.B, toolTip = "Toggle background color."},
+        {name = "Show BG Color", action = function() self:ToggleBackgroundColor(not self.showBGColor) end, key = Keys.B, toolTip = "Toggle background color."},
         {divider = true},
         -- Reset all the values
         {name = "Save", action = function() self:OnSave() end, enabled = false, key = Keys.S, toolTip = "Save changes made to the colors.png file."}, -- Reset all the values
@@ -629,3 +629,34 @@ end
 --     print("Snapshot Restored", dump(colorSnapshot))
 
 -- end
+
+function DrawTool:ToggleBackgroundColor(value)
+
+    self.showBGColor = value
+
+    self.canvasData.showBGColor = value
+
+
+    -- self.paletteColorPickerData.showBGColor = value
+
+    -- pixelVisionOS:RebuildColorPickerCache(self.paletteColorPickerData)
+
+    -- if(usePalettes == true) then
+
+    pixelVisionOS:SelectColorPage(paletteColorPickerData, paletteColorPickerData.picker.selected)
+
+    -- else
+    --     canvasData.emptyColorID = pixelVisionOS.emptyColorID
+    -- end
+
+    pixelVisionOS:InvalidateCanvas(canvasData)
+
+    -- spritePickerData.showBGColor = value
+
+    -- TODO need a way to replace the mask color in palette mode here
+
+    -- pixelVisionOS:InvalidateItemPickerDisplay(spritePickerData)
+
+    -- DrawRect(viewport.x, viewport.y, viewport.w, viewport.h, pixelVisionOS.emptyColorID, DrawMode.TilemapCache)
+
+end

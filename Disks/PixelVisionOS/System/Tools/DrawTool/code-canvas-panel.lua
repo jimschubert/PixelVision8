@@ -143,8 +143,6 @@ end
 
 function DrawTool:UpdateCanvas(value, flipH, flipV)
 
-    
-
     flipH = flipH or false
     flipV = flipV or false
 

@@ -102,6 +102,8 @@ function PixelVisionOS:ImportColorsFromGame()
     -- There are always 128 total palette colors in memory
     self.totalPaletteColors = 128
 
+    local tmpMaskColor = self.systemColors[1]
+
     for i = 129, self.totalColors do
 
         local index = i - 1
@@ -115,11 +117,11 @@ function PixelVisionOS:ImportColorsFromGame()
 
         -- Mask off any colors outside of the palette
         if(paletteIndex >= self.colorsPerSprite) then
-            color = self.maskColor
+            color = tmpMaskColor
 
         -- Set any masked colors in a palette to the fist system color
         elseif(colorID == -1 and paletteIndex < self.colorsPerSprite) then
-            color = self.maskColor
+            color = tmpMaskColor
 
         end
 

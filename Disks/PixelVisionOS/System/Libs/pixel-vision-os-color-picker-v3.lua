@@ -40,6 +40,7 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
   data.pageOverDelay = .5
   data.pageOverLast = -1
   data.total = total
+  data.dragBetweenPages = dragBetweenPages
 
   data.lastSelectedPage = 1
   -- Stop the picker from drawing the selection
@@ -138,7 +139,7 @@ function PixelVisionOS:ConfigureEmptyDragColorPickerSprites(data, spriteID, widt
   local totalSprites = scale * scale
 
   for i = 1, totalSprites do
-    table.insert(emptySpriteList, spriteID or emptymaskcolor.spriteIDs[1])
+    table.insert(emptySpriteList, spriteID or emptycolor.spriteIDs[1])
   end
 
   data.emptyDrawArgs[1] = emptySpriteList
@@ -283,7 +284,7 @@ function PixelVisionOS:UpdateColorPicker(data)
   self:UpdateItemPicker(data)
 
   -- Check for dragging over a page
-  if(data.dragging == true) then
+  if(data.dragging == true and data.dragBetweenPages == true) then
 
     local pageButtons = data.pages.buttons
 

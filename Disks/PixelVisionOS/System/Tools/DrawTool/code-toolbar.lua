@@ -221,10 +221,10 @@ function DrawTool:OnSelectTool(value)
     if(toolName == "eraser") then
 
         --  Clear the current color selection
-        -- pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
+        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
         -- Disable the color picker
-        -- pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, false)
+        pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, false)
 
         -- Make sure the canvas is enabled
         editorUI:Enable(self.canvasData, true)
@@ -236,14 +236,11 @@ function DrawTool:OnSelectTool(value)
         -- Change to fill mode if shift is down
         if(Key(Keys.LeftShift) or Key(Keys.RightShift)) then
 
-            -- print("Special mode")
             self:ToggleFill(true)
-
 
         else
 
             self:ToggleFill(false)
-            
 
         end
 
@@ -255,22 +252,25 @@ function DrawTool:OnSelectTool(value)
         if(self.lastColorID == nil or self.lastColorID == -1) then
 
             -- For palette mode, we set the color to the last color per sprite but for direct color mode we set it to the last system color
-            -- self.lastColorID = self.usePalettes and gameEditor:ColorsPerSprite() or self.paletteColorPickerData.total - 1
+            self.lastColorID = 0
 
         end
 
+        
         -- Enable co
-        -- pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
+        pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
 
         -- Need to find the right color if we are in palette mode
-        if(self.usePalettes == true) then
+        -- if(self.usePalettes == true) then
 
             -- Need to offset the last color id by the current palette page
             -- self.lastColorID = self.lastColorID + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
 
-        end
+        -- end
 
-        -- pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID)
+        print("restore color", self.lastColorID)
+
+        pixelVisionOS:SelectItemPickerIndex(self.paletteColorPickerData, self.lastColorID)
 
     end
 

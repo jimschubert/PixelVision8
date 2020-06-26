@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 using Microsoft.Xna.Framework;
 using PixelVision8.Engine.Chips;
 using PixelVision8.Engine.Utils;
@@ -680,6 +681,73 @@ namespace PixelVision8.Engine
             CopyPixels(ref pixelData, x, y, width, height);
 
             return pixelData;
+        }
+
+        public override void SetPixels(int x, int y, int blockWidth, int blockHeight, int[] pixels)
+        {
+
+            if (wrap == false)
+            {
+
+                BlockSave(pixels, blockWidth, blockHeight, this.pixels, x, y, width, height);
+                return;
+            }
+
+            base.SetPixels(x, y, blockWidth, blockHeight, pixels);
+        }
+
+        void BlockSave(int[] src, int srcW, int srcH, int[] dest, int destX, int destY, int destW, int destH)
+        {
+        
+            var srcX = 0;
+            var srcY = 0;
+            var srcLength = srcW;
+        
+            // Adjust X
+            if (destX < 0)
+            {
+                srcX = -destX;
+        
+                srcW -= srcX;
+                 
+                // destW += destX; 
+                destX = 0;
+            }
+        
+            if (destX + srcW > destW)
+                srcW -= ((destX + srcW) - destW);
+        
+            if (srcW <= 0) return;
+        
+            // Adjust Y
+            if (destY < 0)
+            {
+                srcY = -destY;
+        
+                srcH -= srcY;
+        
+                // destW += destX; 
+                destY = 0;
+            }
+        
+            if (destY + srcH > destH)
+                srcH -= ((destY + srcH) - destH);
+        
+            if (srcH <= 0) return;
+        
+            var row = 0;
+            var startCol = 0;
+            var endCol = 0;
+            var destCol = 0;
+        
+            for (row = 0; row < srcH; row++)
+            {
+                startCol = srcX + (row + srcY) * srcLength;
+                destCol = destX + (row + destY) * destW;
+        
+                Array.Copy(src, startCol, dest, destCol, srcW);
+            }
+        
         }
     }
 }

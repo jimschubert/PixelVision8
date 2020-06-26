@@ -37,6 +37,10 @@ function PixelVisionOS:CreateCanvas(rect, size, scale, colorOffset, toolTip, emp
 
   -- Create a selection canvas
   data.selectionCanvas = NewCanvas(data.rect.w, data.rect.h)
+  data.selectionCanvas.wrap = false
+
+  print("Wrap", data.selectionCanvas.wrap)
+
   data.selectionCanvas:SetStroke({0}, 1, 1)
 
   local spriteData = _G["pixelselection1x"]
@@ -47,7 +51,6 @@ function PixelVisionOS:CreateCanvas(rect, size, scale, colorOffset, toolTip, emp
   -- DrawRect( 0, 0, 8, 8, 54, DrawMode.Sprite )
 
   data.onClick = function(tmpData)
-
 
     self:CanvasRelease(tmpData, true)
 
@@ -148,6 +151,8 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
   if(data == nil) then
     return
   end
+
+  
 
   -- If the button has data but it's not enabled exit out of the update
   if(data.enabled == false) then
@@ -277,7 +282,11 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
       data.brushDrawArgs[2] = (position.y * data.gridSize) + data.rect.y - data.borderOffset
       -- Draw over rect
       -- editorUI:NewDraw("DrawSprites", data.overDrawArgs)
-      editorUI:NewDraw("DrawRect", data.brushDrawArgs)
+      
+      if(data.tool ~= "eyedropper") then
+        editorUI:NewDraw("DrawRect", data.brushDrawArgs)
+      end
+
     end
 
     -- end
@@ -324,8 +333,6 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
       -- If we are not in the button's rect, clear the focus
       editorUI:ClearFocus(data)
 
-      
-
     end
 
   end
@@ -360,6 +367,14 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
 
     end
 
+  end
+
+  -- Trigger click if released out of bounds to save drawing
+  if(editorUI.collisionManager.mouseReleased == true and data.mouseState == "dragging") then
+    -- Click the button
+    data.onClick(data)
+    data.firstPress = true
+    
   end
 
   -- Make sure we don't need to redraw the button.
@@ -541,9 +556,9 @@ function PixelVisionOS:DrawOnCanvas(data, mousePos, toolID)
       -- TODO this doesn't appear to do anything
       data.overColor = data.paintCanvas:ReadPixelAt(mousePos.x, mousePos.y) - data.colorOffset
       
-    elseif(data.tool == "select") then
+    -- elseif(data.tool == "select") then
 
-      -- print("select", data.startPos.x, data.startPos.y)
+    --   -- print("select", data.startPos.x, data.startPos.y)
 
     end
 
@@ -566,6 +581,13 @@ function PixelVisionOS:CutPixels(data)
   }
 
   selection.pixelData = data.paintCanvas:GetPixels(selection.size.X, selection.size.Y, selection.size.Width, selection.size.Height)
+
+  -- Convert the mask colors to the tool's mask color
+  for i = 1, #selection.pixelData do
+      if(selection.pixelData[i] == 255) then
+        selection.pixelData[i] = -1
+      end
+  end
 
   -- Change the stroke to a single pixel of white
   data.tmpPaintCanvas:SetStroke({data.emptyColorID}, 1, 1)
@@ -606,7 +628,7 @@ function PixelVisionOS:CancelCanvasSelection(data, mergeSelection, action)
     data.paintCanvas:SetPixels(data.selectRect.Left, data.selectRect.Top, data.selectedPixelData.size.Width, data.selectedPixelData.size.Height, data.selectedPixelData.pixelData)
     data.paintCanvas:Invalidate()
   end
-
+ 
   data.selectedPixelData = nil
   data.selectionState = "none"
   data.selectRect = nil
@@ -728,6 +750,8 @@ function PixelVisionOS:CanvasRelease(data, callAction)
 
   data.mouseState = data.mouseState == "released" and "up" or "released"
 
+
+  print("Released")
   -- Return if the selection rect is nil
   -- if(data.selectRect ~= nil) then
   --   return
@@ -743,6 +767,8 @@ function PixelVisionOS:CanvasRelease(data, callAction)
 
     -- Normally clearing the canvas invalidates it but se want to reset it until its drawn in again
     data.tmpPaintCanvas:ResetValidation()
+
+    print("Merged tmp canvas")
 
   end
 
@@ -771,12 +797,35 @@ function PixelVisionOS:CanvasRelease(data, callAction)
 
   end
 
+  local oldPixelData = nil
+
+  if(data.selectedPixelData ~= nil) then
+
+    oldPixelData = data.paintCanvas:GetPixels()
+
+    -- data.paintCanvas:MergeCanvas(data.selectionCanvas, 0, true)
+
+   print("Pixels", dump(data.selectedPixelData.pixelData))
+
+   --TODO need to test for a special key down and toggle ignoring transparency
+   data.ignoreMaskColor = true
+    
+    data.paintCanvas:SetPixels(data.selectRect.Left, data.selectRect.Top, data.selectedPixelData.size.Width, data.selectedPixelData.size.Height, data.selectedPixelData.pixelData)
+    
+
+  end
+
   -- trigger the canvas action callback
   if(data.onAction ~= nil and callAction ~= false) then
 
     -- Trigger the onAction call back and pass in the double click value if the button is set up to use it
     data.onAction()
 
+  end
+
+  if(oldPixelData ~= nil) then
+    data.paintCanvas:SetPixels(oldPixelData)
+    data.paintCanvas:Invalidate()
   end
 
 end

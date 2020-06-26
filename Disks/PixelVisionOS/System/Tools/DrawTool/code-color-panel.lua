@@ -267,7 +267,7 @@ function DrawTool:OnSystemColorDropTarget(src, dest)
         local realDestID = destPos.index + dest.altColorOffset
 
         -- Make sure the colors are not the same
-        if(realSrcID ~= realDestID) then
+        if(realSrcID ~= realDestID and destPos.index < pixelVisionOS.totalSystemColors) then
 
             
 

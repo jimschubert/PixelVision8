@@ -1,7 +1,19 @@
 -- TODO these need to be merged
-SaveShortcut, AddShortcut, EditShortcut, ClearShortcut, DeleteShortcut, BGShortcut, UndoShortcut, RedoShortcut, CopyShortcut, PasteShortcut = 5, 7, 8, 9, 10, 11, 13, 14, 15, 16
-ClearShortcut, SaveShortcut, RevertShortcut, UndoShortcut, RedoShortcut, CopyShortcut, PasteShortcut = 4, 5, 6, 8, 9, 10, 11
-
+SaveShortcut = 4
+UndoShortcut = 6
+RedoShortcut = 7
+CopyShortcut = 8
+PasteShortcut = 9
+ClearShortcut = 10
+AddShortcut = 12
+EditShortcut = 13
+DeleteShortcut = 14
+SetBGShortcut = 15
+SelectAllShortcut = 17
+FillShortcut = 18
+ShowGrid = 20
+ShowBGShortcut = 21
+QuitShortcut = 25
 
 function DrawTool:CreateDropDownMenu()
 
@@ -13,36 +25,33 @@ function DrawTool:CreateDropDownMenu()
 
     local menuOptions = 
     {
-        -- About ID 1
+        -- About ID
         {name = "About", action = function() pixelVisionOS:ShowAboutModal(self.toolName) end, toolTip = "Learn about PV8."},
-        {name = "Help", action = function() pixelVisionOS:ShowAboutModal(self.toolName) end, toolTip = "Learn about PV8."},
+        -- Tool options
         {divider = true},
-        -- Editor modes
-        -- TODO toggle between "Palette Mode" and "Color Mode"
-        {name = "Palette Mode", action = function() self:TogglePaletteMode(not self.usePalettes) end, enabled = canEdit, toolTip = "Toggle between palette and direct color mode."}, -- Reset all the values
-        -- TODO toggle between "Edit Sprites" to "Edit Colors"
-        {name = "Edit Sprites", enabled = self.spriteEditorPath ~= nil, action = function() self:OnEditSprites() end, toolTip = "Open the sprite editor."},
-        -- TODO toggle between "Show BG Color" to "Hide BG Color"
-        {name = "Show BG Color", action = function() self:ToggleBackgroundColor(not self.showBGColor) end, key = Keys.B, toolTip = "Toggle background color."},
-        {divider = true},
-        -- Reset all the values
+        {name = "Toggle Mode", action = function() self:ChangeEditMode( self.mode == ColorMode and SpriteMode or ColorMode ) end, key = Keys.M, toolTip = "Toggle between the sprite and color editor modes."},
         {name = "Save", action = function() self:OnSave() end, enabled = false, key = Keys.S, toolTip = "Save changes made to the colors.png file."}, -- Reset all the values
-        {name = "Revert", action = OnRevert, enabled = false, toolTip = "Revert the sprite to its previous state."}, -- Reset all the values
-        {divider = true},
-        {name = "Add", action = function() self:OnAdd() end, enabled = false, key = Keys.A, toolTip = "Add a new color to the currently selected picker."},
-        {name = "Edit", action = function() self:OnEditColor() end, enabled = false, key = Keys.E, toolTip = "Edit the currently selected color."},
-        {name = "Clear", action = function() self:OnClear() end, enabled = false, key = Keys.B, toolTip = "Clear the currently selected color."},
-        {name = "Delete", action = function() self:OnDelete() end, enabled = false, key = Keys.D, toolTip = "Remove the currently selected color."},
+        -- Shared options
         {divider = true},
         {name = "Undo", action = function() self:OnUndo() end, enabled = false, key = Keys.Z, toolTip = "Undo the last action."}, -- Reset all the values
         {name = "Redo", action = function() self:OnRedo() end, enabled = false, key = Keys.Y, toolTip = "Redo the last undo."}, -- Reset all the values
         {name = "Copy", action = function() self:OnCopy() end, enabled = false, key = Keys.C, toolTip = "Copy the currently selected sound."}, -- Reset all the values
         {name = "Paste", action = function() self:OnPaste() end, enabled = false, key = Keys.V, toolTip = "Paste the last copied sound."}, -- Reset all the values
+        {name = "Clear", action = function() self:OnClear() end, enabled = false, key = Keys.B, toolTip = "Clear the currently selected sprite or color."},
+        -- Color Editing
         {divider = true},
-        {name = "Fill", action = OnFill, enabled = true, key = Keys.F, toolTip = "Paste the last copied sprite."}, -- Reset all the values
-        {name = "Select All", action = OnSelectAll, enabled = true, key = Keys.A, toolTip = "Paste the last copied sprite."}, -- Reset all the values
-        {name = "Set BG Color", action = function() self:OnSetBGColor() end, enabled = false, toolTip = "Set the current color as the background."}, -- Reset all the values
+        {name = "Add", action = function() self:OnAdd() end, enabled = false, key = Keys.A, toolTip = "Add a new system color."},
+        {name = "Edit", action = function() self:OnEditColor() end, enabled = false, key = Keys.E, toolTip = "Edit the currently selected system color."},
+        {name = "Delete", action = function() self:OnDelete() end, enabled = false, key = Keys.D, toolTip = "Remove the currently selected system color."},
+        {name = "Set BG Color", action = function() self:OnSetBGColor() end, enabled = false, toolTip = "Set the current system color as the background."}, -- Reset all the values
+        -- Pixel Selection
         {divider = true},
+        {name = "Select All", action = function() self:OnSelectAll() end, enabled = false, key = Keys.A, toolTip = "Select all of the pixels in the current sprite."}, -- Reset all the values
+        {name = "Fill", action = function() self:OnFill() end, enabled = false, key = Keys.F, toolTip = "Fill the selection with the current color."}, -- Reset all the values
+        -- Misc options
+        {divider = true},
+        {name = "Show Grid", action = function() self:ToggleGrid(not self.canvasData.showGrid) end, key = Keys.G, toolTip = "Toggle background color."},
+        {name = "Show BG Color", action = function() self:ToggleBackgroundColor(not self.showBGColor) end, key = Keys.B, toolTip = "Toggle background color."},
         {name = "Optimize", action = OnOptimize, toolTip = "Remove duplicate sprites."},
         {name = "Sprite Builder", action = OnSpriteBuilder, toolTip = "Generate a sprite table from a project's SpriteBuilder dir."}, -- Reset all the values
         {divider = true},
@@ -74,6 +83,12 @@ function DrawTool:OnEditSprites()
 
         end
     )
+end
+
+function DrawTool:ToggleGrid(value)
+
+    self.canvasData.showGrid = value
+
 end
 
 
@@ -128,39 +143,61 @@ function DrawTool:OnAdd()
         -- Make sure we are not at the end of the total per page value
         if(self.paletteColorPickerData.visiblePerPage < self.paletteColorPickerData.totalPerPage) then
 
-            local index = self.paletteColorPickerData.picker.selected
+            if(self.paletteColorPickerData.picker.selected < self.paletteColorPickerData.visiblePerPage -1) then
 
-            -- Rebuild all of the palettes
+                pixelVisionOS:ShowMessageModal(self.toolName .." Error", "You can only add a new palette color to the end of the palette.", 160, false)
 
-            local totalPerPalette = 16
-            local totalPalettes = self.totalPaletteColors / 16
-
-            for i = 1, totalPalettes do
-
-                local palette = {}
-
-                -- for j = 1, totalPerPalette do
-
-                -- end
-
-                table.insert(palette, index, 0)
+                return
 
             end
 
             pixelVisionOS:ColorPickerVisiblePerPage(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage + 1)
+            pixelVisionOS:RebuildPickerPages(self.paletteColorPickerData)
+        
+            local pageOffset = ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
+--  print("Sel", self.paletteColorPickerData.currentSelection + 1)
 
-            self:InvalidateData()
+-- print("Sel",  self.paletteColorPickerData.visiblePerPage - 1)
+            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage - 1)
 
-            -- Disable add option
+        else
 
-            self:UpdateAddDeleteShortcuts()
+            pixelVisionOS:ShowMessageModal(self.toolName .." Error", "You can only have ".. self.paletteColorPickerData.visiblePerPage .. " colors in a palette.", 160, false)
 
-            gameEditor:ColorsPerSprite(self.paletteColorPickerData.visiblePerPage)
+
+            -- local index = self.paletteColorPickerData.picker.selected
+
+            -- -- Rebuild all of the palettes
+
+            -- local totalPerPalette = 16
+            -- local totalPalettes = self.totalPaletteColors / 16
+
+            -- for i = 1, totalPalettes do
+
+            --     local palette = {}
+
+            --     -- for j = 1, totalPerPalette do
+
+            --     -- end
+
+            --     table.insert(palette, index, 0)
+
+            -- end
+
+            -- pixelVisionOS:ColorPickerVisiblePerPage(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage + 1)
+
+            -- self:InvalidateData()
+
+            -- -- Disable add option
+
+            -- self:UpdateAddDeleteShortcuts()
+
+            -- gameEditor:ColorsPerSprite(self.paletteColorPickerData.visiblePerPage)
 
 
         end
 
-    else
+    elseif(self.selectionMode == SystemColorMode) then
 
         if(self.systemColorPickerData.total >= gameEditor:MaximumColors()) then
             pixelVisionOS:ShowMessageModal(self.toolName .." Error", "You can not add any more system colors. Please increase the maximum color limit in the data.json file.", 160, false)
@@ -197,18 +234,17 @@ function DrawTool:OnAdd()
 
                     else
 
-                        -- Make sure the game as the current colors from the tool
+                        -- Make sure the game has the current colors from the tool
                         pixelVisionOS:CopyToolColorsToGameMemory()
 
                         -- Get all the colors in the game
                         local colors = gameEditor:Colors()
 
                         -- Make sure this color doesn't already exist
-
                         local matchingColorIndex = table.indexOf(colors, newColorHex)
                         if(matchingColorIndex > - 1) then
 
-                            pixelVisionOS:ShowMessageModal(toolName .." Error", "'".. newColorHex .."' the same as system color ".. (matchingColorIndex - 1) ..", enter a new color.", 160, false)
+                            pixelVisionOS:ShowMessageModal(self.toolName .." Error", "'".. newColorHex .."' the same as system color ".. (matchingColorIndex - 1) ..", enter a new color.", 160, false)
 
                         else
 
@@ -227,10 +263,7 @@ function DrawTool:OnAdd()
                             end
 
                             pixelVisionOS:AddNewColorToPicker(self.systemColorPickerData)
-                            --
-                            -- pixelVisionOS:RefreshColorPickerColor(systemColorPickerData, currentSelection + 1)
-                            -- pixelVisionOS:ChangeColorPickerTotal(systemColorPickerData, pixelVisionOS.totalSystemColors, true)
-
+                            
                             pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, currentSelection + 1)
 
                             self:OnSelectSystemColor(currentSelection + 1)
@@ -286,7 +319,7 @@ function DrawTool:OnSetBGColor()
                 
                 -- TODO need a way to undo this
                 
-                self:SaveBGPosition()  
+                -- self:SaveBGPosition()  
 
                 gameEditor:BackgroundColor(colorID)
 
@@ -333,7 +366,7 @@ function DrawTool:OnPaste()
 
     pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, colorID, self.copyValue)
 
-    pixelVisionOS:EnableMenuItem(CopyShortcut, true)
+    -- pixelVisionOS:EnableMenuItem(CopyShortcut, true)
     pixelVisionOS:EnableMenuItem(PasteShortcut, false)
 
     self.copyValue = nil
@@ -410,7 +443,7 @@ function DrawTool:DeleteSystemColor(value)
     pixelVisionOS:ImportColorsFromGame()
 
     -- TODO need to wire up to the undo/redo logic
-    self:ColorSnapshot()
+    -- self:ColorSnapshot()
 
     -- Remove the last system color from the picker
     pixelVisionOS:RemoveColorFromPicker(self.systemColorPickerData)
@@ -433,7 +466,7 @@ function DrawTool:DeleteSystemColor(value)
 end
 
 function DrawTool:OnUndo()
-    
+
     pixelVisionOS:Undo(self)
 
     self:UpdateHistoryButtons()
@@ -465,34 +498,50 @@ end
 
 function DrawTool:GetState()
 
-    local mode = 0
+    -- local mode = 0
 
     local colorSnapshot = {}
 
     -- Mode 1 stores colors
-    if(mode == 0 or mode == 1) then
+    -- if(mode == 0 or mode == 1) then
         
-        pixelVisionOS:CopyToolColorsToGameMemory()
+    pixelVisionOS:CopyToolColorsToGameMemory()
 
-        -- Copy over all the new system colors from the tool's memory
-        for i = 1, pixelVisionOS.totalColors do
+    -- Copy over all the new system colors from the tool's memory
+    for i = 1, pixelVisionOS.totalColors do
 
-            -- Set the game's color to the tool's color
-            table.insert(colorSnapshot, gameEditor:Color(i -1))
-
-        end
+        -- Set the game's color to the tool's color
+        table.insert(colorSnapshot, gameEditor:Color(i -1))
 
     end
+
+    local currentMode = self.mode
+
+    print("Mode", currentMode)
+    
+    local spriteID = self.spritePickerData.currentSelection
+    local systemColorID = self.lastSystemColorID
+    local palColorID = self.lastPaletteColorID
+    local size = self.spriteMode
+    -- local toolID = self.lastSelectedToolID
+
+    local pixelData = nil
+
+    if(self.mode == SpriteMode) then
+        pixelData = pixelVisionOS:GetCanvasPixelData(self.canvasData)
+    end
+
+    -- end
 
     -- Mode 2 stores bg position
-    if(mode == 0 or mode == 2) then
+    -- if(mode == 0 or mode == 2) then
 
 
-    end
+    -- end
 
-    if(mode == 0 or mode == 3) then
-        -- TODO Capture state change for palette mode?
-    end
+    -- if(mode == 0 or mode == 3) then
+    --     -- TODO Capture state change for palette mode?
+    -- end
 
     -- TODO capture position
 
@@ -500,6 +549,20 @@ function DrawTool:GetState()
         -- colors = colorSnapshot,
         -- sound = settingsString,
         Action = function()
+            
+            self.ignoreFocus = true
+
+            self:ChangeSpriteID(spriteID)
+
+            pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, systemColorID)
+            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, palColorID)
+            -- editorUI:SelectToggleButton(self.toolBtnData, toolID)
+
+            self.ignoreFocus = false
+
+            -- Restore focus
+            self:ChangeEditMode(currentMode)
+
             
             if(#colorSnapshot > 0) then
 
@@ -524,7 +587,20 @@ function DrawTool:GetState()
 
                 self:InvalidateData()
             end
-            
+
+            if(pixelData ~= nil) then
+
+                if(size ~= self.spriteMode) then
+                    self.spriteMode = size - 1
+                    self:OnNextSpriteSize()
+                end
+                -- TODO need to figure out how to optimize this
+                pixelVisionOS:SetCanvasPixels(self.canvasData, pixelData)
+                -- self.canvasData.paintCanvas:SetPixels(pixelData)
+                self:OnSaveCanvasChanges()
+
+            end
+
         end
     }
 

@@ -43,3 +43,9 @@ function Draw()
   pixelVisionOS:Draw()
 
 end
+
+function Shutdown()
+
+  drawTool:Shutdown()
+
+end

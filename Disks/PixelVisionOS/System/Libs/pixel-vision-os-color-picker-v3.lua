@@ -57,9 +57,6 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
     0
   }
 
-  
-
-
   self:ConfigureEmptyDragColorPickerSprites(data)
 
   -- Need to clean up selection on action callback
@@ -80,8 +77,6 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
 
   end
 
-
-
   data.pagePosition = NewPoint(
     rect.x + rect.w,
     rect.y + rect.h
@@ -97,11 +92,6 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
     data.pagePosition.y = data.pagePosition.y + 16
   end
 
-  -- Shift the pagination down if there is a horizontal scroll bar
-  -- if(data.vSlider ~= nil) then
-  --   data.pagePosition.x = data.pagePosition.x + 16
-  -- end
-
   data.pages = editorUI:CreateToggleGroup()
 
   data.pages.onAction = function(value)
@@ -110,7 +100,8 @@ function PixelVisionOS:CreateColorPicker(rect, tileSize, total, totalPerPage, ma
 
   end
 
-  data.pageToolTipTemplate = "Select " .. toolTip .. " page "
+  -- TODO need to pad the pages
+  data.pageToolTipTemplate = toolTip .. " page "
 
   local pixelData = Sprite(_G["emptycolor"].spriteIDs[1])
 
@@ -373,6 +364,10 @@ end
 
 function PixelVisionOS:SelectColorPickerIndex(data, value)
 
+  if(data.picker.enabled == false) then
+    return
+  end
+  
   -- Recalculate the position
   local pos = CalculatePosition(value, data.columns)
 
@@ -403,6 +398,7 @@ function PixelVisionOS:InvalidateColorPickerCache(data)
   data.invalidPixelCache = true
 end
 
+-- TODO maybe move this to the item picker file?
 function PixelVisionOS:RebuildPickerPages(data, totalPages)
 
   -- If the total colors are 0, make the total pages 0 too
@@ -444,7 +440,7 @@ function PixelVisionOS:RebuildPickerPages(data, totalPages)
     if(pageID <= 0) then
       DrawSprites(pagebuttonempty.spriteIDs, rect.x, rect.y, pagebuttonempty.width, false, false, DrawMode.TilemapCache)
     else
-      editorUI:ToggleGroupButton(data.pages, rect, "pagebutton" .. tostring(pageID - 1), toolTipTemplate .. tostring(pageID))
+      editorUI:ToggleGroupButton(data.pages, rect, "pagebutton" .. tostring(pageID - 1), toolTipTemplate .. tostring(pageID-1))
     end
   end
 

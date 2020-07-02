@@ -151,7 +151,7 @@ namespace PixelVision8.Runner.Parsers
             // Sort colors
             uniqueColorIDs.Sort();
 
-            Debug.WriteLine(Parser.FileName + " Unique Colors " + string.Join(",", uniqueColorIDs.ToArray()));
+            // Debug.WriteLine(Parser.FileName + " Unique Colors " + string.Join(",", uniqueColorIDs.ToArray()));
 
             var indexes = new List<int>();
             

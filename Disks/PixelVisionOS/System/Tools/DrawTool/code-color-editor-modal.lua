@@ -113,44 +113,44 @@ function EditColorModal:Configure()
 
     table.insert(self.buttons, cancelBtnData)
 
+    local highlighterTheme = {
+        disabled = PaletteOffset(0,0),
+        text = PaletteOffset(0,2),
+        selection = PaletteOffset(0,4),
+    }
+
     -- Settings
-    self.colorHexInputData = self.editorUI:CreateInputField({x = self.rect.x + 24, y = self.rect.y + 144, w = 48}, "FF00FF", "Hex value of the selected color.", "hex", "input", 180)
+    self.colorHexInputData = self.editorUI:CreateInputField({x = self.rect.x + 24, y = self.rect.y + 144, w = 48}, "FF00FF", "Hex value of the selected color.", "hex", "input", PaletteOffset(0))
+    self.colorHexInputData.highlighterTheme = highlighterTheme
 
     self.colorHexInputData.forceCase = "upper"
-
-    -- Make sure we only display upper case letters for the hex value
-    -- self.colorHexInputData.captureInput = function()
-    --   return string.upper(InputString())
-    -- end
 
     table.insert(self.invalidateUI, self.colorHexInputData)
 
     -- Red input
-    self.redInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 80, w = 24}, "000", "Hex value of the selected color.", "number", "input", 180)
+    self.redInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 80, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.redInputData.highlighterTheme = highlighterTheme
+    
     self.redInputData.min = 0
     self.redInputData.max = 255
 
-
-
     table.insert(self.invalidateUI, self.redInputData)
 
-
     -- Green input
-    self.greenInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 112, w = 24}, "000", "Hex value of the selected color.", "number", "input", 180)
+    self.greenInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 112, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.greenInputData.highlighterTheme = highlighterTheme
 
     self.greenInputData.min = 0
     self.greenInputData.max = 255
 
-
-
     table.insert(self.invalidateUI, self.greenInputData)
 
     -- blue input
-    self.blueInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 144, w = 24}, "000", "Hex value of the selected color.", "number", "input", 180)
+    self.blueInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 144, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.blueInputData.highlighterTheme = highlighterTheme
 
     self.blueInputData.min = 0
     self.blueInputData.max = 255
-
 
     table.insert(self.invalidateUI, self.blueInputData)
 
@@ -178,8 +178,6 @@ function EditColorModal:Configure()
         true
     )
 
-
-
     -- Check boxes
     self.colorModeRadioGroupData = self.editorUI:CreateToggleGroup(true)
     self.colorModeRadioGroupData.onAction = function(value)
@@ -200,18 +198,12 @@ function EditColorModal:Configure()
 
     table.insert(self.invalidateUI, hsvButton)
 
-    -- self.editorUI:Enable(hsvButton, false)
-
     -- Create two rects for the picker
     self.colorSpaceRect = { x = self.rect.x + 16, y = self.rect.y + 32, w = 80, h = 80}
     self.greySpaceRect = { x = self.rect.x + 16, y = self.rect.y + 96 + 16, w = 80, h = 8}
 
-
-    -- Wire up UI
-
     -- Hex input needs to convert to RGB and update the input fields which will update the sliders.
     self.colorHexInputData.onAction = function(value)
-
 
         -- TODO need to check which mode we are in for the value
 
@@ -635,23 +627,6 @@ function EditColorModal:RGBToHSV(r, g, b)
 
     return h, s, v
 end
---
--- function EditColorModal:HSV(h, s, v)
---   if s <= 0 then return v, v, v end
---   h, s, v = h / 256 * 6, s / 255, v / 255
---   local c = v * s
---   local x = (1 - math.abs((h%2) - 1)) * c
---   local m, r, g, b = (v - c), 0, 0, 0
---   if h < 1 then r, g, b = c, x, 0
---   elseif h < 2 then r, g, b = x, c, 0
---   elseif h < 3 then r, g, b = 0, c, x
---   elseif h < 4 then r, g, b = 0, x, c
---   elseif h < 5 then r, g, b = x, 0, c
---   else r, g, b = c, 0, x
---     end return (r + m) * 255, (g + m) * 255, (b + m) * 255
---   end
--- end
-
 
 function EditColorModal:Draw()
     if(self.showWarning == true) then

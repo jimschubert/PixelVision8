@@ -27,10 +27,14 @@ function DrawTool:CreateCanvas()
 
     self.canvasData.onPress = function()
             
+        self:BeginUndo()
+
         self:SaveCanvasState()
         -- local pixelData = editorUI:GetCanvasPixelData(canvasData)
 
         self.canvasData.inDrawMode = true
+
+        self:ForcePickerFocus(self.canvasData)
 
         -- UpdateHistory(pixelData)
     end
@@ -39,7 +43,10 @@ function DrawTool:CreateCanvas()
 
     self.canvasData.onDropTarget = function(src, dest) self:OnCanvasDrop(src, dest) end
 
-    self.canvasData.onAction = function() self:OnSaveCanvasChanges() end
+    self.canvasData.onAction = function() 
+        self:OnSaveCanvasChanges() 
+        self:EndUndo()
+    end
 
     self.clearBackgroundPattern = {}
 
@@ -53,19 +60,44 @@ function DrawTool:CreateCanvas()
 
 end
 
+local paletteKeys = {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8}
+
 -- TODO need to rename this and change other UpdateCanvas function
 function DrawTool:UpdateCanvasUI()
 
     pixelVisionOS:UpdateCanvas(self.canvasData)
 
-    -- if(self.colorPreviewInvalid == true) then
+    local newCopyValue = self.canvasData.selectRect ~= nil
 
-    --     self:DrawColorPerSpriteDisplay()
+    if(self.lastCopyValue ~= newCopyValue) then
+        print(dump(self.canvasData.selectRect))
+        pixelVisionOS:EnableMenuItem(CopyShortcut, newCopyValue)
+        pixelVisionOS:EnableMenuItem(ClearShortcut, newCopyValue)
+        pixelVisionOS:EnableMenuItem(FillShortcut, newCopyValue)
+        self.lastCopyValue = newCopyValue
+    end
 
-    --     self:ResetColorPreviewValidation()
+    if(self.selectionMode == DrawingMode) then
 
-    -- end
+        for i = 1, 8 do
+            if(Key( paletteKeys[i], InputState.Released )) then
 
+                local index = i -1
+
+                if(Key( Keys.LeftShift, InputState.Down ) or Key(Keys.RightShift)) then
+
+                    index = index + 8
+
+                end
+                -- TODO need to select color in palette
+                    -- self:OnSelectPaletteColor(index)
+                break
+
+            end
+        end
+
+    end
+    
 end
 
 function DrawTool:SaveCanvasState()
@@ -94,7 +126,6 @@ function DrawTool:ShowCanvasPanel()
     
     pixelVisionOS:InvalidateCanvas(self.canvasData)
 
-    -- self:InvalidateColorPreview()
 end
 
 function DrawTool:HideCanvasPanel()
@@ -106,7 +137,7 @@ function DrawTool:HideCanvasPanel()
     self.canvasPanelActive = false
 
     pixelVisionOS:RemoveUI(canvasID)
-
+    
 end
 
 function DrawTool:OnCanvasDrop(src, dest)
@@ -156,7 +187,7 @@ function DrawTool:UpdateCanvas(value, flipH, flipV)
     -- Save the original pixel data from the selection
     local tmpPixelData = gameEditor:ReadGameSpriteData(value, spriteSelection.x, spriteSelection.y, flipH, flipV)--
     
-    print("Test", self.spriteMode)
+    -- print("Test", self.spriteMode)
     self.lastCanvasScale = spriteSelection.scale--Clamp(8 * spriteSelection.scale, 4, 16)
 
     self.lastCanvasSize = NewPoint((8 * spriteSelection.x), (8 * spriteSelection.y))
@@ -186,7 +217,6 @@ function DrawTool:UpdateCanvas(value, flipH, flipV)
     -- pixelVisionOS:EnableMenuItem(ClearShortcut, not self:IsSpriteEmpty(tmpPixelData))
 
 
-    pixelVisionOS:EnableMenuItem(CopyShortcut, true)
 
     -- self:InvalidateColorPreview()
 
@@ -215,112 +245,112 @@ end
 --     self.colorPreviewInvalid = false
 -- end
 
-function DrawTool:DrawColorPerSpriteDisplay()
+-- function DrawTool:DrawColorPerSpriteDisplay()
 
-    -- TODO create unique colors
+--     -- TODO create unique colors
 
-    local pixelData = gameEditor:ReadGameSpriteData(self.spritePickerData.currentSelection, editorUI.spriteMode.x, editorUI.spriteMode.y)
+--     local pixelData = gameEditor:ReadGameSpriteData(self.spritePickerData.currentSelection, editorUI.spriteMode.x, editorUI.spriteMode.y)
 
-    -- Clear unique color list
+--     -- Clear unique color list
 
-    local uniqueColors = {}
+--     local uniqueColors = {}
 
-    -- loop through all the pixel data and look for unique colors
-    for i = 1, #pixelData do
+--     -- loop through all the pixel data and look for unique colors
+--     for i = 1, #pixelData do
 
-        -- Get the color id and the index if it exists in the unique color array
-        local colorID = pixelData[i]
+--         -- Get the color id and the index if it exists in the unique color array
+--         local colorID = pixelData[i]
 
-        if(colorID > - 1) then
-            local index = table.indexOf(uniqueColors, colorID)
+--         if(colorID > - 1) then
+--             local index = table.indexOf(uniqueColors, colorID)
 
-            -- If this is a new color, add it to the unique color array
-            if(index == - 1) then
-                table.insert(uniqueColors, colorID)
-            end
-        end
+--             -- If this is a new color, add it to the unique color array
+--             if(index == - 1) then
+--                 table.insert(uniqueColors, colorID)
+--             end
+--         end
 
-    end
+--     end
 
-    local backgroundSprites = {
-        _G["colorbarleft"],
-        _G["colorbarright"],
-    }
+--     local backgroundSprites = {
+--         _G["colorbarleft"],
+--         _G["colorbarright"],
+--     }
 
-    local totalSections = math.ceil(self.cps / 2)
+--     local totalSections = math.ceil(self.cps / 2)
 
-    local totalColors = Clamp(#uniqueColors, 2, 16)
+--     local totalColors = Clamp(#uniqueColors, 2, 16)
 
-    -- TODO need to fix this
-    if(totalColors / 2 > totalSections) then
-        totalSections = totalColors / 2
-    end
+--     -- TODO need to fix this
+--     if(totalColors / 2 > totalSections) then
+--         totalSections = totalColors / 2
+--     end
 
-    for i = 1, totalSections do
-        table.insert(backgroundSprites, 2, _G["colorbarmiddle"])
-    end
+--     for i = 1, totalSections do
+--         table.insert(backgroundSprites, 2, _G["colorbarmiddle"])
+--     end
 
-    local totalSections = #backgroundSprites
+--     local totalSections = #backgroundSprites
 
-    local maxSections = 10
+--     local maxSections = 10
 
-    local shiftOffset = 0
+--     local shiftOffset = 0
 
-    -- Pad background
-    if(totalSections < maxSections) then
+--     -- Pad background
+--     if(totalSections < maxSections) then
 
-        local emptyTotal = maxSections - totalSections
+--         local emptyTotal = maxSections - totalSections
 
-        shiftOffset = emptyTotal * 8
+--         shiftOffset = emptyTotal * 8
 
-        for i = 1, emptyTotal do
-            table.insert(backgroundSprites, 1, _G["pagebuttonempty"])
-        end
+--         for i = 1, emptyTotal do
+--             table.insert(backgroundSprites, 1, _G["pagebuttonempty"])
+--         end
 
-    end
+--     end
 
-    -- local startX = 144
-    local nextX = 168 ---- (8 - totalSections * 8)
+--     -- local startX = 144
+--     local nextX = 168 ---- (8 - totalSections * 8)
 
-    for i = maxSections, 1, - 1 do
+--     for i = maxSections, 1, - 1 do
 
-        nextX = nextX - 8
+--         nextX = nextX - 8
 
-         -- TODO needs to be differed to the render queue
-        editorUI:NewDraw("DrawSprites", {backgroundSprites[i].spriteIDs, nextX, 160, 1, false, false, DrawMode.TilemapCache})
+--          -- TODO needs to be differed to the render queue
+--         editorUI:NewDraw("DrawSprites", {backgroundSprites[i].spriteIDs, nextX, 160, 1, false, false, DrawMode.TilemapCache})
 
-    end
+--     end
 
-    local colorOffset = pixelVisionOS.colorOffset
-    --
-    -- if(pixelVisionOS.paletteMode) then
+--     local colorOffset = pixelVisionOS.colorOffset
+--     --
+--     -- if(pixelVisionOS.paletteMode) then
 
-        colorOffset = colorOffset + 128 + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
+--         colorOffset = colorOffset + 128 + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
 
-    -- end
+--     -- end
 
-    -- Shift next x over
-    nextX = nextX + 4 + shiftOffset
-    for i = 1, self.cps do
+--     -- Shift next x over
+--     nextX = nextX + 4 + shiftOffset
+--     for i = 1, self.cps do
 
-        local color = i <= #uniqueColors and uniqueColors[i] + colorOffset or pixelVisionOS.emptyColorID
+--         local color = i <= #uniqueColors and uniqueColors[i] + colorOffset or pixelVisionOS.emptyColorID
         
-        nextX = nextX + 4
-        -- if(drawColor == true) then
-        editorUI:NewDraw("DrawRect", {nextX, 164, 4, 4, color, DrawMode.TilemapCache})
-        -- end
-    end
+--         nextX = nextX + 4
+--         -- if(drawColor == true) then
+--         editorUI:NewDraw("DrawRect", {nextX, 164, 4, 4, color, DrawMode.TilemapCache})
+--         -- end
+--     end
 
-    -- Redraw the palette label over the CPS display background
-    -- if(usePalettes == true) then
+--     -- Redraw the palette label over the CPS display background
+--     -- if(usePalettes == true) then
 
-        -- TODO this needs to be differed to the draw queue  
-        -- Change color label to palette
-        editorUI:NewDraw("DrawSprites", {gamepalettetext.spriteIDs, 32 / 8, 168 / 8, gamepalettetext.width, false, false, DrawMode.Tile})
+--         -- TODO this needs to be differed to the draw queue  
+--         -- Change color label to palette
+--         editorUI:NewDraw("DrawSprites", {gamepalettetext.spriteIDs, 32 / 8, 168 / 8, gamepalettetext.width, false, false, DrawMode.Tile})
 
-    -- end
+--     -- end
 
-end
+-- end
 
 function DrawTool:OnSaveCanvasChanges()
 
@@ -367,6 +397,8 @@ function DrawTool:OnSaveCanvasChanges()
         editorUI:ResetValidation(self.canvasData)
 
     end
+
+    
 
     -- Make sure the clear button is enabled since a change has happened to the canvas
     -- pixelVisionOS:EnableMenuItem(ClearShortcut, true)

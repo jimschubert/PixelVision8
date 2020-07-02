@@ -46,7 +46,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
     data.totalItems = columns * rows
 
     -- Default scale is 1
-    data.scale = {x = 1, y = 1}
+    data.scale = 1
     data.displaySize = Display()
 
     data.maxScale = 4
@@ -188,7 +188,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
     end
 
     -- Set the default size to 1
-    self:ChangeItemPickerScale(data, 1, {x= 1, y = 1})
+    self:ChangeItemPickerScale(data, 1)
 
     data.draggingLabel = draggingLabel or "ItemPicker"
     data.enableDragging = enableDragging
@@ -270,8 +270,8 @@ function PixelVisionOS:SelectItemPickerIndex(data, value, callback, updateScroll
     local tmpPos = CalculatePosition(data.currentSelection, data.columns)
 
     -- Snap to grid
-    tmpPos.x = math.floor(tmpPos.x / data.scale.x) * data.scale.x
-    tmpPos.y = math.floor(tmpPos.y / data.scale.y) * data.scale.y
+    tmpPos.x = math.floor(tmpPos.x / data.scale) * data.scale
+    tmpPos.y = math.floor(tmpPos.y / data.scale) * data.scale
 
     -- Recalculate selection after snapping to the grid
     data.currentSelection = CalculateIndex(tmpPos.x, tmpPos.y, data.columns)
@@ -411,16 +411,16 @@ function PixelVisionOS:UpdateItemPicker(data)
                 data.overPos.y = self.editorUI.collisionManager.mousePos.y
 
                 -- Offset the item so you can see it under the cursor
-                -- local offset =  
+                local offset = (data.scale * 8) * .5
 
                 -- Apply offset
-                data.overPos.x = data.overPos.x - ((data.scale.x * 8) * .5)
-                data.overPos.y = data.overPos.y - ((data.scale.y * 8) * .35)
+                data.overPos.x = data.overPos.x - offset
+                data.overPos.y = data.overPos.y - offset
 
             end
 
             -- TODO this scale is off
-            -- local tileSize = data.scale * 8
+            local tileSize = data.scale * 8
 
             if(data.emptyDrawArgs ~= nil) then
                 -- Update the empty tile position
@@ -490,7 +490,7 @@ function PixelVisionOS:UpdateItemPicker(data)
             data.overItemDrawArgs[1] = data.onOverRender(data, tmpX, tmpY)
 
             data.overItemDrawArgs[4] = data.picker.itemWidth -- * 8
-            data.overItemDrawArgs[5] = data.picker.itemHeight --* 8
+            data.overItemDrawArgs[5] = data.picker.itemWidth --* 8
 
         end
 
@@ -553,11 +553,11 @@ function PixelVisionOS:UpdateItemPickerSelection(data)
     if(data.viewport.Contains(data.tmpItemRect)) then
 
         -- Adjust for scale
-        -- spriteSize = spriteSize * data.scale.x
-        cols = cols / data.scale.x
+        spriteSize = spriteSize * data.scale
+        cols = cols / data.scale
 
         -- Find the new index value for the picker
-        local newIndex = CalculateIndex(data.tmpItemRect.x / (spriteSize * data.scale.x), data.tmpItemRect.y / (spriteSize * data.scale.y), cols)
+        local newIndex = CalculateIndex(data.tmpItemRect.x / spriteSize, data.tmpItemRect.y / spriteSize, cols)
 
         editorUI:SelectPicker(data.picker, newIndex, false)
 
@@ -585,8 +585,8 @@ function PixelVisionOS:CalculateItemPickerPosition(data, x, y)
         position.y = position.y + (data.lastStartY / data.itemSize.y)
 
         -- Snap position to the grid
-        position.x = math.floor(position.x / data.scale.x) * data.scale.x
-        position.y = math.floor(position.y / data.scale.y) * data.scale.y
+        position.x = math.floor(position.x / data.scale) * data.scale
+        position.y = math.floor(position.y / data.scale) * data.scale
 
         position.index = math.index(position.x, position.y, data.columns)
     else
@@ -601,23 +601,21 @@ function PixelVisionOS:CalculateItemPickerPosition(data, x, y)
 
 end
 
-function PixelVisionOS:ChangeItemPickerScale(data, scale, selection)
+function PixelVisionOS:ChangeItemPickerScale(data, scale)
 
     if(data == nil) then
         return
     end
 
-    -- print("selection", dump(selection))
-
-    data.scale = selection--{x = scale, y = scale}
+    data.scale = scale
 
     local tmpItemSize = scale * data.itemSize.x
 
     -- Resize picker
-    data.picker.itemWidth = selection.x * data.itemSize.x
-    data.picker.itemHeight = selection.y * data.itemSize.y
-    data.picker.columns = math.floor(data.picker.rect.w / data.picker.itemWidth)
-    data.picker.rows = math.floor(data.picker.rect.h / data.picker.itemHeight)
+    data.picker.itemWidth = tmpItemSize
+    data.picker.itemHeight = tmpItemSize
+    data.picker.columns = math.floor(data.picker.rect.w / tmpItemSize)
+    data.picker.rows = math.floor(data.picker.rect.h / tmpItemSize)
 
     -- print(data.name, "spriteName", data.picker.spriteName)
     if(_G[data.picker.spriteName .. "over"] ~= nil) then
@@ -625,25 +623,25 @@ function PixelVisionOS:ChangeItemPickerScale(data, scale, selection)
         data.picker.overDrawArgs[4] = _G[data.picker.spriteName .. "over"].width
     end
 
-    if(_G[data.picker.spriteName .. "over"] ~= nil) then
+    if(_G[data.picker.spriteName .. "selected"] ~= nil) then
         data.picker.selectedDrawArgs[1] = _G[data.picker.spriteName .. "selectedup"].spriteIDs
         data.picker.selectedDrawArgs[4] = _G[data.picker.spriteName .. "selectedup"].width
     end
 
-    data.tmpItemRect.width = data.picker.itemWidth
-    data.tmpItemRect.height = data.picker.itemHeight
+    data.tmpItemRect.width = tmpItemSize
+    data.tmpItemRect.height = tmpItemSize
 
     if(_G["emptycolor"] ~= nil) then
         -- Need to resize empty sprite block
         local emptySpriteList = {}
-        local totalSprites = data.scale.x * data.scale.y
+        local totalSprites = scale * scale
 
         for i = 1, totalSprites do
             table.insert(emptySpriteList, _G["emptycolor"].spriteIDs[1])
         end
 
         data.emptyDrawArgs[1] = emptySpriteList
-        data.emptyDrawArgs[4] = data.scale.x
+        data.emptyDrawArgs[4] = scale
     end
 
     -- Need to update the current selection if it's not set to -1

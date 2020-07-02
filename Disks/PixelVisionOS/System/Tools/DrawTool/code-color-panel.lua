@@ -6,7 +6,6 @@ _G["itempickerover"] = {spriteIDs = selection2x2over.spriteIDs, width = selectio
 -- Next we need to create the item picker selected up sprite by using the color selection spriteIDs and changing the color offset
 _G["itempickerselectedup"] = {spriteIDs = selection2x2selected.spriteIDs, width = selection2x2selected.width, colorOffset = 0}
 
-
 function DrawTool:CreateColorPanel()
 
     -- Create the system color picker
@@ -27,13 +26,12 @@ function DrawTool:CreateColorPanel()
     self.bgDrawArgs =
     {
         bgflagicon.spriteIDs,
-        0, 
+        0,
         0,
         bgflagicon.width,
         false,
         false,
         DrawMode.Sprite
-
     }
 
     self.systemColorPickerData.ctrlCopyEnabled = false
@@ -57,19 +55,11 @@ function DrawTool:CreateColorPanel()
     -- Create a function to handle what happens when a color is dropped onto the system color picker
     self.systemColorPickerData.onDropTarget = function(src, dest) self:OnSystemColorDropTarget(src, dest) end
 
-    -- Manage what happens when a color is selected
-    self.systemColorPickerData.onPress = function(value)
-
-        -- Call the OnSelectSystemColor method to update the fields
-        self:OnSelectSystemColor(value)
-
-        -- -- Change the focus of the current color picker
-        self:ForcePickerFocus(self.systemColorPickerData)
-    end
-
+    -- Capture double click action to trigger edit
     self.systemColorPickerData.onAction = function(value, doubleClick)
 
-        if(doubleClick == true and self.canEdit == true) then
+        -- TODO need to look into how this is actually getting the doubleClick value
+        if(doubleClick == true) then
 
             self:OnEditColor()
 
@@ -77,14 +67,11 @@ function DrawTool:CreateColorPanel()
 
     end
 
-    self.systemColorPickerData.onChange = function(index, color)
-    
-        -- print("Color Change", index, color)
-        Color(index, color)
+    -- Manage what happens when a color is selected
+    self.systemColorPickerData.onRelease = function(value) self:OnSelectSystemColor(value) end
 
-        -- TODO need to go through all of the colors and make sure they are unique
-
-    end
+    -- Change the color in the tool
+    self.systemColorPickerData.onChange = function(index, color) Color(index, color) end
 
     self.systemColorPickerData.onDrawColor = function(data, id, x, y)
 
@@ -113,18 +100,25 @@ function DrawTool:OnSelectSystemColor(value)
     -- Update menu menu items
 
     -- TODO need to enable this when the color editor pop-up is working
-    pixelVisionOS:EnableMenuItem(EditShortcut, self.canEdit)
+    -- pixelVisionOS:EnableMenuItem(EditShortcut, false)
 
     -- These are only available based on the palette mode
-    pixelVisionOS:EnableMenuItem(AddShortcut, self.canEdit)
-    pixelVisionOS:EnableMenuItem(DeleteShortcut, self.canEdit)
+    -- pixelVisionOS:EnableMenuItem(AddShortcut, true)
+    -- pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
     -- pixelVisionOS:EnableMenuItem(BGShortcut, ("#"..colorHex) ~= pixelVisionOS.maskColor)
 
     -- You can only copy a color when in direct color mode
-    pixelVisionOS:EnableMenuItem(CopyShortcut, true)
+    -- pixelVisionOS:EnableMenuItem(CopyShortcut, true)
 
     -- Only enable the paste button if there is a copyValue and we are not in palette mode
-    pixelVisionOS:EnableMenuItem(PasteShortcut, self.copyValue ~= nil)
+    
+
+    -- print("SELECT COLOR", value)
+    self.lastSystemColorID = value
+
+    -- Change the focus of the current color picker
+    self:ForcePickerFocus(self.systemColorPickerData)
+
 
 end
 
@@ -153,6 +147,9 @@ function DrawTool:ShowColorPanel()
     pixelVisionOS:InvalidateItemPickerPageButton(self.systemColorPickerData)
     -- TODO clear page area?
 
+    editorUI:NewDraw("DrawSprites", {pickerbottompageedge.spriteIDs, 20, 20, pickerbottompageedge.width, false, false,  DrawMode.Tile})
+
+
 end
 
 function DrawTool:HideColorPanel()
@@ -164,6 +161,14 @@ function DrawTool:HideColorPanel()
     self.colorPanelActive = false
 
     pixelVisionOS:RemoveUI(colorPanelID)
+
+    -- Clear bottom of the main window
+    for i = 1, 8 do
+        editorUI:NewDraw("DrawSprites", {pagebuttonempty.spriteIDs, 11 + i, 20, pagebuttonempty.width, false, false,  DrawMode.Tile})
+    end
+
+    editorUI:NewDraw("DrawSprites", {canvasbottomrightcorner.spriteIDs, 20, 20, canvasbottomrightcorner.width, false, false,  DrawMode.Tile})
+
 
 end
 
@@ -189,6 +194,8 @@ function DrawTool:UpdateHexColor(value)
 
     if(value == pixelVisionOS.maskColor) then
 
+        -- TODO this are is throwing an error
+        -- print("MASK COLOR ERROR")
         pixelVisionOS:ShowMessageModal(self.toolName .." Error", self.maskColorError, 160, false)
 
         return false
@@ -267,9 +274,7 @@ function DrawTool:OnSystemColorDropTarget(src, dest)
         local realDestID = destPos.index + dest.altColorOffset
 
         -- Make sure the colors are not the same
-        if(realSrcID ~= realDestID and destPos.index < pixelVisionOS.totalSystemColors) then
-
-            
+        if(realSrcID ~= realDestID and destPos.index < dest.total) then
 
             -- Get the src and dest color hex value
             local srcColor = Color(realSrcID)
@@ -311,7 +316,7 @@ function DrawTool:OnSystemColorDropTarget(src, dest)
             -- Redraw the color page
             pixelVisionOS:InvalidateItemPickerDisplay(dest)
 
-            pixelVisionOS:DisplayMessage("Color ID '"..srcColor.."' was swapped with Color ID '"..destColor .."'", 5)
+            pixelVisionOS:DisplayMessage("Color ID '"..realSrcID.."' was swapped with Color ID '"..realDestID .."'", 5)
 
             self:EndUndo()
 

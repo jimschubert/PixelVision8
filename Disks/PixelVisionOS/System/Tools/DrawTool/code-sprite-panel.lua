@@ -40,13 +40,23 @@ function DrawTool:CreateSpritePanel()
     self.spritePickerData.onRelease = function(value) self:OnSelectSprite(value) end
     self.spritePickerData.onDropTarget = function(src, dest) self:OnSpritePickerDrop(src, dest) end
 
-    self.spriteIDInputData = editorUI:CreateInputField({x = 176, y = 208, w = 32}, "0", "The ID of the currently selected sprite.", "number", nil, 180)
+    self.spriteIDInputData = editorUI:CreateInputField({x = 176, y = 208, w = 32}, "0", "The ID of the currently selected sprite.", "number", nil, PaletteOffset(0))
+    
+    self.spriteIDInputData.highlighterTheme = {
+        disabled = PaletteOffset(0,0),
+        text = PaletteOffset(0,2),
+        selection = PaletteOffset(0,4),
+    }
+    
     self.spriteIDInputData.min = 0
     self.spriteIDInputData.max = gameEditor:TotalSprites() - 1
     self.spriteIDInputData.onAction = function(value) self:ChangeSpriteID(value) end
     
+    
+    
+    
     self.spriteMode = 0
-    self.maxSpriteSize = 4
+    self.maxSpriteSize = #self.selectionSizes
 
     -- Create size button
     self.sizeBtnData = editorUI:CreateButton({x = 224, y = 200}, "spritemode1x1", "Pick the sprite size.")
@@ -70,7 +80,7 @@ function DrawTool:UpdateSpritePanel()
         -- Change the scale
         if(Key(Keys.OemMinus, InputState.Released) and self.spriteMode > 1) then
             self:OnNextSpriteSize(true)
-        elseif(Key(Keys.OemPlus, InputState.Released) and self.spriteMode < 4) then
+        elseif(Key(Keys.OemPlus, InputState.Released) and self.spriteMode < self.maxSpriteSize) then
             self:OnNextSpriteSize()
         end
 
@@ -92,12 +102,12 @@ function DrawTool:UpdateSpritePanel()
         -- Test to see if the new position has changed
         if(self.newPos.x ~= 0 or self.newPos.y ~= 0) then
 
-            local curPos = CalculatePosition(self.focusPicker.currentSelection, self.focusPicker.columns)
+            local curPos = CalculatePosition(self.panelInFocus.currentSelection, self.panelInFocus.columns)
 
-            self.newPos.x = Clamp(curPos.x + self.newPos.x, 0, self.focusPicker.columns - 1)
-            self.newPos.y = Clamp(curPos.y + self.newPos.y, 0, self.focusPicker.rows - 1)
+            self.newPos.x = Clamp(curPos.x + self.newPos.x, 0, self.panelInFocus.columns - 1)
+            self.newPos.y = Clamp(curPos.y + self.newPos.y, 0, self.panelInFocus.rows - 1)
 
-            local newIndex = CalculateIndex(self.newPos.x, self.newPos.y, self.focusPicker.columns)
+            local newIndex = CalculateIndex(self.newPos.x, self.newPos.y, self.panelInFocus.columns)
 
             self:ChangeSpriteID(newIndex)
 
@@ -172,7 +182,6 @@ end
 
 function DrawTool:ConfigureSpritePickerSelector(size)
     
-
     self.selectionSize = self.selectionSizes[size]
 
     local x = self.selectionSize.x
@@ -182,6 +191,8 @@ function DrawTool:ConfigureSpritePickerSelector(size)
     
     _G["spritepickerover"] = {spriteIDs = _G[spriteName .. "over"].spriteIDs, width = _G[spriteName .. "over"].width, colorOffset = 0}
 
+    -- local state = self.selectionMode == SpriteMode and "selected" or "over"
+
     _G["spritepickerselectedup"] = {spriteIDs = _G[spriteName .. "selected"].spriteIDs, width = _G[spriteName .. "selected"].width, colorOffset = 0}
 
     pixelVisionOS:ChangeItemPickerScale(self.spritePickerData, size, self.selectionSize)
@@ -190,7 +201,7 @@ end
 
 function DrawTool:ChangeSpriteID(value)
 
-    print("value", value)
+    -- print("value", value)
 
     -- Need to convert the text into a number
     value = tonumber(value)
@@ -204,6 +215,7 @@ function DrawTool:ChangeSpriteID(value)
     self:UpdateCanvas(self.spritePickerData.currentSelection)
     
     self.spritePickerData.dragging = false
+
 
 end
 
@@ -223,6 +235,12 @@ function DrawTool:OnSelectSprite(value)
     editorUI:ChangeInputField(self.spriteIDInputData, value, false)
 
     self:UpdateCanvas(value)
+    
+    if(self.mode ~= SpriteMode) then
+
+        self:ChangeEditMode(SpriteMode)
+        
+    end
 
     -- ResetColorInvalidation()
 
@@ -260,6 +278,8 @@ function DrawTool:OnSpritePickerDrop(src, dest)
 
             local selection = self.selectionSizes[self.spriteMode]
 
+            self:BeginUndo()
+
             local srcSprite = gameEditor:ReadGameSpriteData(srcSpriteID, selection.x, selection.y)
             local destSprite = gameEditor:ReadGameSpriteData(destSpriteID, selection.x, selection.y)
 
@@ -277,6 +297,7 @@ function DrawTool:OnSpritePickerDrop(src, dest)
 
             pixelVisionOS:InvalidateItemPickerDisplay(src)
 
+            self:EndUndo()
             -- ChangeSpriteID(destSpriteID)
 
             self:InvalidateData()
@@ -287,7 +308,7 @@ function DrawTool:OnSpritePickerDrop(src, dest)
     -- Get the current color
     local colorOffset = src.pressSelection.index
 
-    print("Color Offset", src.pressSelection.index)
+    -- print("Color Offset", src.pressSelection.index)
 
     -- TODO change the offset of the sprite picker by that value
 

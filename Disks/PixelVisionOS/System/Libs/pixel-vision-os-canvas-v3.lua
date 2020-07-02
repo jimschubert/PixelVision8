@@ -34,18 +34,21 @@ function PixelVisionOS:CreateCanvas(rect, size, scale, colorOffset, toolTip, emp
   data.selectRect = nil
   data.selectedPixelData = nil
   data.brushColorID = 253 -- Second to last color in the tool
+  data.showGrid = false
 
   -- Create a selection canvas
   data.selectionCanvas = NewCanvas(data.rect.w, data.rect.h)
   data.selectionCanvas.wrap = false
-
-  print("Wrap", data.selectionCanvas.wrap)
-
   data.selectionCanvas:SetStroke({0}, 1, 1)
 
-  local spriteData = _G["pixelselection1x"]
+  data.gridCanvas = NewCanvas(data.rect.w, data.rect.h)
+  data.gridCanvas.wrap = false
+  -- TODO find a real empty color
 
-  data.overDrawArgs = {spriteData.spriteIDs, 0, 0, spriteData.width, false, false, DrawMode.Sprite, 36, true, false}
+
+  -- local spriteData = _G["pixelselection1x"]
+
+  -- data.overDrawArgs = {spriteData.spriteIDs, 0, 0, spriteData.width, false, false, DrawMode.Sprite, 36, true, false}
 
   data.brushDrawArgs = {0, 0, 8, 8, data.brushColorID, DrawMode.Sprite}
   -- DrawRect( 0, 0, 8, 8, 54, DrawMode.Sprite )
@@ -714,7 +717,10 @@ function PixelVisionOS:RedrawCanvas(data)
     -- data.tmpLayerCanvas.ResetValidation()
   end
 
-
+  -- TODO need to find a way to only draw this when the canvas has been invalidated
+  if(data.showGrid == true) then
+    data.gridCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.Sprite, 1, -1, data.emptyColorID)
+  end
 
   -- if(data.selectionCanvas.invalid == true) then
     
@@ -751,7 +757,7 @@ function PixelVisionOS:CanvasRelease(data, callAction)
   data.mouseState = data.mouseState == "released" and "up" or "released"
 
 
-  print("Released")
+  -- print("Released")
   -- Return if the selection rect is nil
   -- if(data.selectRect ~= nil) then
   --   return
@@ -768,8 +774,12 @@ function PixelVisionOS:CanvasRelease(data, callAction)
     -- Normally clearing the canvas invalidates it but se want to reset it until its drawn in again
     data.tmpPaintCanvas:ResetValidation()
 
-    print("Merged tmp canvas")
+    -- print("Merged tmp canvas")
 
+  end
+
+  if(data.selectRect ~= nil and (data.selectRect.Width == 0 or data.selectRect.Height == 0)) then
+    data.selectRect = nil
   end
 
   -- if(data.selectedPixelData ~= nil) then
@@ -805,7 +815,7 @@ function PixelVisionOS:CanvasRelease(data, callAction)
 
     -- data.paintCanvas:MergeCanvas(data.selectionCanvas, 0, true)
 
-   print("Pixels", dump(data.selectedPixelData.pixelData))
+  --  prin/t("Pixels", dump(data.selectedPixelData.pixelData))
 
    --TODO need to test for a special key down and toggle ignoring transparency
    data.ignoreMaskColor = true
@@ -882,6 +892,21 @@ function PixelVisionOS:ResizeCanvas(data, size, scale, pixelData)
 
     data.paintCanvas:SetPixels(0, 0, size.x, size.y, pixelData);
 
+  end
+ 
+  -- Redraw the grid
+  data.gridCanvas:Clear()
+  
+  local columns = data.rect.w / scale
+  local rows = data.rect.h / scale
+
+  data.gridCanvas:SetStroke({0}, 1, 1)
+
+  for i = 0, rows do
+      data.gridCanvas:DrawLine(0, i * scale - 1, data.rect.w, i * scale - 1)
+      for j = 0, columns do
+        data.gridCanvas:DrawLine(j*scale -1 , 0, j*scale -1 , data.rect.h)
+      end
   end
 
 end

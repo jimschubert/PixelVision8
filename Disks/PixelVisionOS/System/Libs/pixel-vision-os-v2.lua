@@ -315,10 +315,10 @@ function PixelVisionOS:RegisterUI(data, updateCall, scope, ignoreModal)
   
     -- For debugging
   
-    print("Remove", removeItem, "total", self.uiTotal)
+    -- print("Remove", removeItem, "total", self.uiTotal)
   
-    for i = 1, #self.uiComponents do
-      print("Left over", self.uiComponents[i].uiData.name)
-    end
+    -- for i = 1, #self.uiComponents do
+    --   print("Left over", self.uiComponents[i].uiData.name)
+    -- end
   
   end

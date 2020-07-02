@@ -85,68 +85,7 @@ namespace PixelVision8.Engine
             pattern.SetPixels(pixels);
         }
 
-        private int tmpX = 0;
-        private int tmpY = 0;
-        private int tmpW = 0;
-        private int tmpH = 0;
-
-        /// <summary>
-        ///     Fast blit to the display through the draw request API
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="drawMode"></param>
-        /// <param name="scale"></param>
-        /// <param name="maskColor"></param>
-        /// <param name="maskColorID"></param>
-        /// <param name="viewport"></param>
-        public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1,
-            int maskColor = -1, int maskColorID = -1, Rectangle? viewport = null)
-        {
-            // This only works when the canvas has a reference to the gameChip
-            if (gameChip == null) return;
-
-            if (viewport.HasValue)
-            {
-                tmpX = viewport.Value.X;
-                tmpY = viewport.Value.Y;
-                tmpW = viewport.Value.Width;
-                tmpH = viewport.Value.Height;
-            }
-            else
-            {
-                tmpX = 0;
-                tmpY = 0;
-                tmpW = width;
-                tmpH = height;
-            }
-
-            
-            var newWidth = tmpW * scale;
-            var newHeight = tmpH * scale;
-
-            var w = tmpW;
-            var w2 = newWidth;
-            var texColors = GetPixels(tmpX, tmpY, tmpW, tmpH);
-            var newColors = new int[newWidth * newHeight];
-            var ratioX = (float)tmpW / newWidth;
-            var ratioY = (float)tmpH / newHeight;
-
-            for (var y1 = 0; y1 < newHeight; y1++)
-            {
-                var thisY = (int) (ratioY * y1) * w;
-                var yw = y1 * w2;
-                for (var x1 = 0; x1 < w2; x1++)
-                {
-                    var pixel = texColors[(int) (thisY + ratioX * x1)];
-
-                    newColors[yw + x1] = pixel == maskColorID ? maskColor : pixel;
-                }
-            }
-
-            gameChip.DrawPixels(newColors, x, y, newWidth, newHeight, false, false, drawMode);
-            
-        }
+        
 
 
         /// <summary>
@@ -749,5 +688,108 @@ namespace PixelVision8.Engine
             }
         
         }
+
+        private int tmpX = 0;
+        private int tmpY = 0;
+        private int tmpW = 0;
+        private int tmpH = 0;
+
+        /// <summary>
+        ///     Fast blit to the display through the draw request API
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="drawMode"></param>
+        /// <param name="scale"></param>
+        /// <param name="maskColor"></param>
+        /// <param name="maskColorID"></param>
+        /// <param name="viewport"></param>
+        public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1,
+            int maskColor = -1, int maskColorID = -1, Rectangle? viewport = null)
+        {
+            // This only works when the canvas has a reference to the gameChip
+            if (gameChip == null) return;
+
+            if (viewport.HasValue)
+            {
+                tmpX = viewport.Value.X;
+                tmpY = viewport.Value.Y;
+                tmpW = viewport.Value.Width;
+                tmpH = viewport.Value.Height;
+            }
+            else
+            {
+                tmpX = 0;
+                tmpY = 0;
+                tmpW = width;
+                tmpH = height;
+            }
+
+            var srcPixels = GetPixels(tmpX, tmpY, tmpW, tmpH);
+
+            var newWidth = tmpW * scale;
+            var newHeight = tmpH * scale;
+
+            var destPixels = ResizePixels(srcPixels, tmpW, tmpH, newWidth, newHeight);
+
+            // var w = tmpW;
+            // var w2 = newWidth;
+            // var newColors = new int[newWidth * newHeight];
+            // var ratioX = (float)tmpW / newWidth;
+            // var ratioY = (float)tmpH / newHeight;
+            //
+            // for (var y1 = 0; y1 < newHeight; y1++)
+            // {
+            //     var thisY = (int)(ratioY * y1) * w;
+            //     var yw = y1 * w2;
+            //     for (var x1 = 0; x1 < w2; x1++)
+            //     {
+            //         var pixel = texColors[(int)(thisY + ratioX * x1)];
+            //
+            //         newColors[yw + x1] = pixel == maskColorID ? maskColor : pixel;
+            //     }
+            // }
+
+            gameChip.DrawPixels(destPixels, x, y, newWidth, newHeight, false, false, drawMode);
+
+        }
+
+        // Reference https://tech-algorithm.com/articles/nearest-neighbor-image-scaling/
+        public int[] ResizePixels(int[] pixels, int w1, int h1, int w2, int h2)
+        {
+            int[] temp = new int[w2 * h2];
+            // EDIT: added +1 to account for an early rounding problem
+            int x_ratio = (int)((w1 << 16) / w2) + 1;
+            int y_ratio = (int)((h1 << 16) / h2) + 1;
+            //int x_ratio = (int)((w1<<16)/w2) ;
+            //int y_ratio = (int)((h1<<16)/h2) ;
+            //int y_ratio = (int)((h1<<16)/h2) ;
+            int x2, y2;
+            for (int i = 0; i < h2; i++)
+            {
+                for (int j = 0; j < w2; j++)
+                {
+                    x2 = ((j * x_ratio) >> 16);
+                    y2 = ((i * y_ratio) >> 16);
+                    temp[(i * w2) + j] = pixels[(y2 * w1) + x2];
+                }
+            }
+            return temp;
+        }
     }
+
+    // Performance improvement
+    // for (int i=0;i<h2;i++)
+    // {
+    // int* t = temp + i * w2;
+    // y2 = ((i* y_ratio)>>16);
+    // int* p = pixels + y2 * w1;
+    // int rat = 0;
+    //     for (int j=0;j<w2;j++)
+    // {
+    //     x2 = (rat>>16);
+    //     * t++ = p[x2];
+    //     rat += x_ratio;
+    // }
+    // }
 }

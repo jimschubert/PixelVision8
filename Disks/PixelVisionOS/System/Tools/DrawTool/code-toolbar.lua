@@ -2,27 +2,27 @@ SpriteMode, ColorMode = 0, 1
 
 local toolbarID = "ToolBarUI"
 
-local tools = {"pen", "line", "box", "circle", "eyedropper", "fill", "select"}
+local tools = {"pen", "eraser", "line", "box", "circle", "eyedropper", "fill", "select"}
 
-local toolKeys = {Keys.P, Keys.L, Keys.B, Keys.C, Keys.I, Keys.F, Keys.M}
+local toolKeys = {Keys.B, Keys.E, Keys.L, Keys.U, Keys.C, Keys.I, Keys.F, Keys.M}
 
 local pos = NewPoint(8, 56)
 
 function DrawTool:CreateToolbar()
 
-    self.lastSelectedToolID = nil
+    self.lastSelectedToolID = 1
 
     -- Labels for mode changes
     self.editorLabelArgs = {nil, 4, 2, nil, false, false, DrawMode.Tile}
 
     -- Add the eraser if we are in direct color mode
-    table.insert(tools, 2, "eraser")
-    table.insert(toolKeys, 2, Keys.E)
+    -- table.insert(tools, 2, "eraser")
+    -- table.insert(toolKeys, 2, Keys.E)
 
-    self.lastColorID = 0
+    -- self.lastColorID = 0
 
     self.modeButton = editorUI:CreateToggleButton({x=pos.X, y=pos.y - 32}, "editormode", "Change into color edit mode.")
-    self.modeButton.onAction = function(value) self:ChangeEditMode(value) end
+    self.modeButton.onAction = function(value) self:ChangeEditMode(value and ColorMode or SpriteMode) end
 
     self.toolBtnData = editorUI:CreateToggleGroup()
     self.toolBtnData.onAction = function(value) self:OnSelectTool(value) end
@@ -92,9 +92,8 @@ function DrawTool:UpdateToolbar()
 end
 
 
-function DrawTool:ChangeEditMode(value)
-
-    local mode = value and ColorMode or SpriteMode
+function DrawTool:ChangeEditMode(mode)
+    -- print("Mode", mode)
     
     if(mode == self.mode) then
         return
@@ -102,13 +101,9 @@ function DrawTool:ChangeEditMode(value)
 
     self.mode = mode
 
-    -- Clear bottom of the main window
-    for i = 1, 8 do
-        editorUI:NewDraw("DrawSprites", {pagebuttonempty.spriteIDs, 10 + i, 20, pagebuttonempty.width, false, false,  DrawMode.Tile})
-    end
-
     if(self.mode == ColorMode) then
 
+        self.toolTitle = "colors.png"
         
         -- Make sure the mode button is selected
         if(self.modeButton.selected == false) then
@@ -118,28 +113,29 @@ function DrawTool:ChangeEditMode(value)
 
         self:ShowColorPanel()
         self:HideCanvasPanel()
-        -- -- Disable sprite selector
-        -- -- Disable the tools
-        -- -- Invalidate the color picker
-        -- editorUI:NewDraw("DrawSprites", {pickerbottompageedge.spriteIDs, 20, 20, pickerbottompageedge.width, false, false,  DrawMode.Tile})
-
+       
         self:ToggleToolBar(false)
 
         self.editorLabelArgs[1] = systemcolorlabel.spriteIDs
         self.editorLabelArgs[4] = systemcolorlabel.width
 
-        pixelVisionOS:EnableItemPicker(self.spritePickerData, false, true)
-
-        self.lastSpriteSelection = self.spritePickerData.currentSelection
-
-        pixelVisionOS:ClearItemPickerSelection(self.spritePickerData)
-
         editorUI:Enable(self.sizeBtnData,false)
         editorUI:Enable(self.spriteIDInputData,false)
-        editorUI:ChangeInputField(self.spriteIDInputData, "", false)
+
+        -- Toggle menu options
+        pixelVisionOS:EnableMenuItem(SelectAllShortcut, false)
+        pixelVisionOS:EnableMenuItem(ShowBGShortcut, false)
+        pixelVisionOS:EnableMenuItem(ShowGrid, false)
+
+        -- Enable the palette panel
+        pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
+
+        self:ForcePickerFocus(self.systemColorPickerData)
 
     elseif(self.mode == SpriteMode) then
-        
+
+        self.toolTitle = "sprites.png"
+
         -- Make sure the mode button is selected
         if(self.modeButton.selected == true) then
             editorUI:ToggleButton(self.modeButton, false, false)
@@ -147,41 +143,33 @@ function DrawTool:ChangeEditMode(value)
 
         self:HideColorPanel()
         self:ShowCanvasPanel()
-        -- -- Enable sprite selection
-        -- -- Enable the tools
-        -- -- Invalidate the canvs
-
+       
         self:ToggleToolBar(true)
 
         self.editorLabelArgs[1] = spriteeditorlabel.spriteIDs
         self.editorLabelArgs[4] = spriteeditorlabel.width
 
-
-        -- The sprite picker shouldn't be selectable on this screen but you can still change pages
-        pixelVisionOS:EnableItemPicker(self.spritePickerData, true, true)
-
         editorUI:Enable(self.sizeBtnData, true)
         editorUI:Enable(self.spriteIDInputData, true)
 
-        editorUI:ChangeInputField(self.spriteIDInputData, self.lastSpriteSelection)
+        -- Toggle menu options
+        pixelVisionOS:EnableMenuItem(SelectAllShortcut, true)
+        pixelVisionOS:EnableMenuItem(ShowBGShortcut, true)
+        pixelVisionOS:EnableMenuItem(ShowGrid, true)
 
-
-        if(self.lastSpriteSelection ~= nil) then
-            pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, self.lastSpriteSelection)
-        end
+        self:ForcePickerFocus(self.spritePickerData)
 
     end
 
     editorUI:NewDraw("DrawSprites", self.editorLabelArgs)
 
+    self:UpdateTitle()
+
 end
 
 function DrawTool:ToggleToolBar(value)
 
-    if(value == false and self.toolBtnData.currentSelection > 0) then
-
-        -- Save the current tool selection ID
-        self.lastSelectedToolID = self.toolBtnData.currentSelection
+    if(value == false) then
 
         -- Force the current selection to be enabled so it will display the disabled graphic
         self.toolBtnData.buttons[self.lastSelectedToolID].enabled = true
@@ -198,14 +186,9 @@ function DrawTool:ToggleToolBar(value)
     editorUI:Enable(self.flipVButton, value)
 
     if(value == true and self.lastSelectedToolID ~= nil) then
-        
-        -- print("self.lastSelectedToolID", self.lastSelectedToolID)
-        
-        -- Restore last selection
-        editorUI:SelectToggleButton(self.toolBtnData, self.lastSelectedToolID, false)
 
-        -- Clear the last selection 
-        self.lastSelectedToolID = nil
+        -- Restore last selection
+        editorUI:SelectToggleButton(self.toolBtnData, self.lastSelectedToolID, true)
 
     end
 
@@ -213,23 +196,21 @@ end
 
 function DrawTool:OnSelectTool(value)
 
+    -- Save the current tool selection ID
+    self.lastSelectedToolID = Clamp(value, 1, #tools)
+
     local toolName = tools[value]
 
     pixelVisionOS:ChangeCanvasTool(self.canvasData, toolName)
 
     -- We disable the color selection when switching over to the eraser
-    if(toolName == "eraser") then
+    if(toolName == "eraser" or  toolName == "select") then
 
         --  Clear the current color selection
         pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
         -- Disable the color picker
         pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, false)
-
-        -- Make sure the canvas is enabled
-        editorUI:Enable(self.canvasData, true)
-
-        -- ResetColorInvalidation()
 
     else
 
@@ -244,33 +225,13 @@ function DrawTool:OnSelectTool(value)
 
         end
 
-        -- print("Fill", self.canvasData.fill)
-
-        -- We need to restore the color when switching back to a new tool
-
-        -- Make sure the last color is in range
-        if(self.lastColorID == nil or self.lastColorID == -1) then
-
-            -- For palette mode, we set the color to the last color per sprite but for direct color mode we set it to the last system color
-            self.lastColorID = 0
-
-        end
-
-        
-        -- Enable co
+        -- Make sure the palette picker is enabled
         pixelVisionOS:EnableItemPicker(self.paletteColorPickerData, true)
 
-        -- Need to find the right color if we are in palette mode
-        -- if(self.usePalettes == true) then
-
-            -- Need to offset the last color id by the current palette page
-            -- self.lastColorID = self.lastColorID + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
-
-        -- end
-
-        print("restore color", self.lastColorID)
-
-        pixelVisionOS:SelectItemPickerIndex(self.paletteColorPickerData, self.lastColorID)
+        -- Restore the last palette selection
+        if(self.paletteColorPickerData.currentSelection == -1) then
+            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.lastPaletteColorID)
+        end
 
     end
 

@@ -18,7 +18,7 @@ function DrawTool:CreatePalettePanel()
         8, -- Max pages
         pixelVisionOS.colorOffset + 128,
         "itempicker",
-        "Select palette color ",
+        "palette color",
         false,
         true,
         false
@@ -29,31 +29,81 @@ function DrawTool:CreatePalettePanel()
     -- TODO this shouldn't have to be called?
     pixelVisionOS:RebuildColorPickerCache(self.paletteColorPickerData)
 
+    self.paletteColorPickerData.UpdateToolTip = function(tmpData)
+
+        local action = ""
+        local label = tmpData.toolTipLabel
+        local index = 0
+        local ending = ""
+        local pos = 0
+        local page = tmpData.pages.currentSelection - 1
+        
+        -- print("page", self.paletteColorPickerData.picker.overPos.index)
+        local toolTipMessage = "%s color %d from palette %d %s"
+        
+        
+        if(tmpData.dragging) then
+
+            if(tmpData.overPos.index ~= nil and tmpData.overPos.index ~= -1 and tmpData.overPos.index < tmpData.picker.total) then
+
+                action = tmpData.copyDrag == true and "Copy" or "Swap"
+               
+                index = tmpData.pressSelection.index
+                ending = (tmpData.copyDrag == true and "to" or "with") .. " color ".. tostring(tmpData.overPos.index) .. " in palette " .. page
+                pos = tmpData.picker.selected
+            else
+            
+                action = "Dragging"
+                index = tmpData.pressSelection.index
+                pos = tmpData.picker.selected
+                -- tmpData.picker.toolTip = "Dragging "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.pressSelection.index), tmpData.totalItemStringPadding, "0")
+            
+            end
+
+        elseif(tmpData.overPos.index ~= nil and tmpData.overPos.index ~= -1) then
+
+            action = "Select"
+            index = tmpData.overPos.index
+            pos = editorUI:CalculatePickerPosition(tmpData.picker).index
+
+            -- Update the tooltip with the index and position
+            -- tmpData.picker.toolTip = "Select "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0")
+
+        else
+            toolTipMessage = ""
+        end
+
+        -- This is hard coded to add 128 to the index since that is where palette IDs begin in the re-mapped color chip
+        tmpData.picker.toolTip = string.format(toolTipMessage, action, pos, page, ending)
+
+    end
+
     -- print("paletteColorPickerData")
     self.paletteColorPickerData.onAction = function(value, doubleClick)
 
         if(doubleClick == true and self.canEdit == true) then
 
             -- editorUI:ToggleButton(self.modeButton, not self.modeButton.value)
-            self:ChangeEditMode(not self.modeButton.selected)
+            self:ChangeEditMode(ColorMode)
+
+            local colorID = table.indexOf(pixelVisionOS.systemColors, Color(pixelVisionOS.colorOffset + 128 + value)) - 1 
+
+            self:ForcePickerFocus(self.systemColorPickerData)
+
+            self:OnSelectSystemColor(colorID)
+
+            pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, colorID)
+
+
+            
             -- TODO find and select color in picker
             return
         end
 
-        self:ForcePickerFocus(self.paletteColorPickerData)
-        
-        -- Force value to be in palette mode
-        value = self.paletteColorPickerData.picker.selected
-
-
-        self.lastColorID = value
-
-        print("Brush Color", value, self.paletteColorPickerData.pages.currentSelection - 1)
-
-        -- Set the canvas brush color
-        pixelVisionOS:CanvasBrushColor(self.canvasData, value)
-
     end
+
+    self.paletteColorPickerData.onRelease = function(value) self:OnSelectPaletteColor(value) end
+
 
     self.paletteColorPickerData.onDropTarget = function(src, dest) self:OnPalettePickerDrop(src, dest) end
     
@@ -69,40 +119,33 @@ function DrawTool:CreatePalettePanel()
     -- Wire up the picker to change the color offset of the sprite picker
     self.paletteColorPickerData.onPageAction = function(value)
 
-        
-        -- If we are not in palette mode, don't change the sprite color offset
-        -- if(self.usePalettes == true) then
-            
-            local pageOffset = ((value - 1) * 16)
+       -- Calculate page offset value
+        local pageOffset = ((value - 1) * 16)
 
-            -- Calculate the new color offset
-            local newColorOffset = pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + pageOffset
+        -- Calculate the new color offset
+        local newColorOffset = pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + pageOffset
 
-            pixelVisionOS:ChangeItemPickerColorOffset(self.spritePickerData, newColorOffset)
+        -- Change the spite picker color offset
+        pixelVisionOS:ChangeItemPickerColorOffset(self.spritePickerData, newColorOffset)
 
-            -- Update the canvas color offset
-            self.canvasData.colorOffset = newColorOffset
+        -- Update the canvas color offset
+        self.canvasData.colorOffset = newColorOffset
 
-            pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
+        pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
 
-            self:UpdateCanvas(self.lastSelection)
+        self:UpdateCanvas(self.lastSelection)
 
-            -- Need to reselect the current color in the new palette if we are in draw mode
-            if(self.canvasData.tool ~= "eraser" or self.canvasData.tool ~= "eyedropper") then
+        -- Need to reselect the current color in the new palette if we are in draw mode
+        if(self.canvasData.tool ~= "eraser" and self.canvasData.tool ~= "select") then
 
-                self.lastColorID = Clamp(self.lastColorID, 0, 15)
+            local colorID = Clamp(self.paletteColorPickerData.picker.selected, 0, pixelVisionOS.colorsPerSprite) + pageOffset
 
-                pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, self.lastColorID + pageOffset)
-
-                pixelVisionOS:CanvasBrushColor(self.canvasData, self.lastColorID)
-                -- pixelVisionOS:SelectItemPickerIndex(paletteColorPickerData, lastColorID + pageOffset, true, false)
-
+            if(self.paletteColorPickerData.currentSelection ~= colorID) then
+                pixelVisionOS:SelectItemPickerIndex(self.paletteColorPickerData, colorID, false, true)
+                self:OnSelectPaletteColor(colorID)
             end
-
-            -- Make sure we shift the colors by the new page number
-            -- self:InvalidateColorPreview()
-
-        -- end
+            
+        end
 
     end
 
@@ -132,6 +175,25 @@ function DrawTool:CreatePalettePanel()
     self:DrawPalettePanelLabel()
 
     pixelVisionOS:RegisterUI({name = palettePanelID}, "UpdatePalettePanel", self)
+
+end
+
+function DrawTool:OnSelectPaletteColor(value)
+
+    -- print("OnSelectPaletteColor", value)
+
+    self:ForcePickerFocus(self.paletteColorPickerData)
+        
+    self.lastPaletteColorID = value
+    
+    -- Force value to be in palette mode
+    value = self.paletteColorPickerData.picker.selected
+
+    -- print("Saving last pal", self.lastPaletteColorID)
+    
+
+        -- Set the canvas brush color
+    pixelVisionOS:CanvasBrushColor(self.canvasData, value)
 
 end
 
@@ -215,8 +277,10 @@ function DrawTool:OnPalettePickerDrop(src, dest)
         self:OnAddDroppedColor(id, dest, srcHex)
         
     else
-        
-        self:OnSystemColorDropTarget(src, dest)
+        -- Test that the destination position is visible
+        if(editorUI:CalculatePickerPosition(dest.picker).index < dest.visiblePerPage) then
+            self:OnSystemColorDropTarget(src, dest)
+        end
 
     end
 

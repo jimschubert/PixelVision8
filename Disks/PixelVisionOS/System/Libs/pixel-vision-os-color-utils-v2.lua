@@ -54,7 +54,7 @@ function PixelVisionOS:ImportColorsFromGame()
     -- Get all of the game's colors
     local gameColors = gameEditor:Colors()
 
-    print(dump(gameColors))
+    -- print(dump(gameColors))
 
     -- Create a table for all of the system colors so we can track unique colors
     self.systemColors = {}

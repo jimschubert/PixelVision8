@@ -1150,6 +1150,9 @@ function EditorUI:TextEditorUpdate(data, dt)
       self:EditTextEditor(data, false)
     end
 
+    -- Force the display to redraw if it has been changed externally
+    self:TextEditorDrawBuffer(data)
+
     return
 
   end

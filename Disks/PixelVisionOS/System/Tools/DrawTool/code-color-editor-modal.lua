@@ -113,6 +113,27 @@ function EditColorModal:Configure()
 
     table.insert(self.buttons, cancelBtnData)
 
+    -- Create two rects for the picker
+    self.colorSpaceRect = { x = self.rect.x + 16, y = self.rect.y + 32, w = 80, h = 80}
+    self.greySpaceRect = { x = self.rect.x + 16, y = self.rect.y + 96 + 16, w = 80, h = 8}
+
+    local colorPickerButton = editorUI:CreateButton({ x = self.colorSpaceRect.x, y = self.colorSpaceRect.y, w = self.colorSpaceRect.w, h = self.colorSpaceRect.h + self.greySpaceRect.h}, nil, "Pick a color.")
+    -- TODO need to figure out a way  to change the focus
+    colorPickerButton.buttonCursor = 8
+    
+    colorPickerButton.onPress = function(value)
+
+        self.updateColorPicker = true
+
+    end
+
+    colorPickerButton.onAction = function(value)
+       
+        self.updateColorPicker = false
+    end
+
+    table.insert(self.buttons, colorPickerButton)
+
     local highlighterTheme = {
         disabled = PaletteOffset(0,0),
         text = PaletteOffset(0,2),
@@ -198,9 +219,7 @@ function EditColorModal:Configure()
 
     table.insert(self.invalidateUI, hsvButton)
 
-    -- Create two rects for the picker
-    self.colorSpaceRect = { x = self.rect.x + 16, y = self.rect.y + 32, w = 80, h = 80}
-    self.greySpaceRect = { x = self.rect.x + 16, y = self.rect.y + 96 + 16, w = 80, h = 8}
+    
 
     -- Hex input needs to convert to RGB and update the input fields which will update the sliders.
     self.colorHexInputData.onAction = function(value)
@@ -363,76 +382,48 @@ function EditColorModal:ChangeColorMode(value)
 
     end
 
-    -- print("Reset Hex", self.colorHexInputData.text)
-
     self:UpdateHexValue("#"..self.colorHexInputData.text)
-    -- Update the color from the hex value
-    -- editorUI:ChangeInputField(self.colorHexInputData, self.colorHexInputData.text, true)
-
-    -- TODO convert from HEX to Color
-
-    -- TODO switch text
-
+    
 end
 
 function EditColorModal:Close()
 
-    -- print("close", self.tmpColor, self.maskColor)
     Color(self.tmpColor, self.maskColor)
 
 end
 
 function EditColorModal:Update(timeDelta)
 
-    -- print("In Focus", editorUI.inFocusUI.name)
+    if(self.updateColorPicker == true) then
+        
+        if(editorUI.collisionManager:MouseInRect(self.colorSpaceRect)) then
 
-    local mouseDown = editorUI.collisionManager.mouseDown
-
-    -- Test to see if the mouse is inside of one of the color space rects
-    if(editorUI.collisionManager:MouseInRect(self.colorSpaceRect)) then
-
-        editorUI:SetFocus(self.colorSpaceRect, 8)
-
-        if(mouseDown) then
-
-            if(self.rgbMode == true) then
-
-                self.tmpR = ((editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w) * 255
-                self.tmpG = ((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y) / self.colorSpaceRect.h ) * 255
-                self.tmpB = (1 - (editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w) * 255
-
-            else
-
-                self.tmpH = (editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w
-
-                -- TODO need to flip this value horizontally
-                self.tmpS = ((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y + 10) / (self.colorSpaceRect.h + 20))
-
-                -- This is always 100% when in the picker
-                self.tmpV = 1 - (((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y) / (self.colorSpaceRect.h + 30)))
-
-                self.tmpR, self.tmpG, self.tmpB = self:HSVToRGB(self.tmpH, self.tmpS, self.tmpV)
-
-            end
-
-            local newHex = self:RGBToHex(self.tmpR, self.tmpG, self.tmpB)
-
-            self:UpdateHexValue(newHex)
-
-            -- TODO need to test for palette mode
-            -- self.showWarning = table.indexOf(self.colorCache, newHex) > - 1
-
-            -- print("Color Picker", editorUI.collisionManager.mousePos.x, editorUI.collisionManager.mousePos.y, h, s)
-
-        end
-
-
-    elseif(editorUI.collisionManager:MouseInRect(self.greySpaceRect)) then
-        --
-        editorUI:SetFocus(self.greySpaceRect, 8)
-
-        if(mouseDown) then
-
+                if(self.rgbMode == true) then
+    
+                    self.tmpR = ((editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w) * 255
+                    self.tmpG = ((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y) / self.colorSpaceRect.h ) * 255
+                    self.tmpB = (1 - (editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w) * 255
+    
+                else
+    
+                    self.tmpH = (editorUI.collisionManager.mousePos.x - self.colorSpaceRect.x) / self.colorSpaceRect.w
+    
+                    -- TODO need to flip this value horizontally
+                    self.tmpS = ((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y + 10) / (self.colorSpaceRect.h + 20))
+    
+                    -- This is always 100% when in the picker
+                    self.tmpV = 1 - (((editorUI.collisionManager.mousePos.y - self.colorSpaceRect.y) / (self.colorSpaceRect.h + 30)))
+    
+                    self.tmpR, self.tmpG, self.tmpB = self:HSVToRGB(self.tmpH, self.tmpS, self.tmpV)
+    
+                end
+    
+                local newHex = self:RGBToHex(self.tmpR, self.tmpG, self.tmpB)
+    
+                self:UpdateHexValue(newHex)
+    
+        elseif(editorUI.collisionManager:MouseInRect(self.greySpaceRect)) then
+        
             local h = 0
 
             -- TODO need to flip this value horizontally
@@ -447,17 +438,8 @@ function EditColorModal:Update(timeDelta)
 
             self:UpdateHexValue(hex)
 
-            -- print("Grey Picker", editorUI.collisionManager.mousePos.x, editorUI.collisionManager.mousePos.y)
-
         end
 
-    elseif(self.colorSpaceRect.inFocus == true) then
-
-        editorUI:ClearFocus(self.colorSpaceRect)
-
-    elseif(self.greySpaceRect.inFocus == true) then
-        editorUI:ClearFocus(self.greySpaceRect)
-        -- editorUI.cursorID = 1
     end
 
     if(self.invalid == true) then
@@ -482,10 +464,7 @@ function EditColorModal:Update(timeDelta)
                 tonumber(self.blueInputData.text) / 100
             )
 
-
             newHex = self:RGBToHex(r, g, b )
-
-
 
         end
 
@@ -536,6 +515,7 @@ function EditColorModal:UpdateHexValue(value)
 
     end
 
+    --TODO need to force these to update
     editorUI:ChangeInputField(self.redInputData, tostring(r))
     editorUI:ChangeInputField(self.greenInputData, tostring(g))
     editorUI:ChangeInputField(self.blueInputData, tostring(b))

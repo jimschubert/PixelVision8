@@ -198,25 +198,14 @@ function DrawTool:LoadSuccess()
     -- Select the start sprite
     self:ChangeSpriteID(startSprite)
 
-    -- Set default tool
-    editorUI:SelectToggleButton(self.toolBtnData, defaultToolID)
-
-    -- Set default palette color
-    -- pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, defaultSystemColor)
-
-    -- Set default palette color
-    -- pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, defaultPalette)
-
-
     -- print("SCALE", self.spriteMode)
     self:ConfigureSpritePickerSelector(self.spriteMode)
 
-    self:ChangeSpriteID(defaultSpriteID)
+    -- Set default tool
+    editorUI:SelectToggleButton(self.toolBtnData, defaultToolID)
 
     -- Set default mode
     self:ChangeEditMode(defaultMode)
-
-    
     
     self:ResetDataValidation()
 
@@ -330,7 +319,7 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, false)
 
-        print("paletteColorPickerData sel", self.paletteColorPickerData.currentSelection)
+        -- print("paletteColorPickerData sel", self.paletteColorPickerData.currentSelection)
 
     elseif(src.name == self.spritePickerData.name) then
         self.selectionMode = SpriteMode

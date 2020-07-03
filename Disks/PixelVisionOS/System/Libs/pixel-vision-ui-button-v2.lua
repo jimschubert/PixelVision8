@@ -25,6 +25,8 @@ function EditorUI:CreateButton(rect, spriteName, toolTip, forceDraw)
   data.doubleClickDelay = .45
   data.doubleClickActive = false
 
+  data.buttonCursor = 2
+
   -- By default, we don't want buttons to redraw the background
   data.redrawBackground = false
   data.bgColorOverride = nil
@@ -153,8 +155,9 @@ function EditorUI:UpdateButton(data, hitRect)
       end
     end
 
+    print(data.name, data.buttonCursor)
     -- If we are in the collision area, set the focus
-    self:SetFocus(data)
+    self:SetFocus(data, data.buttonCursor)
 
     -- calculate the correct button over state
     local state = self.collisionManager.mouseDown and "down" or "over"

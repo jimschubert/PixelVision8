@@ -43,8 +43,6 @@ function EditorUI:CreatePicker(rect, itemWidth, itemHeight, total, spriteName, t
 
   data.borderOffset = 2
 
-  print(data.name, data.spriteName)
-
   if(data.cachedSpriteData.over ~= nil) then
 
     local spriteData = data.cachedSpriteData.selectedup

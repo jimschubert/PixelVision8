@@ -57,7 +57,6 @@ function DrawTool:CreateCanvas()
         table.insert(self.clearBackgroundPattern, tileID)
     end
 
-
 end
 
 local paletteKeys = {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8}
@@ -65,12 +64,15 @@ local paletteKeys = {Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.
 -- TODO need to rename this and change other UpdateCanvas function
 function DrawTool:UpdateCanvasUI()
 
+    if(self.canvasPanelBackgroundInvalid == true) then
+        self:ClearCanvasPanelBackground()
+    end
+
     pixelVisionOS:UpdateCanvas(self.canvasData)
 
     local newCopyValue = self.canvasData.selectRect ~= nil
 
     if(self.lastCopyValue ~= newCopyValue) then
-        print(dump(self.canvasData.selectRect))
         pixelVisionOS:EnableMenuItem(CopyShortcut, newCopyValue)
         pixelVisionOS:EnableMenuItem(ClearShortcut, newCopyValue)
         pixelVisionOS:EnableMenuItem(FillShortcut, newCopyValue)
@@ -171,26 +173,41 @@ function DrawTool:ToggleBackgroundColor(value)
 
 end
 
+function DrawTool:InvalidateCanvasPanelBackground()
+
+    -- TODO should only need to do this when there is a switch between modes
+    if(self.selectionSize.x ~= self.selectionSize) then
+        print("Canvas is invalid")
+        self.canvasPanelBackgroundInvalid = true
+    end
+
+end
+
+function DrawTool:ClearCanvasPanelBackground()
+
+    print("Canvas BG Cleared")
+    
+    -- Need to draw immediately since the canvas doesn't run through the UI draw queue
+    DrawSprites(self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
+
+    self.canvasPanelBackgroundInvalid = false
+end
+
 
 function DrawTool:UpdateCanvas(value, flipH, flipV)
+
+    self:InvalidateCanvasPanelBackground()
 
     flipH = flipH or false
     flipV = flipV or false
 
-    local spriteSelection = self.selectionSizes[self.spriteMode]
-
-    if(spriteSelection.x ~= spriteSelection.y) then
-        -- Need to draw immediately since the canvas doesn't run through the UI draw queue
-        DrawSprites( self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
-    end
-
     -- Save the original pixel data from the selection
-    local tmpPixelData = gameEditor:ReadGameSpriteData(value, spriteSelection.x, spriteSelection.y, flipH, flipV)--
+    local tmpPixelData = gameEditor:ReadGameSpriteData(value, self.selectionSize.x, self.selectionSize.y, flipH, flipV)--
     
     -- print("Test", self.spriteMode)
-    self.lastCanvasScale = spriteSelection.scale--Clamp(8 * spriteSelection.scale, 4, 16)
+    self.lastCanvasScale = self.selectionSize.scale--Clamp(8 * spriteSelection.scale, 4, 16)
 
-    self.lastCanvasSize = NewPoint((8 * spriteSelection.x), (8 * spriteSelection.y))
+    self.lastCanvasSize = NewPoint((8 * self.selectionSize.x), (8 * self.selectionSize.y))
 
     pixelVisionOS:ResizeCanvas(self.canvasData, self.lastCanvasSize, self.lastCanvasScale, tmpPixelData)
 
@@ -235,122 +252,6 @@ function DrawTool:IsSpriteEmpty(pixelData)
     return true
 
 end
-
--- function DrawTool:InvalidateColorPreview()
-
---     self.colorPreviewInvalid = true
--- end
-
--- function DrawTool:ResetColorPreviewValidation()
---     self.colorPreviewInvalid = false
--- end
-
--- function DrawTool:DrawColorPerSpriteDisplay()
-
---     -- TODO create unique colors
-
---     local pixelData = gameEditor:ReadGameSpriteData(self.spritePickerData.currentSelection, editorUI.spriteMode.x, editorUI.spriteMode.y)
-
---     -- Clear unique color list
-
---     local uniqueColors = {}
-
---     -- loop through all the pixel data and look for unique colors
---     for i = 1, #pixelData do
-
---         -- Get the color id and the index if it exists in the unique color array
---         local colorID = pixelData[i]
-
---         if(colorID > - 1) then
---             local index = table.indexOf(uniqueColors, colorID)
-
---             -- If this is a new color, add it to the unique color array
---             if(index == - 1) then
---                 table.insert(uniqueColors, colorID)
---             end
---         end
-
---     end
-
---     local backgroundSprites = {
---         _G["colorbarleft"],
---         _G["colorbarright"],
---     }
-
---     local totalSections = math.ceil(self.cps / 2)
-
---     local totalColors = Clamp(#uniqueColors, 2, 16)
-
---     -- TODO need to fix this
---     if(totalColors / 2 > totalSections) then
---         totalSections = totalColors / 2
---     end
-
---     for i = 1, totalSections do
---         table.insert(backgroundSprites, 2, _G["colorbarmiddle"])
---     end
-
---     local totalSections = #backgroundSprites
-
---     local maxSections = 10
-
---     local shiftOffset = 0
-
---     -- Pad background
---     if(totalSections < maxSections) then
-
---         local emptyTotal = maxSections - totalSections
-
---         shiftOffset = emptyTotal * 8
-
---         for i = 1, emptyTotal do
---             table.insert(backgroundSprites, 1, _G["pagebuttonempty"])
---         end
-
---     end
-
---     -- local startX = 144
---     local nextX = 168 ---- (8 - totalSections * 8)
-
---     for i = maxSections, 1, - 1 do
-
---         nextX = nextX - 8
-
---          -- TODO needs to be differed to the render queue
---         editorUI:NewDraw("DrawSprites", {backgroundSprites[i].spriteIDs, nextX, 160, 1, false, false, DrawMode.TilemapCache})
-
---     end
-
---     local colorOffset = pixelVisionOS.colorOffset
---     --
---     -- if(pixelVisionOS.paletteMode) then
-
---         colorOffset = colorOffset + 128 + ((self.paletteColorPickerData.pages.currentSelection - 1) * 16)
-
---     -- end
-
---     -- Shift next x over
---     nextX = nextX + 4 + shiftOffset
---     for i = 1, self.cps do
-
---         local color = i <= #uniqueColors and uniqueColors[i] + colorOffset or pixelVisionOS.emptyColorID
-        
---         nextX = nextX + 4
---         -- if(drawColor == true) then
---         editorUI:NewDraw("DrawRect", {nextX, 164, 4, 4, color, DrawMode.TilemapCache})
---         -- end
---     end
-
---     -- Redraw the palette label over the CPS display background
---     -- if(usePalettes == true) then
-
---         -- TODO this needs to be differed to the draw queue  
---         -- Change color label to palette
---         editorUI:NewDraw("DrawSprites", {gamepalettetext.spriteIDs, 32 / 8, 168 / 8, gamepalettetext.width, false, false, DrawMode.Tile})
-
---     -- end
-
--- end
 
 function DrawTool:OnSaveCanvasChanges()
 
@@ -397,11 +298,5 @@ function DrawTool:OnSaveCanvasChanges()
         editorUI:ResetValidation(self.canvasData)
 
     end
-
-    
-
-    -- Make sure the clear button is enabled since a change has happened to the canvas
-    -- pixelVisionOS:EnableMenuItem(ClearShortcut, true)
-    -- pixelVisionOS:EnableMenuItem(RevertShortcut, true)
 
 end

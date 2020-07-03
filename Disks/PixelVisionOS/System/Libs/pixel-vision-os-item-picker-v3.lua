@@ -117,7 +117,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
 
     data.picker.onAction = function(value, doubleClick)
 
-        print("OnAction")
+        -- print("OnAction")
         if(editorUI.inFocusUI.name == data.name) then
             
             -- editorUI.inFocusUI = nil

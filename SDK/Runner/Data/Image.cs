@@ -96,4 +96,9 @@ public class Image : TextureData
         return _pixelData;
     }
 
+    public void RemapColors(Color colors)
+    {
+        // TODO need to create a way to remap the colors in the current image to the one passed in
+    }
+
 }

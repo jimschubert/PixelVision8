@@ -134,6 +134,8 @@ function DrawTool:ChangeEditMode(mode)
 
     elseif(self.mode == SpriteMode) then
 
+        self:ClearCanvasPanelBackground()
+
         self.toolTitle = "sprites.png"
 
         -- Make sure the mode button is selected

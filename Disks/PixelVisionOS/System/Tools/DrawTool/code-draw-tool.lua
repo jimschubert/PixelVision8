@@ -58,7 +58,7 @@ function DrawTool:Init()
     if(_drawTool.rootDirectory ~= nil) then
 
         -- Load only the game data we really need
-        _drawTool.success = gameEditor.Load(_drawTool.rootDirectory, {SaveFlags.System, SaveFlags.Meta, SaveFlags.Colors, SaveFlags.ColorMap, SaveFlags.Sprites})
+        _drawTool.success = gameEditor.Load(_drawTool.rootDirectory, {SaveFlags.System, SaveFlags.Meta, SaveFlags.Colors, SaveFlags.Sprites})
 
     end
 
@@ -67,9 +67,22 @@ function DrawTool:Init()
         
         _drawTool:LoadError()
 
+        
     else
 
+        -- TODO need to manually load the image, display a progress bar and process each sprite
+        -- local image = ReadImage(NewWorkspacePath(_drawTool.rootDirectory.."sprites.png"))
+
+        -- local total = image.TotalSprites
+
+        -- for i = 1, total do
+        --     local id = i-1
+        --     gameEditor:Sprite(id, image.GetSpriteData(id))
+        -- end
+
         _drawTool:LoadSuccess()
+
+        -- print("Total Sprites", image.TotalSprites)
         
     end
   
@@ -112,19 +125,16 @@ function DrawTool:LoadSuccess()
     -- Get the target file
     local targetFile = ReadMetadata("file", nil)
 
-    -- if(targetFile ~= nil) then
-
     local targetFilePath = NewWorkspacePath(targetFile)
 
     local colorMode = targetFilePath.EntityName == "colors.png"
 
     local pathSplit = string.split(targetFile, "/")
 
-    -- Update title with file path
-    self.toolTitle = pathSplit[#pathSplit - 1] .. "/" .. pathSplit[#pathSplit]
-        
-    -- print("colorMode", colorMode)
+    self.titlePath = pathSplit[#pathSplit - 1] .. "/"
 
+    -- Update title with file path
+    -- self.toolTitle =  .. pathSplit[#pathSplit]
 
     self:CreateDropDownMenu()
 
@@ -134,56 +144,11 @@ function DrawTool:LoadSuccess()
 
     self:CreatePalettePanel()
 
-    -- self:CreateColorSelector()
-
     self:CreateCanvas()
 
     self:CreateToolbar()
 
-    -- self.selectionIDLabelArgs = {coloridlabel.spriteIDs, 21, 24, coloridlabel.width, false, false, DrawMode.Tile}
-
-
-    
-    -- -- Restore last state
-    -- local selectedSpritePage = 1
-    -- local paletteColorPicker = 1
-
-    -- if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
-
-    --     selectedSpritePage = tonumber(ReadSaveData("selectedSpritePage", "1"))
-    --     paletteColorPicker = tonumber(ReadSaveData("selectedPalettePage", "1"))
-
-    -- end
-
-    -- pixelVisionOS:OnSpritePickerPage(self.spritePickerData, selectedSpritePage)
-    -- pixelVisionOS:OnColorPickerPage(self.paletteColorPickerData, paletteColorPicker)
-
-    -- -- Setup default mode
-    -- self:ChangeEditMode(SpriteMode)
-
-    -- -- Reset the validation to update the title and set the validation flag correctly for any changes
-    -- self:ResetDataValidation()
-
-    -- -- Set the focus mode to none
-    -- self:ForcePickerFocus()
-
-    -- -- TODO only do this when it's in draw mode
-    -- editorUI:SelectToggleButton(self.toolBtnData, 1)
-    -- pixelVisionOS:SelectColorPickerColor(self.paletteColorPickerData, 0)
-    -- pixelVisionOS:SelectSpritePickerIndex(self.spritePickerData, 0)
-    
     local startSprite = 0
-
-    -- if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
-    --     startSprite = tonumber(ReadSaveData("selectedSprite", "0"))
-    --     self.spriteMode = tonumber(ReadSaveData("spriteMode", "1")) - 1
-        
-    -- end
-
-    
-
-    -- pixelVisionOS:ChangeCanvasPixelSize(self.canvasData, self.spriteMode)
-    
 
     if(self.debugMode == true) then
         self.colorMemoryCanvas = NewCanvas(8, TotalColors() / 8)
@@ -300,7 +265,7 @@ end
 
 function DrawTool:UpdateTitle()
 
-    pixelVisionOS:ChangeTitle(self.toolTitle .. (self.invalid == true and "*" or ""), "toolbariconfile")
+    pixelVisionOS:ChangeTitle(self.titlePath .. self.toolTitle .. (self.invalid == true and "*" or ""), "toolbariconfile")
 
 end
 

@@ -694,7 +694,7 @@ function PixelVisionOS:RedrawCanvas(data)
   if(data.paintCanvas.invalid == true) then
 
     -- Draw the final canvas to the display on each frame
-    data.paintCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.TilemapCache, data.scale, bgColor, data.emptyColorID)
+    data.paintCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.TilemapCache, data.scale, data.emptyColorID, bgColor)
 
     data.paintCanvas:ResetValidation()
 

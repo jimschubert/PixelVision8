@@ -28,7 +28,7 @@ function EditorUI:CreateToggleButton(rect, spriteName, toolTip, forceDraw)
   data.onClick = function(tmpData)
 
     -- Only trigger the click action when the last pressed button name matches
-    if(self.currentButtonDown == tmpData.name) then
+    if(self.inFocusUI == tmpData) then
       self:ToggleButton(tmpData)
     end
 

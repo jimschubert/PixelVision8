@@ -95,13 +95,9 @@ end
 function PixelVisionOS:Draw()
 
     if(self.editorUI.inFocusUI ~= nil and self.editorUI.inFocusUI.toolTip ~= nil) then
-
         self:DisplayToolTip(self.editorUI.inFocusUI.toolTip)
-
     else
         self:ClearToolTip()
-        -- clear tool tip message
-
     end
 
     -- We manually call draw on the message bar since it can be updated at any point outside of its own update call

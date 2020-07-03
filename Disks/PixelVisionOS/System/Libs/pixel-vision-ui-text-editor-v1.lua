@@ -1142,20 +1142,32 @@ end
 
 function EditorUI:TextEditorUpdate(data, dt)
 
+  -- Make sure we don't detect a collision if the mouse is down but not over this button
+  if(self.collisionManager.mouseDown and data.inFocus == false) then
+
+    -- If we lose focus while the mouse is down but still in edit mode we need to clear that
+    if(data.editing == true) then
+      self:EditTextEditor(data, false)
+    end
+
+    return
+
+  end
+
   local overrideFocus = (data.inFocus == true and self.collisionManager.mouseDown)
 
   -- TODO this should be only happen when in focus
   local cx = self.collisionManager.mousePos.c - data.tiles.c
   local cy = self.collisionManager.mousePos.r - data.tiles.r
 
-  -- print("Inside Text", data.name)
+  -- print("Inside Text", (editorUI.inFocusUI ~= nil and editorUI.inFocusUI.name or nil))
   -- Ready to test finer collision if needed
-  if(self.collisionManager:MouseInRect(data.rect) == true or overrideFocus) then
+  if((self.collisionManager:MouseInRect(data.rect) == true or overrideFocus)) then
 
     if(data.enabled == true and data.editable == true) then
 
       if(data.inFocus == false) then
-
+        print("in focus")
         -- Set focus
         self:SetFocus(data, 3)
       end
@@ -1179,7 +1191,7 @@ function EditorUI:TextEditorUpdate(data, dt)
 
     end
 
-  else
+  elseif(data.inFocus == true) then
     -- If the mouse isn't over the component clear the focus
     self:ClearFocus(data)
 

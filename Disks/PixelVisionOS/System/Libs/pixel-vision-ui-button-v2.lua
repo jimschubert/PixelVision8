@@ -38,21 +38,22 @@ function EditorUI:CreateButton(rect, spriteName, toolTip, forceDraw)
   data.onClick = function(tmpData)
 
     -- Only trigger the click action when the last pressed button name matches
-    if(self.currentButtonDown == tmpData.name) then
+    if(self.inFocusUI.name == tmpData.name) then
       self:ClickButton(tmpData, true, tmpData.doubleClickActive and tmpData.doubleClickTime < tmpData.doubleClickDelay)
 
-      self.currentButtonDown = nil
+      -- self.inFocusUI = nil
       tmpData.doubleClickTime = 0
       tmpData.doubleClickActive = true
       tmpData.doubleClick = true
     end
+    
   end
 
   -- On First Press (Called when the button)
   data.onFirstPress = function(tmpData)
 
     -- Save the name of the button that was just pressed
-    self.currentButtonDown = tmpData.name
+    -- self.inFocusUI = tmpData
 
     self:PressButton(tmpData, true)
   end
@@ -188,6 +189,7 @@ function EditorUI:UpdateButton(data, hitRect)
       -- Click the button
       data.onClick(data)
       data.firstPress = true
+
     elseif(self.collisionManager.mouseDown) then
 
       if(data.firstPress ~= false) then
@@ -202,11 +204,11 @@ function EditorUI:UpdateButton(data, hitRect)
 
   else
 
+    -- On Release Outside
     if(data.inFocus == true) then
       data.firstPress = true
       -- If we are not in the button's rect, clear the focus
       self:ClearFocus(data)
-
     end
 
   end

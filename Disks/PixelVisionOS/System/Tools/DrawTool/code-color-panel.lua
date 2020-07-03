@@ -35,6 +35,79 @@ function DrawTool:CreateColorPanel()
     }
 
     self.systemColorPickerData.ctrlCopyEnabled = false
+    
+    self.systemColorPickerData.UpdateToolTip = function(tmpData)
+
+        local action = ""
+        local label = tmpData.toolTipLabel
+        local index = 0
+        local ending = ""
+        
+        local toolTipMessage = "%s %s %03d %s"
+        
+        
+        if(tmpData.dragging) then
+
+            if(tmpData.overPos.index ~= nil and tmpData.overPos.index ~= -1 and tmpData.overPos.index < tmpData.total) then
+
+                action = tmpData.copyDrag == true and "Copy" or "Swap"
+               
+                index = tmpData.pressSelection.index
+                ending = string.format("%s color ID %03d", (tmpData.copyDrag == true and "to" or "with"), tmpData.overPos.index)
+
+                -- ending = (tmpData.copyDrag == true and "to" or "with") .. " ".. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0")
+
+                -- tmpData.picker.toolTip = string.format(toolTipMessage, "swap", tmpData.toolTipLabel, tmpData.pressSelection.index, "with ".. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0"))--"Swap "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.pressSelection.index), tmpData.totalItemStringPadding, "0") .. " with ".. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0")
+            elseif(editorUI.collisionManager:MouseInRect(self.paletteColorPickerData.rect)) then
+
+                local page = self.paletteColorPickerData.pages.currentSelection - 1
+                local shiftColor = page * 16
+                index = tmpData.pressSelection.index
+                -- print("self.paletteColorPickerData.overPos", self.paletteColorPickerData.overPos)
+
+                local palIndex = pixelVisionOS:CalculateItemPickerPosition(self.paletteColorPickerData).index - shiftColor
+
+                if(palIndex >= self.paletteColorPickerData.visiblePerPage) then
+                    action = "Dragging"
+                    
+                else
+                    -- This is a special use case where we don't want to use the default tool tip message
+                    tmpData.picker.toolTip = string.format("Copy color ID %03d to color %02d in palette %0d", index, palIndex, page) --string.format("Preview color offset %03d", (page * 16) + tmpData.picker.selected + 128)
+                    
+                    -- -- Exit this since we already set the tooltip value
+                    return
+                end
+            elseif(editorUI.collisionManager:MouseInRect(self.spritePickerData.rect)) then
+
+                -- This is a special use case where we don't want to use the default tool tip message
+                tmpData.picker.toolTip = string.format("Preview color offset %03d", tmpData.pressSelection.index)
+                
+                -- -- Exit this since we already set the tooltip value
+                return
+            else
+            
+                action = "Dragging"
+                index = tmpData.pressSelection.index
+
+                -- tmpData.picker.toolTip = "Dragging "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.pressSelection.index), tmpData.totalItemStringPadding, "0")
+            
+            end
+
+        elseif(tmpData.overPos.index ~= nil and tmpData.overPos.index ~= -1) then
+
+            action = "Select"
+            index = tmpData.overPos.index
+
+            -- Update the tooltip with the index and position
+            -- tmpData.picker.toolTip = "Select "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0")
+
+        else
+            toolTipMessage = ""
+        end
+
+        tmpData.picker.toolTip = string.format(toolTipMessage, action, label, index, ending)
+
+    end
 
     self.systemColorPickerData.onPageAction = function(value)
 
@@ -97,22 +170,6 @@ end
 
 function DrawTool:OnSelectSystemColor(value)
 
-    -- Update menu menu items
-
-    -- TODO need to enable this when the color editor pop-up is working
-    -- pixelVisionOS:EnableMenuItem(EditShortcut, false)
-
-    -- These are only available based on the palette mode
-    -- pixelVisionOS:EnableMenuItem(AddShortcut, true)
-    -- pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
-    -- pixelVisionOS:EnableMenuItem(BGShortcut, ("#"..colorHex) ~= pixelVisionOS.maskColor)
-
-    -- You can only copy a color when in direct color mode
-    -- pixelVisionOS:EnableMenuItem(CopyShortcut, true)
-
-    -- Only enable the paste button if there is a copyValue and we are not in palette mode
-    
-
     -- print("SELECT COLOR", value)
     self.lastSystemColorID = value
 
@@ -122,14 +179,6 @@ function DrawTool:OnSelectSystemColor(value)
 
 end
 
--- function DrawTool:UpdateBGIconPosition(id)
-
---     local pos = CalculatePosition(id % 64, 8)
-
---     self.BGIconX = pos.x * 16
---     self.BGIconY = pos.y * 16
-
--- end
 
 function DrawTool:ShowColorPanel()
     -- print("Show")
@@ -346,10 +395,7 @@ function DrawTool:UpdateBGIconPosition(id)
 
     local pos = CalculatePosition(id % 64, 8)
 
-
     self.bgDrawArgs[2] = self.systemColorPickerData.rect.x + (pos.x * 16)
     self.bgDrawArgs[3] = self.systemColorPickerData.rect.y + (pos.y * 16)
-    -- self.BGIconX = pos.x * 16
-    -- self.BGIconY = pos.y * 16
 
 end

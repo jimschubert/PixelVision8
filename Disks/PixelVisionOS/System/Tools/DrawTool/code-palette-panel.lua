@@ -31,26 +31,37 @@ function DrawTool:CreatePalettePanel()
 
     self.paletteColorPickerData.UpdateToolTip = function(tmpData)
 
+        -- print("Update Tool Tip", tmpData.name, tmpData.dragging)
         local action = ""
-        local label = tmpData.toolTipLabel
-        local index = 0
         local ending = ""
         local pos = 0
         local page = tmpData.pages.currentSelection - 1
         
         -- print("page", self.paletteColorPickerData.picker.overPos.index)
-        local toolTipMessage = "%s color %d from palette %d %s"
-        
+        local toolTipMessage = "%s color %02d from palette %d %s"
         
         if(tmpData.dragging) then
 
-            if(tmpData.overPos.index ~= nil and tmpData.overPos.index ~= -1 and tmpData.overPos.index < tmpData.picker.total) then
+            local shiftColor = page * 16
+            local palIndex = tmpData.overPos.index - shiftColor
+
+            -- print("tmpData.overPos.index", )
+            if(palIndex > -1 and palIndex < tmpData.visiblePerPage) then
 
                 action = tmpData.copyDrag == true and "Copy" or "Swap"
                
-                index = tmpData.pressSelection.index
-                ending = (tmpData.copyDrag == true and "to" or "with") .. " color ".. tostring(tmpData.overPos.index) .. " in palette " .. page
+                -- index = palIndex
+                ending = string.format("%s color %02d in palette %d", (tmpData.copyDrag == true and "to" or "with"), tostring(palIndex), page)
                 pos = tmpData.picker.selected
+
+            elseif(editorUI.collisionManager:MouseInRect(self.spritePickerData.rect)) then
+
+                -- This is a special use case where we don't want to use the default tool tip message
+                tmpData.picker.toolTip = string.format("Preview color offset %03d", (page * 16) + tmpData.picker.selected + 128)
+                
+                -- -- Exit this since we already set the tooltip value
+                return
+
             else
             
                 action = "Dragging"
@@ -66,16 +77,13 @@ function DrawTool:CreatePalettePanel()
             index = tmpData.overPos.index
             pos = editorUI:CalculatePickerPosition(tmpData.picker).index
 
-            -- Update the tooltip with the index and position
-            -- tmpData.picker.toolTip = "Select "..tmpData.toolTipLabel.." ID " .. string.lpad(tostring(tmpData.overPos.index), tmpData.totalItemStringPadding, "0")
-
         else
             toolTipMessage = ""
         end
 
         -- This is hard coded to add 128 to the index since that is where palette IDs begin in the re-mapped color chip
         tmpData.picker.toolTip = string.format(toolTipMessage, action, pos, page, ending)
-
+        -- print ("New Tool Tip", tmpData.picker.name, tmpData.picker.toolTip)
     end
 
     -- print("paletteColorPickerData")

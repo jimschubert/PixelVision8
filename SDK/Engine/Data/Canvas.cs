@@ -705,7 +705,7 @@ namespace PixelVision8.Engine
         /// <param name="maskColorID"></param>
         /// <param name="viewport"></param>
         public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1,
-            int maskColor = -1, int maskColorID = -1, Rectangle? viewport = null)
+            int maskColor = -1, int maskColorID = -1, int colorOffset = 0, Rectangle? viewport = null)
         {
             // This only works when the canvas has a reference to the gameChip
             if (gameChip == null) return;
@@ -727,30 +727,19 @@ namespace PixelVision8.Engine
 
             var srcPixels = GetPixels(tmpX, tmpY, tmpW, tmpH);
 
+            // Loop through and replace mask colors
+            for (int i = 0; i < srcPixels.Length; i++)
+            {
+                if (srcPixels[i] == maskColor)
+                    srcPixels[i] = maskColorID;
+            }
+
             var newWidth = tmpW * scale;
             var newHeight = tmpH * scale;
 
-            var destPixels = ResizePixels(srcPixels, tmpW, tmpH, newWidth, newHeight);
+            var destPixels = scale > 1 ? ResizePixels(srcPixels, tmpW, tmpH, newWidth, newHeight) : srcPixels;
 
-            // var w = tmpW;
-            // var w2 = newWidth;
-            // var newColors = new int[newWidth * newHeight];
-            // var ratioX = (float)tmpW / newWidth;
-            // var ratioY = (float)tmpH / newHeight;
-            //
-            // for (var y1 = 0; y1 < newHeight; y1++)
-            // {
-            //     var thisY = (int)(ratioY * y1) * w;
-            //     var yw = y1 * w2;
-            //     for (var x1 = 0; x1 < w2; x1++)
-            //     {
-            //         var pixel = texColors[(int)(thisY + ratioX * x1)];
-            //
-            //         newColors[yw + x1] = pixel == maskColorID ? maskColor : pixel;
-            //     }
-            // }
-
-            gameChip.DrawPixels(destPixels, x, y, newWidth, newHeight, false, false, drawMode);
+            gameChip.DrawPixels(destPixels, x, y, newWidth, newHeight, false, false, drawMode, colorOffset);
 
         }
 

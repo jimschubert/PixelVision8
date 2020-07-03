@@ -61,9 +61,7 @@ function EditorUI:CreatePicker(rect, itemWidth, itemHeight, total, spriteName, t
 
   data.onClick = function(tmpData)
 
-    if(self.currentPickerDown == tmpData.name) then
-
-
+    if(self.inFocusUI.name == tmpData.name) then
 
       self:PickerClick(tmpData, true, tmpData.doubleClickActive and tmpData.doubleClickTime < tmpData.doubleClickDelay)
 
@@ -78,7 +76,7 @@ function EditorUI:CreatePicker(rect, itemWidth, itemHeight, total, spriteName, t
 
   data.onFirstPress = function(tmpData)
 
-    self.currentPickerDown = tmpData.name
+    self.inFocusUI = tmpData
     self:PickerPress(tmpData, true)
   end
 

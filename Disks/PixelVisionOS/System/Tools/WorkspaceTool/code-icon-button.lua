@@ -24,7 +24,7 @@ function PixelVisionOS:CreateIconButton(point, spriteName, label, toolTip, bgCol
     local tmpRect = {x = point.X, y = point.y, w = 48, h = 40}
     
     -- Use the same data as the button (but don't pass in a sprite)
-    local data = self.editorUI:CreateButton(tmpRect, nil, toolTip)
+    local data = editorUI:CreateButton(tmpRect, nil, toolTip)
 
     data.name = "Icon" .. data.name
 
@@ -40,7 +40,7 @@ function PixelVisionOS:CreateIconButton(point, spriteName, label, toolTip, bgCol
 
     data.onClick = function(tmpData)
         
-        if(self.editorUI.currentButtonDown == tmpData.name) then
+        if(editorUI.inFocusUI.name == tmpData.name) then
             -- Toggle the button's action
             --#5 | #1
             self:ToggleIconButton(tmpData)
@@ -87,7 +87,7 @@ function PixelVisionOS:CreateIconButtonStates(data, spriteName, text, bgColor)
     if(spriteName == "none") then
 
         -- Clear the bakground since there is nothing to display
-        self.editorUI:NewDraw("DrawRect", data.bgDrawArgs)
+        editorUI:NewDraw("DrawRect", data.bgDrawArgs)
 
     else
         
@@ -213,7 +213,7 @@ function PixelVisionOS:UpdateIconButton(data, hitRect)
 
         -- If the button is disabled but still in focus we need to remove focus
         if(data.inFocus == true) then
-            self.editorUI:ClearFocus(data)
+            editorUI:ClearFocus(data)
         end
 
         -- See if the button needs to be redrawn.
@@ -231,12 +231,12 @@ function PixelVisionOS:UpdateIconButton(data, hitRect)
         hitRect = data.hitRect or data.rect
     end
 
-    local overrideFocus = (data.inFocus == true and self.editorUI.collisionManager.mouseDown)
+    local overrideFocus = (data.inFocus == true and editorUI.collisionManager.mouseDown)
 
-    local collision = self.editorUI.collisionManager:MouseInRect(hitRect)
+    local collision = editorUI.collisionManager:MouseInRect(hitRect)
 
     -- Make sure we don't detect a collision if the mouse is down but not over this button
-    if(self.editorUI.collisionManager.mouseDown and data.inFocus == false) then
+    if(editorUI.collisionManager.mouseDown and data.inFocus == false) then
 
         if(data.highlight == true and collision == false) then
             self:HighlightIconButton(data, false)
@@ -259,7 +259,7 @@ function PixelVisionOS:UpdateIconButton(data, hitRect)
                 data.doubleClickActive = false
             end
 
-            data.doubleClickTime = data.doubleClickTime + self.editorUI.timeDelta
+            data.doubleClickTime = data.doubleClickTime + editorUI.timeDelta
             
             if(data.doubleClickActive and data.doubleClickTime > data.doubleClickDelay) then
                 data.doubleClickActive = false
@@ -267,17 +267,17 @@ function PixelVisionOS:UpdateIconButton(data, hitRect)
         end
 
         -- If we are in the collision area, set the focus
-        self.editorUI:SetFocus(data)
+        editorUI:SetFocus(data)
 
-        self.editorUI:Invalidate(data)
+        editorUI:Invalidate(data)
 
         -- Check to see if the button is pressed and has an onAction callback
-        if(self.editorUI.collisionManager.mouseReleased == true) then
+        if(editorUI.collisionManager.mouseReleased == true) then
 
             -- Click the button
             data.onClick(data)
             data.firstPress = true
-        elseif(self.editorUI.collisionManager.mouseDown) then
+        elseif(editorUI.collisionManager.mouseDown) then
 
             if(data.firstPress ~= false) then
 
@@ -299,9 +299,9 @@ function PixelVisionOS:UpdateIconButton(data, hitRect)
         if(data.inFocus == true) then
             data.firstPress = true
             -- If we are not in the button's rect, clear the focus
-            self.editorUI:ClearFocus(data)
+            editorUI:ClearFocus(data)
 
-            self.editorUI:Invalidate(data)
+            editorUI:Invalidate(data)
 
         end
 
@@ -356,7 +356,7 @@ function PixelVisionOS:RedrawIconButton(data)
 
         end
 
-        self.editorUI:ResetValidation(data)
+        editorUI:ResetValidation(data)
 
     end
 
@@ -389,7 +389,7 @@ function PixelVisionOS:ToggleIconButton(data, value, callAction)
         -- data.selected = true
 
         -- Invalidate the button so it redraws
-        self.editorUI:Invalidate(data)
+        editorUI:Invalidate(data)
 
     end
 
@@ -403,7 +403,7 @@ end
 function PixelVisionOS:OpenIconButton(data, value)
     
     if(data.open ~= value) then
-        self.editorUI:Invalidate(data)
+        editorUI:Invalidate(data)
     end
     
     data.open = value
@@ -412,14 +412,14 @@ end
 
 -- function PixelVisionOS:CloseIconButton(data)
 --     data.open = false
---     self.editorUI:Invalidate(data)
+--     editorUI:Invalidate(data)
 -- end
 
 function PixelVisionOS:CreateIconGroup(singleSelection)
 
     singleSelection = singleSelection == nil and true or singleSelection
 
-    local data = self.editorUI:CreateData()
+    local data = editorUI:CreateData()
 
     data.name = "IconButtonGroup" .. data.name
 
@@ -460,7 +460,7 @@ function PixelVisionOS:IconGroupAddButton(data, buttonData, id)
     -- save the button data
     table.insert(data.buttons, id, buttonData)
 
-    self.editorUI.collisionManager:EnableDragging(buttonData, .5, data.name)
+    editorUI.collisionManager:EnableDragging(buttonData, .5, data.name)
 
     buttonData.id = id
 
@@ -519,7 +519,7 @@ function PixelVisionOS:IconGroupAddButton(data, buttonData, id)
     end
 
     -- Invalidate the button so it redraws
-    self.editorUI:Invalidate(buttonData)
+    editorUI:Invalidate(buttonData)
 
 end
 
@@ -563,12 +563,12 @@ function PixelVisionOS:UpdateIconGroup(data)
                 data.isDragging = true
                 
                 -- Look for drop targets
-                for i = 1, #self.editorUI.collisionManager.dragTargets do
+                for i = 1, #editorUI.collisionManager.dragTargets do
 
-                    local dest = self.editorUI.collisionManager.dragTargets[i]
+                    local dest = editorUI.collisionManager.dragTargets[i]
 
                     -- Look for a collision with the dest
-                    if(self.editorUI.collisionManager:MouseInRect(dest.hitRect ~= nil and dest.hitRect or dest.rect)) then
+                    if(editorUI.collisionManager:MouseInRect(dest.hitRect ~= nil and dest.hitRect or dest.rect)) then
 
                         -- TODO there should be a timer before this is actually triggered
                         if(dest.onOverDropTarget ~= nil) then
@@ -596,7 +596,7 @@ function PixelVisionOS:UpdateIconGroup(data)
                     
                 end
 
-                if(self.editorUI.collisionManager.mousePos.x > - 1 and self.editorUI.collisionManager.mousePos.y > - 1) then
+                if(editorUI.collisionManager.mousePos.x > - 1 and editorUI.collisionManager.mousePos.y > - 1) then
 
                     local mouseOffset = {x = 24, y = 12}
 
@@ -612,11 +612,11 @@ function PixelVisionOS:UpdateIconGroup(data)
                     -- displaySize.width = displaySize.width - 1
                     -- displaySize.y = displaySize.y - 9
 
-                    if((self.editorUI.collisionManager.mousePos.x + (clipSize.w / 2)) > displaySize.x) then
-                        clipSize.w = clipSize.w - ((self.editorUI.collisionManager.mousePos.x + (clipSize.w / 2)) - displaySize.x)
-                    elseif((self.editorUI.collisionManager.mousePos.x - (clipSize.w / 2)) < 0) then
+                    if((editorUI.collisionManager.mousePos.x + (clipSize.w / 2)) > displaySize.x) then
+                        clipSize.w = clipSize.w - ((editorUI.collisionManager.mousePos.x + (clipSize.w / 2)) - displaySize.x)
+                    elseif((editorUI.collisionManager.mousePos.x - (clipSize.w / 2)) < 0) then
 
-                        local tmp = clipSize.w - ((self.editorUI.collisionManager.mousePos.x + (clipSize.w / 2))) + 1
+                        local tmp = clipSize.w - ((editorUI.collisionManager.mousePos.x + (clipSize.w / 2))) + 1
 
                         clipSize.x = tmp
                         clipSize.w = clipSize.w - tmp
@@ -625,12 +625,12 @@ function PixelVisionOS:UpdateIconGroup(data)
 
                     end
 
-                    if((self.editorUI.collisionManager.mousePos.y + (clipSize.h / 2)) > displaySize.y) then
-                        clipSize.h = clipSize.h - ((self.editorUI.collisionManager.mousePos.y + (clipSize.h / 2)) - displaySize.y)
-                    elseif((self.editorUI.collisionManager.mousePos.y - (clipSize.h / 2)) < 4) then
+                    if((editorUI.collisionManager.mousePos.y + (clipSize.h / 2)) > displaySize.y) then
+                        clipSize.h = clipSize.h - ((editorUI.collisionManager.mousePos.y + (clipSize.h / 2)) - displaySize.y)
+                    elseif((editorUI.collisionManager.mousePos.y - (clipSize.h / 2)) < 4) then
                         -- clipSize.h = 0
 
-                        local tmp = clipSize.h - ((self.editorUI.collisionManager.mousePos.y + (clipSize.h / 2))) + 3
+                        local tmp = clipSize.h - ((editorUI.collisionManager.mousePos.y + (clipSize.h / 2))) + 3
 
                         clipSize.y = tmp
                         clipSize.h = clipSize.h - tmp
@@ -640,16 +640,16 @@ function PixelVisionOS:UpdateIconGroup(data)
                     end
 
                     data.drawIconArgs[1] = btn.cachedPixelData["dragging"]:SamplePixels(clipSize.x, clipSize.y, clipSize.w, clipSize.h)
-                    data.drawIconArgs[2] = self.editorUI.collisionManager.mousePos.x - mouseOffset.x
-                    data.drawIconArgs[3] = self.editorUI.collisionManager.mousePos.y - mouseOffset.y
+                    data.drawIconArgs[2] = editorUI.collisionManager.mousePos.x - mouseOffset.x
+                    data.drawIconArgs[3] = editorUI.collisionManager.mousePos.y - mouseOffset.y
                     data.drawIconArgs[4] = clipSize.w
                     data.drawIconArgs[5] = clipSize.h
 
                     -- DrawPixels(btn.cachedPixelData["up"], 0,0)
-                    self.editorUI:NewDraw("DrawPixels", data.drawIconArgs)
+                    editorUI:NewDraw("DrawPixels", data.drawIconArgs)
                     
                     -- TODO need a file count when dragging
-                    -- self.editorUI:NewDraw("DrawText", {string.format("%02d", 1), data.drawIconArgs[2], data.drawIconArgs[3], DrawMode.Sprite, "small", 15, -4})
+                    -- editorUI:NewDraw("DrawText", {string.format("%02d", 1), data.drawIconArgs[2], data.drawIconArgs[3], DrawMode.Sprite, "small", 15, -4})
                 end
 
             end
@@ -702,7 +702,7 @@ function PixelVisionOS:SelectIconButton(data, id, trigger)
                 buttonData.selected = false
 
                 -- Enable the button since it is no longer selected
-                self.editorUI:Enable(buttonData, true)
+                editorUI:Enable(buttonData, true)
 
             end
 
@@ -724,24 +724,24 @@ end
 
 function PixelVisionOS:IconGroupCurrentSelection(data)
 
-    return self.editorUI:ToggleGroupCurrentSelection(data)
+    return editorUI:ToggleGroupCurrentSelection(data)
 
 end
 
 -- TODO is anything using this?
 function PixelVisionOS:ToggleIconGroupSelections(data)
 
-    self.editorUI:ToggleGroupSelections(data)
+    editorUI:ToggleGroupSelections(data)
 
 end
 
 function PixelVisionOS:ClearIconGroupSelections(data)
-    self.editorUI:ClearGroupSelections(data)
+    editorUI:ClearGroupSelections(data)
 end
 
 function PixelVisionOS:ClearIconGroup(data)
 
-    self.editorUI:ClearToggleGroup(data)
+    editorUI:ClearToggleGroup(data)
 
 end
 
@@ -749,7 +749,7 @@ function PixelVisionOS:HighlightIconButton(data, value)
 
     if(data.highlight ~= value) then
         data.highlight = value
-        self.editorUI:Invalidate(data)
+        editorUI:Invalidate(data)
     end
     
 end

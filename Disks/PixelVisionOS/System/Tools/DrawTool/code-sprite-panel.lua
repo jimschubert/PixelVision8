@@ -37,7 +37,7 @@ function DrawTool:CreateSpritePanel()
 
     self.spritePickerData.picker.borderOffset = 8
 
-    self.spritePickerData.onRelease = function(value) self:OnSelectSprite(value) end
+    self.spritePickerData.onAction = function(value) self:ChangeSpriteID(value) end
     self.spritePickerData.onDropTarget = function(src, dest) self:OnSpritePickerDrop(src, dest) end
 
     self.spriteIDInputData = editorUI:CreateInputField({x = 176, y = 208, w = 32}, "0", "The ID of the currently selected sprite.", "number", nil, PaletteOffset(0))
@@ -51,9 +51,6 @@ function DrawTool:CreateSpritePanel()
     self.spriteIDInputData.min = 0
     self.spriteIDInputData.max = gameEditor:TotalSprites() - 1
     self.spriteIDInputData.onAction = function(value) self:ChangeSpriteID(value) end
-    
-    
-    
     
     self.spriteMode = 0
     self.maxSpriteSize = #self.selectionSizes
@@ -114,6 +111,22 @@ function DrawTool:UpdateSpritePanel()
         end
 
     end
+
+    if(self.lastSpriteOffset ~= self.spritePickerData.colorOffset) then
+        self.lastSpriteOffset = self.spritePickerData.colorOffset
+        self.offsetDisplayText = string.format("OFFSET %03d", self.lastSpriteOffset - pixelVisionOS.colorOffset)
+    end
+
+    -- DrawText(  )
+
+    editorUI:NewDraw("DrawText", {self.offsetDisplayText, 172, 224-2, DrawMode.Sprite, "medium", 6, -4})
+
+    if(self.lastSpriteSize ~= self.selectionSizes[self.spriteMode]) then
+        self.lastSpriteSize = self.selectionSizes[self.spriteMode]
+        self.sizeDisplayText = string.format("%02dx%02d", self.lastSpriteSize.x * editorUI.spriteSize.x, self.lastSpriteSize.y * editorUI.spriteSize.y)
+    end
+
+    editorUI:NewDraw("DrawText", {self.sizeDisplayText, 224-2, 224-2, DrawMode.Sprite, "medium", 6, -4 })
 
 end
 
@@ -216,19 +229,6 @@ function DrawTool:ChangeSpriteID(value)
     
     self.spritePickerData.dragging = false
 
-
-end
-
-function DrawTool:OnSelectSprite(value)
-
-    
-
-    -- Reset history
-    -- ClearHistory()
-
-    -- print("Sprite", dump(gameEditor:Sprite(value)))
-
-    -- print("test", self.spritePickerData)
     self:ForcePickerFocus(self.spritePickerData)
 
     -- Update the input field
@@ -242,9 +242,23 @@ function DrawTool:OnSelectSprite(value)
         
     end
 
+end
+
+-- function DrawTool:OnSelectSprite(value)
+
+    
+
+    -- Reset history
+    -- ClearHistory()
+
+    -- print("Sprite", dump(gameEditor:Sprite(value)))
+
+    -- print("test", self.spritePickerData)
+    
+
     -- ResetColorInvalidation()
 
-end
+-- end
 
 function DrawTool:OnSpritePickerDrop(src, dest)
 
@@ -283,6 +297,8 @@ function DrawTool:OnSpritePickerDrop(src, dest)
             local srcSprite = gameEditor:ReadGameSpriteData(srcSpriteID, selection.x, selection.y)
             local destSprite = gameEditor:ReadGameSpriteData(destSpriteID, selection.x, selection.y)
 
+            -- TODO need to track the switch for undo
+
             -- Swap the sprite in the tool's color memory
             gameEditor:WriteSpriteData(srcSpriteID, destSprite, selection.x, selection.y)
             gameEditor:WriteSpriteData(destSpriteID, srcSprite, selection.x, selection.y)
@@ -305,14 +321,17 @@ function DrawTool:OnSpritePickerDrop(src, dest)
         end
     elseif(src.name == self.systemColorPickerData.name) then
 
-    -- Get the current color
-    local colorOffset = src.pressSelection.index
+        -- Get the current color
+        -- local colorOffset = src.pressSelection.index
 
-    -- print("Color Offset", src.pressSelection.index)
+        pixelVisionOS:ChangeItemPickerColorOffset(dest, src.pressSelection.index + pixelVisionOS.colorOffset)
 
-    -- TODO change the offset of the sprite picker by that value
+    elseif(src.name == self.paletteColorPickerData.name) then
+        
+        -- Get the current color
+        local colorOffset = pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + (((src.pages.currentSelection - 1) * 16) + src.picker.selected)
 
-    pixelVisionOS:ChangeItemPickerColorOffset(dest, src.pressSelection.index + pixelVisionOS.colorOffset)
+        pixelVisionOS:ChangeItemPickerColorOffset(dest, colorOffset)
 
     end
 

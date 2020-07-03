@@ -1,7 +1,7 @@
 function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffset, spriteName, toolTip, enableDragging, draggingLabel)
 
     -- Create the component's base values
-    local data = self.editorUI:CreateData(rect)
+    local data = editorUI:CreateData(rect)
 
     data.name = "ItemPicker" .. data.name
 
@@ -110,16 +110,17 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
     end
 
     -- Picker component to use for selection
-    data.picker = self.editorUI:CreatePicker({x = data.visibleRect.x, y = data.visibleRect.y, w = data.visibleRect.w, h = data.visibleRect.h}, itemSize.x, itemSize.y, data.totalItems, spriteName, toolTip)
+    data.picker = editorUI:CreatePicker({x = data.visibleRect.x, y = data.visibleRect.y, w = data.visibleRect.w, h = data.visibleRect.h}, itemSize.x, itemSize.y, data.totalItems, spriteName, toolTip)
 
     -- Keep the picker from drawing the over graphic
     data.picker.drawOver = false
 
     data.picker.onAction = function(value, doubleClick)
 
-        if(self.currentButtonDown == data.name) then
+        print("OnAction")
+        if(editorUI.inFocusUI.name == data.name) then
             
-            self.currentButtonDown = nil
+            -- editorUI.inFocusUI = nil
             data.pressSelection = nil
 
             value = self:CalculateItemPickerPosition(data).index
@@ -136,7 +137,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
 
     data.picker.onPress = function()
 
-        self.currentButtonDown = data.name
+        -- editorUI.inFocusUI = data
 
         -- Store the current ID being pressed
         data.pressSelection = self:CalculateItemPickerPosition(data)
@@ -194,12 +195,12 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
     data.enableDragging = enableDragging
 
     if(data.enableDragging == true) then
-        self.editorUI.collisionManager:EnableDragging(data, .2, data.draggingLabel)
+        editorUI.collisionManager:EnableDragging(data, .2, data.draggingLabel)
 
         -- Make sure we capture the onEndDrag event, clear the selection and pass it back to the collisionManager
         data.onEndDrag = function(target)
 
-            self.editorUI.collisionManager:EndDrag(target)
+            editorUI.collisionManager:EndDrag(target)
 
             data.pressSelection = nil
         end
@@ -369,8 +370,9 @@ function PixelVisionOS:UpdateItemPicker(data)
 
         -- Calculate the bg color
         local bgColor = data.showBGColor and gameEditor:BackgroundColor() or (self.emptyColorID - data.colorOffset - 1)
-
-        gameEditor:CopyCanvasToDisplay(data.canvas, data.visibleRect.x, data.visibleRect.y, data.visibleRect.w, data.visibleRect.h, data.colorOffset, bgColor, data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY )
+--int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1, int maskColor = -1, int maskColorID = -1, Rectangle? viewport = null
+        data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, 1, -1, bgColor, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h))
+        -- gameEditor:CopyCanvasToDisplay(data.canvas, data.visibleRect.x, data.visibleRect.y, data.visibleRect.w, data.visibleRect.h, data.colorOffset, bgColor, data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY )
 
         -- Reset the display invalidation
         data.invalidateDisplay = false
@@ -401,14 +403,14 @@ function PixelVisionOS:UpdateItemPicker(data)
             -- See if control is down while dragging
             data.copyDrag = (Key(Keys.LeftControl) == true or Key(Keys.RightControl) == true) and data.ctrlCopyEnabled == true
 
-            if(self.editorUI.collisionManager:MouseInRect(data.visibleRect) and data.overPos.index < data.total) then
+            if(editorUI.collisionManager:MouseInRect(data.visibleRect) and data.overPos.index < data.total) then
 
                 -- data.overPos = self:CalculateItemPickerPosition(data)
                 data.overPos.x = data.visibleRect.x + (data.overPos.x * data.itemSize.x) - data.lastStartX
                 data.overPos.y = data.visibleRect.y + (data.overPos.y * data.itemSize.y) - data.lastStartY
             else
-                data.overPos.x = self.editorUI.collisionManager.mousePos.x
-                data.overPos.y = self.editorUI.collisionManager.mousePos.y
+                data.overPos.x = editorUI.collisionManager.mousePos.x
+                data.overPos.y = editorUI.collisionManager.mousePos.y
 
                 -- Offset the item so you can see it under the cursor
                 -- local offset =  
@@ -431,23 +433,23 @@ function PixelVisionOS:UpdateItemPicker(data)
                 if(data.viewport:Contains(NewPoint(data.emptyDrawArgs[2] - data.visibleRect.x, data.emptyDrawArgs[3] - data.visibleRect.y))) then
 
                     -- Draw empty tiles
-                    self.editorUI:NewDraw("DrawSprites", data.emptyDrawArgs)
+                    editorUI:NewDraw("DrawSprites", data.emptyDrawArgs)
 
                 end
 
             end
 
-            data.scrollOverTime = data.scrollOverTime + self.editorUI.timeDelta
+            data.scrollOverTime = data.scrollOverTime + editorUI.timeDelta
 
             if(data.scrollOverTime > data.scrollOverDelay) then
                 -- See if the dragged item is inside of the other UI elements
-                if(data.vSlider ~= nil and self.editorUI.collisionManager:MouseInRect(data.vSlider.rect) == true) then
+                if(data.vSlider ~= nil and editorUI.collisionManager:MouseInRect(data.vSlider.rect) == true) then
 
-                    self.editorUI:UpdateSliderPosition(data.vSlider)
+                    editorUI:UpdateSliderPosition(data.vSlider)
 
-                elseif(data.hSlider ~= nil and self.editorUI.collisionManager:MouseInRect(data.hSlider.rect) == true) then
+                elseif(data.hSlider ~= nil and editorUI.collisionManager:MouseInRect(data.hSlider.rect) == true) then
 
-                    self.editorUI:UpdateSliderPosition(data.hSlider)
+                    editorUI:UpdateSliderPosition(data.hSlider)
 
                 else
                     -- Reset page over flag
@@ -465,7 +467,7 @@ function PixelVisionOS:UpdateItemPicker(data)
 
             -- Make sure we are following the mouse if we are not over an item
             if(data.overPos.index == -1) then
-                data.overPos = self.editorUI.collisionManager.mousePos
+                data.overPos = editorUI.collisionManager.mousePos
             end
 
             data.overPos.x = data.rect.x + (data.overPos.x * data.itemSize.x) - data.lastStartX
@@ -507,13 +509,13 @@ function PixelVisionOS:UpdateItemPicker(data)
 
         if( data.overPos.x > - offscreen and (data.overPos.x + data.tmpItemRect.width) < (data.displaySize.x + offscreen) and data.overPos.y > - offscreen and (data.overPos.y + data.tmpItemRect.height) < (data.displaySize.y + offscreen)) then
             -- -- Draw rect behind the over selection
-            self.editorUI:NewDraw("DrawRect", data.maskSpriteDrawArgs)
+            editorUI:NewDraw("DrawRect", data.maskSpriteDrawArgs)
 
             -- Draw selected sprites in the background
-            self.editorUI:NewDraw("DrawPixels", data.overItemDrawArgs)
+            editorUI:NewDraw("DrawPixels", data.overItemDrawArgs)
 
             -- Draw the selection box on top
-            self.editorUI:NewDraw("DrawSprites", data.picker.overDrawArgs)
+            editorUI:NewDraw("DrawSprites", data.picker.overDrawArgs)
 
         end
 
@@ -569,8 +571,8 @@ end
 
 function PixelVisionOS:CalculateItemPickerPosition(data, x, y)
 
-    x = x or self.editorUI.collisionManager.mousePos.x
-    y = y or self.editorUI.collisionManager.mousePos.y
+    x = x or editorUI.collisionManager.mousePos.x
+    y = y or editorUI.collisionManager.mousePos.y
 
     local position = 
     {
@@ -578,7 +580,7 @@ function PixelVisionOS:CalculateItemPickerPosition(data, x, y)
         y = math.floor((y - data.rect.y) / data.itemSize.y),
     }
 
-    if(self.editorUI.collisionManager:MouseInRect(data.visibleRect)) then
+    if(editorUI.collisionManager:MouseInRect(data.visibleRect)) then
 
         -- Offset for scroll
         position.x = position.x + (data.lastStartX / data.itemSize.x)

@@ -33,6 +33,19 @@ function PixelVisionOS:CreateSpritePicker(rect, itemSize, columns, rows, colorOf
     data.pagePosition.x = data.pagePosition.x + 16
   end
 
+  data.picker.onAction = function(value, doubleClick)
+
+    -- Clear the last over id to force the over box to redraw
+    data.lastSpriteID = value
+
+    value = self:CalculateItemPickerPosition(data)
+
+    if(data.onAction ~= nil) then
+      data.onAction(value.index, doubleClick)
+    end
+
+  end
+
   data.pages = editorUI:CreateToggleGroup()
 
   data.pages.onAction = function(value)

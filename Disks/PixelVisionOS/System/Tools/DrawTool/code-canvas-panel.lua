@@ -27,23 +27,22 @@ function DrawTool:CreateCanvas()
 
     self.canvasData.onPress = function()
             
+        print("Press")
         self:BeginUndo()
-
-        self:SaveCanvasState()
-        -- local pixelData = editorUI:GetCanvasPixelData(canvasData)
 
         self.canvasData.inDrawMode = true
 
         self:ForcePickerFocus(self.canvasData)
 
-        -- UpdateHistory(pixelData)
     end
 
-    editorUI.collisionManager:EnableDragging(self.canvasData, .5, "SpritePicker")
+    -- editorUI.collisionManager:EnableDragging(self.canvasData, .5, "SpritePicker")
 
-    self.canvasData.onDropTarget = function(src, dest) self:OnCanvasDrop(src, dest) end
+    -- self.canvasData.onDropTarget = function(src, dest) self:OnCanvasDrop(src, dest) end
 
     self.canvasData.onAction = function() 
+
+        print("Release")
         self:OnSaveCanvasChanges() 
         self:EndUndo()
     end
@@ -102,20 +101,6 @@ function DrawTool:UpdateCanvasUI()
     
 end
 
-function DrawTool:SaveCanvasState()
-
-    --UpdateHistory(pixelVisionOS:GetCanvasPixelData(canvasData))
-
-    -- if(self.colorPreviewInvalid == true) then
-
-    --     self:DrawColorPerSpriteDisplay()
-
-    --     self:ResetColorPreviewValidation()
-
-    -- end
-
-end
-
 function DrawTool:ShowCanvasPanel()
 
     if(self.canvasPanelActive == true) then
@@ -142,18 +127,6 @@ function DrawTool:HideCanvasPanel()
     
 end
 
-function DrawTool:OnCanvasDrop(src, dest)
-
-    if(src.name == self.spritePickerData.name) then
-
-        self:ChangeSpriteID(src.pressSelection.index)
-
-        -- TODO this is overkill, we just need a way to refresh the selection
-        pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
-    end
-
-end
-
 function DrawTool:ToggleBackgroundColor(value)
 
 
@@ -163,7 +136,7 @@ function DrawTool:ToggleBackgroundColor(value)
 
     if(self.usePalettes == true) then
 
-        pixelVisionOS:SelectColorPage(self.paletteColorPickerData, self.paletteColorPickerData.picker.selected)
+        -- pixelVisionOS:SelectColorPage(self.paletteColorPickerData, self.paletteColorPickerData.picker.selected)
 
     else
         self.canvasData.emptyColorID = pixelVisionOS.emptyColorID
@@ -177,7 +150,7 @@ function DrawTool:InvalidateCanvasPanelBackground()
 
     -- TODO should only need to do this when there is a switch between modes
     if(self.selectionSize.x ~= self.selectionSize) then
-        print("Canvas is invalid")
+        -- print("Canvas is invalid")
         self.canvasPanelBackgroundInvalid = true
     end
 
@@ -185,7 +158,7 @@ end
 
 function DrawTool:ClearCanvasPanelBackground()
 
-    print("Canvas BG Cleared")
+    -- print("Canvas BG Cleared")
     
     -- Need to draw immediately since the canvas doesn't run through the UI draw queue
     DrawSprites(self.clearBackgroundPattern, 4, 4, 16, false, false, DrawMode.Tile)
@@ -226,16 +199,6 @@ function DrawTool:UpdateCanvas(value, flipH, flipV)
     end
 
     self.lastSelection = value
-
-    -- TODO enable this
-    -- pixelVisionOS:EnableMenuItem(RevertShortcut, false)
-
-    -- -- Only enable the clear menu when the sprite is not empty
-    -- pixelVisionOS:EnableMenuItem(ClearShortcut, not self:IsSpriteEmpty(tmpPixelData))
-
-
-
-    -- self:InvalidateColorPreview()
 
 end
 

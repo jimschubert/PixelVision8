@@ -158,7 +158,7 @@ function DrawTool:OnAdd()
 --  print("Sel", self.paletteColorPickerData.currentSelection + 1)
 
 -- print("Sel",  self.paletteColorPickerData.visiblePerPage - 1)
-            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage - 1)
+            -- pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage - 1)
 
         else
 
@@ -517,8 +517,6 @@ function DrawTool:GetState()
 
     local currentMode = self.mode
 
-    print("Mode", currentMode)
-    
     local spriteID = self.spritePickerData.currentSelection
     local systemColorID = self.lastSystemColorID
     local palColorID = self.lastPaletteColorID
@@ -527,23 +525,21 @@ function DrawTool:GetState()
 
     local pixelData = nil
 
+    local selectRect = nil
+    local selection = nil
+
     if(self.mode == SpriteMode) then
+        
         pixelData = pixelVisionOS:GetCanvasPixelData(self.canvasData)
+
+        if(self.canvasData.selectRect ~= nil) then
+            selectRect = self.canvasData.selectRect
+            selection = self.canvasData.selection
+        end
+
     end
 
-    -- end
-
-    -- Mode 2 stores bg position
-    -- if(mode == 0 or mode == 2) then
-
-
-    -- end
-
-    -- if(mode == 0 or mode == 3) then
-    --     -- TODO Capture state change for palette mode?
-    -- end
-
-    -- TODO capture position
+    
 
     local state = {
         -- colors = colorSnapshot,
@@ -600,6 +596,13 @@ function DrawTool:GetState()
                 self:OnSaveCanvasChanges()
 
             end
+
+            -- if(selectRect ~= nil) then
+
+            --     self.canvasData.selectRect = selectRect
+            --     self.canvasData.selection = selection
+
+            -- end
 
         end
     }

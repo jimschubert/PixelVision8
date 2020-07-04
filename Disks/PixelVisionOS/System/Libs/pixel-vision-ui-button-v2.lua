@@ -155,7 +155,7 @@ function EditorUI:UpdateButton(data, hitRect)
       end
     end
 
-    print(data.name, data.buttonCursor)
+    -- print(data.name, data.buttonCursor)
     -- If we are in the collision area, set the focus
     self:SetFocus(data, data.buttonCursor)
 

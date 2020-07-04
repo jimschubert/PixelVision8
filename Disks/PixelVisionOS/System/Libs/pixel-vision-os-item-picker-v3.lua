@@ -278,6 +278,7 @@ function PixelVisionOS:SelectItemPickerIndex(data, value, callback, updateScroll
     data.currentSelection = CalculateIndex(tmpPos.x, tmpPos.y, data.columns)
 
     if(data.onRelease ~= nil and callback ~= false) then
+        print("picker callback")
         data.onRelease(data.currentSelection)
     end
 

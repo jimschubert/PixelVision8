@@ -232,7 +232,18 @@ function DrawTool:OnSelectTool(value)
 
         -- Restore the last palette selection
         if(self.paletteColorPickerData.currentSelection == -1) then
-            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.lastPaletteColorID)
+
+            -- Need to calculate the exact position if the pages have changed
+            -- pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.lastPaletteColorID)
+
+            local index = self.lastPaletteColorID % self.paletteColorPickerData.totalPerPage
+            local newID = ((self.paletteColorPickerData.pages.currentSelection - 1)* self.paletteColorPickerData.totalPerPage) + index
+
+            -- if(self.lastPaletteColorID ~= newID) then
+
+            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, newID)
+            -- end
+            -- print("test", index, newID, self.lastPaletteColorID)
         end
 
     end

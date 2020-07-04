@@ -374,6 +374,8 @@ function PixelVisionOS:SelectColorPickerIndex(data, value)
   -- Calculate the correct page from the position y value
   local tmpPage = math.floor((pos.y * 8) / data.pageSize)
 
+  print(data.name, value, tmpPage, dump(pos),data.pageSize)
+
   self:OnColorPickerPage(data, tmpPage + 1)
 
   self:SelectItemPickerIndex(data, value, false, true)

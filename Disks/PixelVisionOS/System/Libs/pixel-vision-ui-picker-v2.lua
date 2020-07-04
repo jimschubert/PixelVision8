@@ -315,9 +315,10 @@ function EditorUI:SelectPicker(data, value, callAction)
   -- TODO this is a bit sloppy, it should run through the internal press logic and not duplicate it all here
   local pos = CalculatePosition(value, data.columns)
 
-  data.selectedDrawArgs[2] = (pos.x * data.itemWidth) + data.rect.x - data.borderOffset
-  data.selectedDrawArgs[3] = (pos.y * data.itemHeight) + data.rect.y - data.borderOffset
-
+  if(data.selectedDrawArgs ~=nil) then
+    data.selectedDrawArgs[2] = (pos.x * data.itemWidth) + data.rect.x - data.borderOffset
+    data.selectedDrawArgs[3] = (pos.y * data.itemHeight) + data.rect.y - data.borderOffset
+  end
   if(data.onAction ~= nil and callAction ~= false) then
 
     -- Trigger the onAction call back and pass in the double click value if the button is set up to use it

@@ -294,7 +294,7 @@ function DrawTool:UpdateHexColor(value)
             if(tmpColor == currentColor and tmpColor ~= pixelVisionOS.maskColor) then
 
                 -- Set the color to equal the new color
-                pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, index, value)
+                -- pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, index, value)
 
             end
 

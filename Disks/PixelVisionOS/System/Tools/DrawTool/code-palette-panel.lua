@@ -14,7 +14,7 @@ function DrawTool:CreatePalettePanel()
         {x = 32, y = 184, w = 128, h = 32},
         {x = 16, y = 16},
         pixelVisionOS.totalPaletteColors,
-        pixelVisionOS.colorsPerSprite, -- Total per page
+        16, -- Total per page
         8, -- Max pages
         pixelVisionOS.colorOffset + 128,
         "itempicker",
@@ -23,6 +23,8 @@ function DrawTool:CreatePalettePanel()
         true,
         false
     )
+
+    pixelVisionOS:ColorPickerVisiblePerPage(self.paletteColorPickerData, pixelVisionOS.colorsPerSprite)
 
     self.paletteColorPickerData.picker.borderOffset = 8
 
@@ -96,22 +98,24 @@ function DrawTool:CreatePalettePanel()
 
             local colorID = table.indexOf(pixelVisionOS.systemColors, Color(pixelVisionOS.colorOffset + 128 + value)) - 1 
 
+            print("Focus Pal")
             self:ForcePickerFocus(self.systemColorPickerData)
 
             self:OnSelectSystemColor(colorID)
 
             pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, colorID)
-
-
             
             -- TODO find and select color in picker
             return
         end
 
+        print("paletteColorPickerData.onAction", value)
+
+        self:OnSelectPaletteColor(value)
+
+        self:ForcePickerFocus(self.paletteColorPickerData)
+
     end
-
-    self.paletteColorPickerData.onRelease = function(value) self:OnSelectPaletteColor(value) end
-
 
     self.paletteColorPickerData.onDropTarget = function(src, dest) self:OnPalettePickerDrop(src, dest) end
     
@@ -146,10 +150,11 @@ function DrawTool:CreatePalettePanel()
         -- Need to reselect the current color in the new palette if we are in draw mode
         if(self.canvasData.tool ~= "eraser" and self.canvasData.tool ~= "select") then
 
-            local colorID = Clamp(self.paletteColorPickerData.picker.selected, 0, pixelVisionOS.colorsPerSprite) + pageOffset
+            local colorID = (self.lastPaletteColorID % 16) + pageOffset
 
+            -- print("colorID", colorID, self.paletteColorPickerData.picker.selected, pageOffset, self.lastPaletteColorID % 16)
             if(self.paletteColorPickerData.currentSelection ~= colorID) then
-                pixelVisionOS:SelectItemPickerIndex(self.paletteColorPickerData, colorID, false, true)
+                pixelVisionOS:SelectItemPickerIndex(self.paletteColorPickerData, colorID, false, false)
                 self:OnSelectPaletteColor(colorID)
             end
             
@@ -188,19 +193,21 @@ end
 
 function DrawTool:OnSelectPaletteColor(value)
 
+    print("OnSelectPaletteColor", value)
+
     -- print("OnSelectPaletteColor", value)
 
-    self:ForcePickerFocus(self.paletteColorPickerData)
+    
         
     self.lastPaletteColorID = value
     
-    -- Force value to be in palette mode
+    -- -- Force value to be in palette mode
     value = self.paletteColorPickerData.picker.selected
 
-    -- print("Saving last pal", self.lastPaletteColorID)
+    -- -- print("Saving last pal", self.lastPaletteColorID)
     
 
-        -- Set the canvas brush color
+    --     -- Set the canvas brush color
     pixelVisionOS:CanvasBrushColor(self.canvasData, value)
 
 end

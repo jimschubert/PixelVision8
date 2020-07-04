@@ -332,6 +332,7 @@ function PixelVisionOS:UpdateCanvas(data, hitRect)
   else
 
     if(data.inFocus == true) then
+      self:CanvasPress(data, true)
       data.firstPress = true
       -- If we are not in the button's rect, clear the focus
       editorUI:ClearFocus(data)
@@ -592,11 +593,16 @@ function PixelVisionOS:CutPixels(data)
       end
   end
 
-  -- Change the stroke to a single pixel of white
-  data.tmpPaintCanvas:SetStroke({data.emptyColorID}, 1, 1)
+  selection.pixelData[i] = 5
+
+  local bgColor = data.showBGColor and gameEditor:BackgroundColor() + 256 or data.emptyColorID
+
 
   -- Change the stroke to a single pixel of white
-  data.tmpPaintCanvas:SetPattern({data.emptyColorID}, 1, 1)
+  data.tmpPaintCanvas:SetStroke({bgColor}, 1, 1)
+
+  -- Change the stroke to a single pixel of white
+  data.tmpPaintCanvas:SetPattern({bgColor}, 1, 1)
 
   -- Adjust right and bottom to account for 1 px border
   data.tmpPaintCanvas:DrawSquare(selection.size.Left, selection.size.Top, selection.size.Right - 1, selection.size.Bottom -1, true)
@@ -719,7 +725,7 @@ function PixelVisionOS:RedrawCanvas(data)
 
   -- TODO need to find a way to only draw this when the canvas has been invalidated
   if(data.showGrid == true) then
-    data.gridCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.Sprite, 1, -1, data.emptyColorID)
+    data.gridCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.Sprite, 1, -1, -1)
   end
 
   -- if(data.selectionCanvas.invalid == true) then
@@ -736,7 +742,9 @@ function PixelVisionOS:RedrawCanvas(data)
     -- Adjust right and bottom by 1 so selection is inside of selected pixels
     data.selectionCanvas:DrawSquare(data.selectRect.Left * data.scale, data.selectRect.Top * data.scale, data.selectRect.Right * data.scale - 1, data.selectRect.Bottom * data.scale -1, false)
 
-    data.selectionCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.Sprite, 1, -1, data.emptyColorID)
+    bgColor = data.showBGColor and gameEditor:BackgroundColor() + 256 or -1
+
+    data.selectionCanvas:DrawPixels(data.rect.x, data.rect.y, DrawMode.Sprite, 1, -1, -1)
   end
 
   end

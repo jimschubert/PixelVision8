@@ -148,8 +148,6 @@ function DrawTool:LoadSuccess()
 
     self:CreateToolbar()
 
-    local startSprite = 0
-
     if(self.debugMode == true) then
         self.colorMemoryCanvas = NewCanvas(8, TotalColors() / 8)
 
@@ -177,9 +175,6 @@ function DrawTool:LoadSuccess()
     -- print("Session", SessionID(), ReadSaveData("sessionID", ""), ReadMetadata("file", nil))
     if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
 
-
-        -- print("Restore SessionID")
-
         self.spriteMode = Clamp(tonumber(ReadSaveData("lastSpriteSize", "1")) - 1, 0, #self.selectionSizes)
         defaultSpriteID = tonumber(ReadSaveData("lastSpriteID", "0"))
         defaultToolID = tonumber(ReadSaveData("lastSelectedToolID", "1"))
@@ -187,16 +182,13 @@ function DrawTool:LoadSuccess()
         self.lastSystemColorID = tonumber(ReadSaveData("lastSystemColorID", "0"))
         self.lastPaletteColorID = tonumber(ReadSaveData("lastPaletteColorID", "0"))
         
-
-        
-
     end
 
     -- Change the sprite mode
     self:OnNextSpriteSize()
 
     -- Select the start sprite
-    self:ChangeSpriteID(startSprite)
+    self:ChangeSpriteID(defaultSpriteID)
 
     -- print("SCALE", self.spriteMode)
     self:ConfigureSpritePickerSelector(self.spriteMode)
@@ -208,6 +200,10 @@ function DrawTool:LoadSuccess()
     self:ChangeEditMode(defaultMode)
     
     self:ResetDataValidation()
+
+    -- print("Test", self.systemColorPickerData)
+
+    self:ForcePickerFocus(self.systemColorPickerData)
 
 
 end
@@ -280,9 +276,6 @@ function DrawTool:ForcePickerFocus(src)
         -- Change sprite picker focus color
         self.spritePickerData.picker.selectedDrawArgs[1] = _G["spritepickerover"].spriteIDs
 
-        -- Clear the palette picker selection in one one color can be selected at a time
-        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
-
         -- Toggle menu options
         pixelVisionOS:EnableMenuItem(CopyShortcut, false)
         pixelVisionOS:EnableMenuItem(PasteShortcut, false)
@@ -292,10 +285,15 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, true)
         
+        
         -- Restore last system color
         if(self.lastSystemColorID ~= nil) then
+            print("Reset Pal")
             pixelVisionOS:SelectColorPickerIndex(self.systemColorPickerData, self.lastSystemColorID)
         end
+
+        -- Clear the palette picker selection in one one color can be selected at a time
+        pixelVisionOS:ClearItemPickerSelection(self.paletteColorPickerData)
 
     elseif(src.name == self.paletteColorPickerData.name) then
 
@@ -339,14 +337,11 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, false)
 
-        -- print("Restore Palette", self.paletteColorPickerData.currentSelection, self.lastPaletteColorID)
-        -- -- Restore palette color
-        -- if(self.lastPaletteColorID ~= nil) then
+        print("Restore palette", self.lastPaletteColorID)
 
-        --     print("Restoring /  ", self.lastPaletteColorID)
-        --     pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.lastPaletteColorID)
-
-        -- end
+        if(self.lastSystemColorID ~= nil) then
+            pixelVisionOS:SelectColorPickerIndex(self.paletteColorPickerData, self.lastPaletteColorID)
+        end
 
     elseif(src.name == self.canvasData.name) then
 

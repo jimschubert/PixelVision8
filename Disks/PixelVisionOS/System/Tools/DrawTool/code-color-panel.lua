@@ -43,8 +43,15 @@ function DrawTool:CreateColorPanel()
         local index = 0
         local ending = ""
         
-        local toolTipMessage = "%s %s %03d %s"
         
+        local toolTipMessage = "%s %s %03d %s"
+
+        if(self.changingColorIndex == false) then 
+
+            -- TODO need to figure out which index it is over and change this accordingly
+            label = "mapped index"
+
+        end
         
         if(tmpData.dragging) then
 
@@ -225,11 +232,111 @@ function DrawTool:UpdateColorPanel()
 
     pixelVisionOS:UpdateColorPicker(self.systemColorPickerData)
 
-    -- TODO this should be put into the os DRAW queue
-    if(self.showBGIcon == true) then
-        editorUI:NewDraw("DrawSprites", self.bgDrawArgs)
-        -- DrawSprites(bgflagicon.spriteIDs, self.systemColorPickerData.rect.x + self.BGIconX, self.systemColorPickerData.rect.y + self.BGIconY, bgflagicon.width, false, false, DrawMode.UI)
+    -- Reset the render flag if dragging normally 
+    if(self.systemColorPickerData.dragging == true) then
+        self.systemColorPickerData.drawOver = true
+        self.systemColorPickerData.drawEmpty = true
     end
+    
+    if(self.selectionMode == SystemColorMode and (self.changingColorIndex == true or Key(Keys.LeftAlt, InputState.Down) or Key(Keys.RightAlt, InputState.Down))) then
+
+        if(self.colorMap == nil) then
+
+            local title = "Error"
+            local message = "The sprites were not analyzed so you will not be able to remap the color indexes. If you'd like to use this feature, you will need to restart the tool and hold down the CTRL key until the analyze sprite message appears."
+            pixelVisionOS:ShowMessageModal(title, message, 164)
+        else
+
+            -- TODO set the sprite picker color offset to 0
+
+            -- print("Dragging", self.systemColorPickerData.dragging)
+
+            self.changingColorIndex = false
+
+            self.colorLayerTime = self.colorLayerTime + (editorUI.timeDelta * 1000)
+
+            if( self.colorLayerTime > self.colorLayerDelay) then
+
+                self.colorLayerTime = 0
+
+                self.showIsolatedColor = not self.showIsolatedColor
+
+                local baseColorIDs = {}
+                -- print("Selected", self.systemColorPickerData.currentSelection)
+                -- local currentSelected = 0--self.systemColorPickerData.pressSelection.index
+                for i = 1, #self.colorMap do
+                    if(self.colorMap[i] ~= self.systemColorPickerData.currentSelection) then
+                        table.insert(baseColorIDs, self.colorMap[i])
+                    end
+                end
+
+                self.spritePickerData.isolateSpriteColors = self.showIsolatedColor == false and self.colorMap or baseColorIDs
+
+                pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
+
+            end
+
+            -- if(self.systemColorPickerData.dragging == true) then
+            --     print("pressSelection", dump(self.systemColorPickerData.pressSelection))
+            -- end
+
+            
+
+            -- Display color ID numbers
+            for i = 1, #self.colorMap do
+                local index =  i - 1
+                
+                -- TODO need to cache this?
+                local pos = CalculatePosition(self.colorMap[i], 8)
+                local drawMode = DrawMode.Sprite
+
+                if(self.systemColorPickerData.pressSelection ~= nil and self.systemColorPickerData.pressSelection.index == self.colorMap[i])  then
+                    
+                    self.changingColorIndex = true
+                    
+                    pos.x = self.systemColorPickerData.overItemDrawArgs[2]
+                    pos.y = self.systemColorPickerData.overItemDrawArgs[3]
+
+                    self.systemColorPickerData.drawOver = false
+                    self.systemColorPickerData.drawEmpty = false
+                    -- drawMode = DrawMode.SpriteAbove
+                    editorUI:NewDraw("DrawSprites", self.systemColorPickerData.picker.overDrawArgs)
+                    
+                else
+
+                    
+
+                    -- shift the position
+                    pos.x = (pos.x * self.systemColorPickerData.itemSize.x) + self.systemColorPickerData.rect.x
+                    pos.y = (pos.y * self.systemColorPickerData.itemSize.y) + self.systemColorPickerData.rect.y
+
+                end
+
+                local spriteData = _G["colorindex"..index]
+                -- DrawText( text, x, y, DrawMode, font, colorOffset, spacing )
+                -- editorUI:NewDraw("DrawText", {tostring(index), pos.x, pos.y, drawMode, "small", 15})
+                editorUI:NewDraw("DrawSprites", {spriteData.spriteIDs, pos.x, pos.y, spriteData.width, false, false, drawMode})
+                
+            end
+        end
+
+
+
+    else
+        if(self.showIsolatedColor == true) then
+            self.spritePickerData.isolateSpriteColors = nil
+
+            pixelVisionOS:InvalidateItemPickerDisplay(self.spritePickerData)
+
+            self.showIsolatedColor= false
+        end
+
+        if(self.showBGIcon == true) then
+            editorUI:NewDraw("DrawSprites", self.bgDrawArgs)
+        end
+
+    end
+
 end
 
 function DrawTool:UpdateHexColor(value)
@@ -294,7 +401,7 @@ function DrawTool:UpdateHexColor(value)
             if(tmpColor == currentColor and tmpColor ~= pixelVisionOS.maskColor) then
 
                 -- Set the color to equal the new color
-                -- pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, index, value)
+                pixelVisionOS:ColorPickerChangeColor(self.paletteColorPickerData, index, value)
 
             end
 
@@ -322,56 +429,104 @@ function DrawTool:OnSystemColorDropTarget(src, dest)
         local realSrcID = srcPos.index + src.altColorOffset
         local realDestID = destPos.index + dest.altColorOffset
 
-        -- Make sure the colors are not the same
-        if(realSrcID ~= realDestID and destPos.index < dest.total) then
+        if(self.changingColorIndex == true) then
 
-            -- Get the src and dest color hex value
-            local srcColor = Color(realSrcID)
-            local destColor = src.copyDrag == true and srcColor or Color(realDestID)
+            local colorIndex = table.indexOf(self.colorMap, srcPos.index)
+
+            print("Change index", colorIndex, "to", destPos.index)
+
+            -- Reset the flag
+            self.changingColorIndex = false
+
+            -- TODO need to be able to merge colors (make 3 and 5 into 3 for example)
+            -- TODO need to be able to swap the colors
+            if(colorIndex > 0 and table.indexOf(self.colorMap, destPos.index) == -1) then
+
+                local title = "Warning"
+                local message = "You are about to set the color index at %02d to %02d. This will require re-indexing all of the sprites.%s\n\nDo you want to do this?"
+
+                local warningMessage = ""
+
+                if(destPos.index > pixelVisionOS.colorsPerSprite) then
+                    warningMessage = "\n\nBy setting the color index greater than the number of colors a sprite can support, it may cause errors when changing palettes."
+                end
+
+                pixelVisionOS:ShowMessageModal(title, string.format(message, self.colorMap[colorIndex], destPos.index, warningMessage), 216, true, 
+                function ()
+
+                    if(pixelVisionOS.messageModal.selectionValue == true) then
+
+                        self:ReIndexSprites(self.colorMap[colorIndex], destPos.index)
+
+                        self.colorMap[colorIndex] = destPos.index
+
+                    end
+
+                    -- TODO Reindex the sprites
+
+                end
             
-            if(Key(Keys.LeftControl) == true or Key(Keys.RightControl) == true) then
-                -- print("Copy")
+            )
+                
             end
 
-            -- Make sure we are not moving a transparent color
-            if(srcColor == pixelVisionOS.maskColor or destColor == pixelVisionOS.maskColor) then
+            -- print("New map", dump(self.colorMap))
 
-                if(self.usePalettes == true and dest.name == self.systemColorPickerData.name) then
+        else
 
-                    pixelVisionOS:ShowMessageModal(self.toolName .." Error", "You can not replace the last color which is reserved for transparency.", 160, false)
+            print("realSrcID", realSrcID, "realDestID", realDestID)
 
-                    return
+            -- Make sure the colors are not the same
+            if(realSrcID ~= realDestID and destPos.index < dest.total) then
+
+                -- Get the src and dest color hex value
+                local srcColor = Color(realSrcID)
+                local destColor = src.copyDrag == true and srcColor or Color(realDestID)
+                
+                if(Key(Keys.LeftControl) == true or Key(Keys.RightControl) == true) then
+                    -- print("Copy")
+                end
+
+                -- Make sure we are not moving a transparent color
+                if(srcColor == pixelVisionOS.maskColor or destColor == pixelVisionOS.maskColor) then
+
+                    if(self.usePalettes == true and dest.name == self.systemColorPickerData.name) then
+
+                        pixelVisionOS:ShowMessageModal(self.toolName .." Error", "You can not replace the last color which is reserved for transparency.", 160, false)
+
+                        return
+
+                    end
 
                 end
 
+                self:BeginUndo()
+                
+                -- Swap the colors in the tool's color memory
+                pixelVisionOS:ColorPickerChangeColor(dest, realSrcID, destColor)
+                pixelVisionOS:ColorPickerChangeColor(dest, realDestID, srcColor)
+
+                -- Update just the colors that changed
+                local srcPixelData = pixelVisionOS:ReadItemPickerOverPixelData(src, srcPos.x, srcPos.y)
+
+                local destPixelData = pixelVisionOS:ReadItemPickerOverPixelData(dest, destPos.x, destPos.y)
+
+                src.canvas.SetPixels(srcPos.x, srcPos.y, src.itemSize.x, src.itemSize.y, srcPixelData)
+
+                pixelVisionOS:InvalidateItemPickerDisplay(src)
+
+                src.canvas.SetPixels(destPos.x, destPos.y, dest.itemSize.x, dest.itemSize.y, destPixelData)
+                -- Redraw the color page
+                pixelVisionOS:InvalidateItemPickerDisplay(dest)
+
+                pixelVisionOS:DisplayMessage("Color ID '"..realSrcID.."' was swapped with Color ID '"..realDestID .."'", 5)
+
+                self:EndUndo()
+
+                -- Invalidate the data so the tool can save
+                self:InvalidateData()
+
             end
-
-            self:BeginUndo()
-            
-            -- Swap the colors in the tool's color memory
-            pixelVisionOS:ColorPickerChangeColor(dest, realSrcID, destColor)
-            pixelVisionOS:ColorPickerChangeColor(dest, realDestID, srcColor)
-
-            -- Update just the colors that changed
-            local srcPixelData = pixelVisionOS:ReadItemPickerOverPixelData(src, srcPos.x, srcPos.y)
-
-            local destPixelData = pixelVisionOS:ReadItemPickerOverPixelData(dest, destPos.x, destPos.y)
-
-            src.canvas.SetPixels(srcPos.x, srcPos.y, src.itemSize.x, src.itemSize.y, srcPixelData)
-
-            pixelVisionOS:InvalidateItemPickerDisplay(src)
-
-            src.canvas.SetPixels(destPos.x, destPos.y, dest.itemSize.x, dest.itemSize.y, destPixelData)
-            -- Redraw the color page
-            pixelVisionOS:InvalidateItemPickerDisplay(dest)
-
-            pixelVisionOS:DisplayMessage("Color ID '"..realSrcID.."' was swapped with Color ID '"..realDestID .."'", 5)
-
-            self:EndUndo()
-
-            -- Invalidate the data so the tool can save
-            self:InvalidateData()
-
         end
 
     end

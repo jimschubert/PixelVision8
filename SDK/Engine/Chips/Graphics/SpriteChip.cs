@@ -142,12 +142,12 @@ namespace PixelVision8.Engine.Chips
         /// <summary>
         ///     Total number of sprites that can be stored in memory.
         /// </summary>
-        public int totalSprites => spritesPerPage * pages;
+        public int TotalSprites => spritesPerPage * pages;
 
         /// <summary>
         ///     Total number of sprites that exist in memory.
         /// </summary>
-        public int spritesInRam => cache.Count(x => x != null);
+        public int SpritesInMemory => cache.Count(x => x != null);
 
         /// <summary>
         ///     Number of colors per sprite.
@@ -284,7 +284,7 @@ namespace PixelVision8.Engine.Chips
         /// </summary>
         public void Clear()
         {
-            cache = new string[totalSprites];
+            cache = new string[TotalSprites];
             //            pixelDataCache = new int[totalSprites][];
             _texture.Clear();
         }
@@ -330,13 +330,13 @@ namespace PixelVision8.Engine.Chips
             }
         }
 
-        public void DrawSprite(ref int[] pixelData, int index, int x, int y, bool flipX = false, bool flipY = false,
-            int colorOffset = 0)
-        {
-
-
-
-        }
+        // public void DrawSprite(ref int[] pixelData, int index, int x, int y, bool flipX = false, bool flipY = false,
+        //     int colorOffset = 0)
+        // {
+        //
+        //
+        //
+        // }
 
         /// <summary>
         ///     Updates the sprite data at a given position in the

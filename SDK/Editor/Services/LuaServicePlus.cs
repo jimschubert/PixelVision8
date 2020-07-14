@@ -25,6 +25,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using MoonSharp.Interpreter;
+using PixelVision8.Engine.Chips;
 using PixelVision8.Engine.Utils;
 using PixelVision8.Runner.Exporters;
 using PixelVision8.Runner.Importers;
@@ -120,7 +121,7 @@ namespace PixelVision8.Runner.Services
             // Read file helpers
             luaScript.Globals["ReadJson"] = new Func<WorkspacePath, Dictionary<string, object>>(ReadJson);
             luaScript.Globals["ReadText"] = new Func<WorkspacePath, string>(ReadText);
-            luaScript.Globals["ReadImage"] = new Func<WorkspacePath, string, Image>(ReadImage);
+            luaScript.Globals["ReadImage"] = new Func<WorkspacePath, string, string[], Image>(ReadImage);
 
             // Save file helpers
             luaScript.Globals["SaveText"] = new Action<WorkspacePath, string>(SaveText);
@@ -224,6 +225,11 @@ namespace PixelVision8.Runner.Services
             return Json.Deserialize(text) as Dictionary<string, object>;
         }
 
+        public void Write(WorkspacePath dest, Dictionary<string, object> data)
+        {
+            SaveText(dest, Json.Serialize(data));
+        }
+
         public string ReadText(WorkspacePath src)
         {
             return workspace.ReadTextFromFile(src);
@@ -239,7 +245,7 @@ namespace PixelVision8.Runner.Services
             workspace.SaveTextToFile(dest, defaultText, true);
         }
 
-        public Image ReadImage(WorkspacePath src, string maskHex = "#ff00ff")
+        public Image ReadImage(WorkspacePath src, string maskHex = "#ff00ff", string[] colorRefs = null)
         {
             
             PNGReader reader = null;
@@ -255,17 +261,35 @@ namespace PixelVision8.Runner.Services
                 reader = new PNGReader(memoryStream.ToArray(), maskHex);
             }
 
-            var imageParser = new ImageParser(reader, maskHex);
+            var tmpColorChip = new ColorChip();
+
+            // If no colors are passed in, used the image's palette
+            if (colorRefs == null)
+            {
+                colorRefs = reader.colorPalette.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
+            }
+
+            tmpColorChip.total = colorRefs.Length;
+
+            for (int i = 0; i < colorRefs.Length; i++)
+            {
+                tmpColorChip.UpdateColorAt(i, colorRefs[i]);
+            }
+
+            var imageParser = new SpriteImageParser(reader, tmpColorChip);
             imageParser.CalculateSteps();
 
             while (imageParser.completed == false) imageParser.NextStep();
 
-            var colorRefs = reader.colorPalette.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
+            
+            // colorRefs = colors ?? reader.colorPalette.ToArray();
+            //
+            // var colorRefs = srcColors.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
 
             // Convert all of the pixels into color ids
-            var pixelIDs = reader.colorPixels.Select(c => Array.IndexOf(colorRefs, ColorUtils.RgbToHex(c.R, c.G, c.B))).ToArray();
+            // var pixelIDs = reader.colorPixels.Select(c => Array.IndexOf(colorRefs, ColorUtils.RgbToHex(c.R, c.G, c.B))).ToArray();
 
-            return new Image(reader.width, reader.height, colorRefs, pixelIDs);
+            return imageParser.image;//new Image(reader.width, reader.height, colorRefs, pixelIDs);
 
         }
 

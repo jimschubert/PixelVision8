@@ -99,7 +99,7 @@ namespace PixelVision8Tests
             if (LoadSpriteChip("sprites-small.png", "colors-pv8.png"))
             {
 
-                Assert.Pass("Loaded " + spriteChip.totalSprites + " sprites.");
+                Assert.Pass("Loaded " + spriteChip.TotalSprites + " sprites.");
                 
             }
             else

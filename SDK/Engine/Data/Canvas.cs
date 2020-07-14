@@ -705,7 +705,7 @@ namespace PixelVision8.Engine
         /// <param name="maskColorID"></param>
         /// <param name="viewport"></param>
         public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1,
-            int maskColor = -1, int maskColorID = -1, int colorOffset = 0, Rectangle? viewport = null)
+            int maskColor = -1, int maskColorID = -1, int colorOffset = 0, Rectangle? viewport = null, int[] isolateColors = null)
         {
             // This only works when the canvas has a reference to the gameChip
             if (gameChip == null) return;
@@ -730,8 +730,18 @@ namespace PixelVision8.Engine
             // Loop through and replace mask colors
             for (int i = 0; i < srcPixels.Length; i++)
             {
+
+                // Check to see if colors should be isolated
+                if (isolateColors != null && Array.IndexOf(isolateColors, srcPixels[i]) == -1)
+                {
+                    srcPixels[i] = -1;
+                }
+
+                // Replace any mask color with the supplied mask color
                 if (srcPixels[i] == maskColor)
+                {
                     srcPixels[i] = maskColorID;
+                }
             }
 
             var newWidth = tmpW * scale;

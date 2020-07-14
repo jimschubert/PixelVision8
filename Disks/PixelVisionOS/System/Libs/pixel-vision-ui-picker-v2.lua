@@ -59,7 +59,7 @@ function EditorUI:CreatePicker(rect, itemWidth, itemHeight, total, spriteName, t
 
   data.onClick = function(tmpData)
 
-    if(self.inFocusUI.name == tmpData.name) then
+    if(self.inFocusUI ~= nil and self.inFocusUI.name == tmpData.name) then
 
       self:PickerClick(tmpData, true, tmpData.doubleClickActive and tmpData.doubleClickTime < tmpData.doubleClickDelay)
 
@@ -148,6 +148,7 @@ function EditorUI:UpdatePicker(data, hitRect)
     -- Check to see if the mouse is over a valid area
     if(tmpPos.index > - 1 and tmpPos.index < data.total) then
 
+      
       -- If we are in the collision area, set the focus
       self:SetFocus(data, data.focusCursor)
 

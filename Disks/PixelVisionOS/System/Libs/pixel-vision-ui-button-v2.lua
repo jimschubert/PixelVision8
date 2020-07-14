@@ -40,7 +40,7 @@ function EditorUI:CreateButton(rect, spriteName, toolTip, forceDraw)
   data.onClick = function(tmpData)
 
     -- Only trigger the click action when the last pressed button name matches
-    if(self.inFocusUI.name == tmpData.name) then
+    if(self.inFocusUI ~= nil and self.inFocusUI.name == tmpData.name) then
       self:ClickButton(tmpData, true, tmpData.doubleClickActive and tmpData.doubleClickTime < tmpData.doubleClickDelay)
 
       -- self.inFocusUI = nil

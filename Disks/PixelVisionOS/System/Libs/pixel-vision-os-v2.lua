@@ -24,7 +24,7 @@ LoadScript("pixel-vision-ui-v2")
 LoadScript("pixel-vision-os-title-bar-v2")
 LoadScript("pixel-vision-os-message-bar-v2")
 LoadScript("pixel-vision-os-modal-v2")
-LoadScript("pixel-vision-os-message-modal-v2")
+LoadScript("pixel-vision-os-message-modal-v3")
 LoadScript("pixel-vision-os-color-utils-v2")
 LoadScript("pixel-vision-os-undo-v2")
 LoadScript("pixel-vision-os-clipboard-v2")
@@ -156,7 +156,7 @@ function PixelVisionOS:ShowAboutModal(toolTitle, optionalText, width)
 
 end
 
-function PixelVisionOS:ShowMessageModal(title, message, width, showCancel, onCloseCallback)
+function PixelVisionOS:ShowMessageModal(title, message, width, showCancel, onCloseCallback, okButtonSpriteName)
 
     -- Look to see if the modal exists
     if(self.messageModal == nil) then
@@ -170,7 +170,7 @@ function PixelVisionOS:ShowMessageModal(title, message, width, showCancel, onClo
     else
 
         -- If the modal exists, configure it with the new values
-        self.messageModal:Configure(title, message, width, showCancel)
+        self.messageModal:Configure(title, message, width, showCancel, okButtonSpriteName)
     end
 
     -- Open the modal

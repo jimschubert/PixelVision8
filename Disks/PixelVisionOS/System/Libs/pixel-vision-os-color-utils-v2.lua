@@ -104,6 +104,8 @@ function PixelVisionOS:ImportColorsFromGame()
 
     local tmpMaskColor = self.systemColors[1]
 
+    self.palettesAreEmpty = true
+
     for i = 129, self.totalColors do
 
         local index = i - 1
@@ -125,12 +127,16 @@ function PixelVisionOS:ImportColorsFromGame()
 
         end
 
+        if(self.palettesAreEmpty == true and color ~= tmpMaskColor) then
+            self.palettesAreEmpty = false
+        end
+
         Color(index + self.colorOffset, color)
 
     end
 
     self.totalSystemColors = #self.systemColors
-    
+
 end
 
 function PixelVisionOS:CopyToolColorsToGameMemory()

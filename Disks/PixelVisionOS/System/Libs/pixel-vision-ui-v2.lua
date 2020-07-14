@@ -228,6 +228,10 @@ end
 
 function EditorUI:SetFocus(data, cursor)
 
+    -- Don't set focus if the mouse was just released
+    if(self.collisionManager.mouseReleased == true) then
+        return
+    end
 
     -- Update the cursor no matter what
     self.cursorID = cursor or 2

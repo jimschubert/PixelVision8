@@ -52,12 +52,13 @@ function DrawTool:CreateDropDownMenu()
         {divider = true},
         {name = "Show Grid", action = function() self:ToggleGrid(not self.canvasData.showGrid) end, key = Keys.G, toolTip = "Toggle background color."},
         {name = "Show BG Color", action = function() self:ToggleBackgroundColor(not self.showBGColor) end, key = Keys.B, toolTip = "Toggle background color."},
-        {name = "Optimize", action = OnOptimize, toolTip = "Remove duplicate sprites."},
-        {name = "Sprite Builder", action = OnSpriteBuilder, toolTip = "Generate a sprite table from a project's SpriteBuilder dir."}, -- Reset all the values
+        {name = "Optimize", action = function() self:OnOptimizeSprites() end, toolTip = "Remove duplicate sprites."},
+        {name = "Sprite Builder", action = function() self:OnSpriteBuilder() end, enabled = self:EnableSpriteBuilder(), toolTip = "Generate a sprite table from a project's SpriteBuilder dir."}, -- Reset all the values
         {divider = true},
         {name = "Quit", key = Keys.Q, action = function () self:OnQuit() end, toolTip = "Quit the current game."}, -- Quit the current game
     }
 
+    print("self.rootDirectory", self.rootDirectory)
     if(PathExists(NewWorkspacePath(self.rootDirectory).AppendFile("code.lua"))) then
         table.insert(menuOptions, #menuOptions, {name = "Run Game", action = OnRunGame, key = Keys.R, toolTip = "Run the code for this game."})
     end
@@ -150,6 +151,8 @@ function DrawTool:OnAdd()
                 return
 
             end
+
+            -- TODO need to update the CPS value
 
             pixelVisionOS:ColorPickerVisiblePerPage(self.paletteColorPickerData, self.paletteColorPickerData.visiblePerPage + 1)
             pixelVisionOS:RebuildPickerPages(self.paletteColorPickerData)
@@ -490,7 +493,7 @@ function DrawTool:EndUndo()
 end
 
 function DrawTool:UpdateHistoryButtons()
-
+   
     pixelVisionOS:EnableMenuItem(UndoShortcut, pixelVisionOS:IsUndoable(self))
     pixelVisionOS:EnableMenuItem(RedoShortcut, pixelVisionOS:IsRedoable(self))
 

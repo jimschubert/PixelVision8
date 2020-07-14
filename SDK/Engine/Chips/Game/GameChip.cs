@@ -1468,7 +1468,7 @@ namespace PixelVision8.Engine.Chips
         /// </returns>
         public int TotalSprites(bool ignoreEmpty = false)
         {
-            return ignoreEmpty ? SpriteChip.spritesInRam : SpriteChip.totalSprites;
+            return ignoreEmpty ? SpriteChip.SpritesInMemory : SpriteChip.TotalSprites;
         }
 
         /// <summary>

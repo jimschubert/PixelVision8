@@ -42,9 +42,12 @@ function DrawTool:CreateCanvas()
 
     self.canvasData.onAction = function() 
 
-        print("Release")
-        self:OnSaveCanvasChanges() 
-        self:EndUndo()
+        if(editorUI.inFocusUI ~= nil and editorUI.inFocusUI.name == self.canvasData.name) then
+            print("Release")
+            self:OnSaveCanvasChanges() 
+            self:EndUndo()
+        end
+
     end
 
     self.clearBackgroundPattern = {}

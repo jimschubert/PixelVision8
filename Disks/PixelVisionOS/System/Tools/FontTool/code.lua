@@ -11,9 +11,9 @@
 -- API Bridge
 LoadScript("sb-sprites")
 LoadScript("pixel-vision-os-v2")
-LoadScript("pixel-vision-os-color-picker-v2")
-LoadScript("pixel-vision-os-sprite-picker-v3")
-LoadScript("pixel-vision-os-canvas-v2")
+LoadScript("pixel-vision-os-color-picker-v3")
+LoadScript("pixel-vision-os-sprite-picker-v4")
+LoadScript("pixel-vision-os-canvas-v3")
 LoadScript("code-characters")
 
 local toolName = "Color Tool"
@@ -313,7 +313,7 @@ function OnFontLoaded()
 
     _G["itempickerselectedup"] = {spriteIDs = charselection.spriteIDs, width = charselection.width, colorOffset = (_G["itempickerover"].colorOffset + 2)}
 
-    canvasData = editorUI:CreateCanvas(
+    canvasData = pixelVisionOS:CreateCanvas(
         {
             x = 8,
             y = 40,
@@ -330,9 +330,9 @@ function OnFontLoaded()
         0
     )
 
-    canvasData.overDrawArgs[8] = 0
+    -- canvasData.overDrawArgs[8] = 0
 
-    editorUI:CanvasBrushColor(canvasData, WHITE)
+    pixelVisionOS:CanvasBrushColor(canvasData, WHITE)
 
     canvasData.onPress = function()
 
@@ -346,16 +346,16 @@ function OnFontLoaded()
         local tmpColor = canvasData.paintCanvas:ReadPixelAt(tmpPos.x, tmpPos.y)
 
         -- Change the tool bases on what color the mouse is over
-        editorUI:ChangeCanvasTool(canvasData, tmpColor == 0 and "pen" or "eraser", 6)
+        pixelVisionOS:ChangeCanvasTool(canvasData, tmpColor == 0 and "pen" or "eraser", 6)
 
         canvasData.inDrawMode = true
 
-        UpdateHistory(editorUI:GetCanvasPixelData(canvasData))
+        UpdateHistory(pixelVisionOS:GetCanvasPixelData(canvasData))
     end
 
     canvasData.onAction = OnSaveCanvasChanges
 
-    editorUI:ChangeCanvasPixelSize(canvasData, 1)
+    pixelVisionOS:ChangeCanvasPixelSize(canvasData, 1)
 
     charPicker = editorUI:CreatePicker(
         {x = 152, y = 72, w = 96, h = 64 },
@@ -425,7 +425,7 @@ end
 
 function OnSaveCanvasChanges()
 
-    local pixelData = editorUI:GetCanvasPixelData(canvasData)
+    local pixelData = pixelVisionOS:GetCanvasPixelData(canvasData)
     -- local canvasSize = editorUI:GetCanvasSize(canvasData)
 
     local total = #pixelData
@@ -568,11 +568,11 @@ function OnSelectChar(value)
     local size = NewPoint(8, 8)
 
     -- TODO simulate selecting the first sprite
-    editorUI:ResizeCanvas(canvasData, size, scale, tmpPixelData)
+    pixelVisionOS:ResizeCanvas(canvasData, size, scale, tmpPixelData)
 
     -- editorUI:CanvasBrushColor(canvasData, WHITE)
 
-    editorUI:ChangeCanvasTool(canvasData, tools[1])
+    pixelVisionOS:ChangeCanvasTool(canvasData, tools[1])
 
     pixelVisionOS:EnableMenuItem(RevertShortcut, false)
 
@@ -719,7 +719,7 @@ function Update(timeDelta)
 
             editorUI:UpdatePicker(charPicker)
             editorUI:UpdateInputField(fontNameInputData)
-            editorUI:UpdateCanvas(canvasData)
+            pixelVisionOS:UpdateCanvas(canvasData)
             editorUI:UpdateStepper(spacingStepper)
             editorUI:UpdateStepper(charStepper)
 

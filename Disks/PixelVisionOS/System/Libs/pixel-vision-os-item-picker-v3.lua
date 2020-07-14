@@ -362,8 +362,7 @@ end
 function PixelVisionOS:UpdateItemPicker(data)
 
     editorUI:UpdatePicker(data.picker)
-    editorUI:UpdateSlider(data.vSlider)
-    editorUI:UpdateSlider(data.hSlider)
+    
 
     if(data.invalidateDisplay == true) then
 
@@ -371,14 +370,16 @@ function PixelVisionOS:UpdateItemPicker(data)
 
         -- Calculate the bg color
         local bgColor = data.showBGColor and gameEditor:BackgroundColor() or (self.emptyColorID - data.colorOffset - 1)
---int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1, int maskColor = -1, int maskColorID = -1, Rectangle? viewport = null
-        data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, 1, -1, bgColor, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h))
-        -- gameEditor:CopyCanvasToDisplay(data.canvas, data.visibleRect.x, data.visibleRect.y, data.visibleRect.w, data.visibleRect.h, data.colorOffset, bgColor, data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY )
+
+        data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, 1, -1, bgColor, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h), data.isolateSpriteColors)
 
         -- Reset the display invalidation
         data.invalidateDisplay = false
 
     end
+
+    editorUI:UpdateSlider(data.vSlider)
+    editorUI:UpdateSlider(data.hSlider)
 
     -- Clear dragging value if dragging is not enabled
     if(data.enableDragging == false) then
@@ -431,7 +432,7 @@ function PixelVisionOS:UpdateItemPicker(data)
                 data.emptyDrawArgs[3] = data.visibleRect.y + (data.pressSelection.y * data.itemSize.y) - data.lastStartY
 
                 -- Make sure that the empty sprites are inside the viewport before drawing them
-                if(data.viewport:Contains(NewPoint(data.emptyDrawArgs[2] - data.visibleRect.x, data.emptyDrawArgs[3] - data.visibleRect.y))) then
+                if(data.drawEmpty ~= false and data.viewport:Contains(NewPoint(data.emptyDrawArgs[2] - data.visibleRect.x, data.emptyDrawArgs[3] - data.visibleRect.y))) then
 
                     -- Draw empty tiles
                     editorUI:NewDraw("DrawSprites", data.emptyDrawArgs)
@@ -508,7 +509,7 @@ function PixelVisionOS:UpdateItemPicker(data)
 
         local offscreen = Clamp(data.tmpItemRect.width / 2, 0, 8)
 
-        if( data.overPos.x > - offscreen and (data.overPos.x + data.tmpItemRect.width) < (data.displaySize.x + offscreen) and data.overPos.y > - offscreen and (data.overPos.y + data.tmpItemRect.height) < (data.displaySize.y + offscreen)) then
+        if( data.drawOver ~= false and data.overPos.x > - offscreen and (data.overPos.x + data.tmpItemRect.width) < (data.displaySize.x + offscreen) and data.overPos.y > - offscreen and (data.overPos.y + data.tmpItemRect.height) < (data.displaySize.y + offscreen)) then
             -- -- Draw rect behind the over selection
             editorUI:NewDraw("DrawRect", data.maskSpriteDrawArgs)
 

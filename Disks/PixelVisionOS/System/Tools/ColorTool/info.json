@@ -5,6 +5,5 @@
   "ext": ".pvt",
   "gpuChip": "PV8",
   "cartChip": "PV8",
-  "soundChip": "PV8",
-  "editType": "colors"
+  "soundChip": "PV8"
 }

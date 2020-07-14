@@ -155,7 +155,6 @@ function EditorUI:OpenChipPicker(data)
 end
 
 function EditorUI:CloseChipPicker(data)
-
   data.open = false
   DrawRect(data.rect.x + 1, data.rect.y, data.rect.w - 1, data.rect.h + 16, BackgroundColor(), DrawMode.TilemapCache)
 end

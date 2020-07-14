@@ -559,10 +559,12 @@ function PixelVisionOS:DrawOnCanvas(data, mousePos, toolID)
 
       -- TODO this doesn't appear to do anything
       data.overColor = data.paintCanvas:ReadPixelAt(mousePos.x, mousePos.y) - data.colorOffset
-      
-    -- elseif(data.tool == "select") then
 
-    --   -- print("select", data.startPos.x, data.startPos.y)
+      if(data.overColor > pixelVisionOS.colorsPerSprite) then
+        data.overColor = -1
+      end
+
+      -- TODO should we display this value or that it is out of bounds?
 
     end
 

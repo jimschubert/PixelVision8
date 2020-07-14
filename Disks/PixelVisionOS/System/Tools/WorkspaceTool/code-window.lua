@@ -40,6 +40,11 @@ function WorkspaceTool:OpenWindow(path, scrollTo, selection)
 
     end
 
+    -- self.runIconUp = {table.unpack(filerunup.spritesIDs)}
+    -- self.runIconSelectedUp = {table.unpack(filerunselectedup.spritesIDs)}
+
+    -- print("Run icon", dump(self.runIconUp))
+
     -- print("Loading Path", path)
 
     -- Configure window settings
@@ -1040,7 +1045,7 @@ function WorkspaceTool:GetDirectoryContents(workspacePath)
     end
 
     -- TODO need to set the correct icon and background
-    -- Creat the trash entity
+    -- Create the trash entity
     table.insert(entities, {
         name = "Trash",
         sprite = #GetEntities(self.trashPath) > 0 and "filetrashfull" or "filetrashempty",
@@ -1100,6 +1105,73 @@ function WorkspaceTool:GetDirectoryContents(workspacePath)
                 }
             )
 
+            local customIconPath = workspacePath.AppendFile("icon.png")
+
+            -- TOOD should we cache this since the window refreshes?
+
+            -- TODO look to see if there is a custom icon.png
+            if(PathExists(customIconPath)) then
+                -- print("Found custom icon")
+
+               
+                -- Check to see if we have a list of the first 16 system colors
+                if(self.systemColors == nil) then
+
+                    -- Build a list of system colors to use as a reference
+                    self.systemColors = {}
+                    for i = 1, 16 do
+                        table.insert(self.systemColors, Color(i-1))
+                    end
+
+                end
+
+                -- TODO load it up
+                local customIcon = ReadImage(customIconPath, "#FF00FF", self.systemColors)
+
+
+                -- TODO copy 3 x 3 sprites out of it into memory
+                local spriteIDs = {}
+
+                self.customSpriteStartIndex = 767
+
+                local spriteMap = {
+                    {0, 1, 2,
+                    6, 7, 8,
+                    12, 13, 14},
+                    {3, 4, 5,
+                    9, 10, 11,
+                    15, 16, 17},
+                }
+
+                _G["filecustomiconup"] = {spriteIDs = {}, width = 3, colorOffset = 0}
+
+                
+
+                for i = 1, 9 do
+                    local index = self.customSpriteStartIndex + i
+                    Sprite(index, customIcon.GetSpriteData(spriteMap[1][i]), ColorsPerSprite())
+                    table.insert(_G["filecustomiconup"].spriteIDs, index)
+                end
+                
+
+                _G["filecustomiconselectedup"] = {spriteIDs = {}, width = 3, colorOffset = 0}
+
+                for i = 1, 9 do
+                    local index = self.customSpriteStartIndex + i + 9
+                    Sprite(index, customIcon.GetSpriteData(spriteMap[2][i]), ColorsPerSprite())
+                    table.insert(_G["filecustomiconselectedup"].spriteIDs, index)
+                end
+
+                -- print("filecustomiconup", dump(_G["filecustomiconup"]))
+
+                -- local sprites = 
+                FileTypeMap.run = "filecustomicon"
+
+                -- TODO overrite the run icon name with new sprite IDs
+            else
+                -- TODO if no icon, reset to default value
+                FileTypeMap.run = "filerun"
+            end
             self.totalSingleSelectFiles = self.totalSingleSelectFiles + 1
             
             self.isGameDir = true

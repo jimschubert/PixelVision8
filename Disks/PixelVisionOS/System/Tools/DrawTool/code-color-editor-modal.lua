@@ -81,7 +81,7 @@ function EditColorModal:Configure()
     -- Fix the button to the bottom of the window
     local bY = math.floor(((self.rect.y + self.rect.h) - buttonSize.y - 8) / 8) * 8
 
-    local backBtnData = self.editorUI:CreateButton({x = bX, y = bY}, "modalokbutton", "")
+    local backBtnData = editorUI:CreateButton({x = bX, y = bY}, "modalokbutton", "")
 
     backBtnData.onAction = function()
 
@@ -98,7 +98,7 @@ function EditColorModal:Configure()
     -- Offset the bX value and snap to the grid
     bX = math.floor((bX - buttonSize.x - 8) / 8) * 8
 
-    local cancelBtnData = self.editorUI:CreateButton({x = bX, y = bY}, "modalcancelbutton", "")
+    local cancelBtnData = editorUI:CreateButton({x = bX, y = bY}, "modalcancelbutton", "")
 
     cancelBtnData.onAction = function()
 
@@ -141,7 +141,7 @@ function EditColorModal:Configure()
     }
 
     -- Settings
-    self.colorHexInputData = self.editorUI:CreateInputField({x = self.rect.x + 24, y = self.rect.y + 144, w = 48}, "FF00FF", "Hex value of the selected color.", "hex", "input", PaletteOffset(0))
+    self.colorHexInputData = editorUI:CreateInputField({x = self.rect.x + 24, y = self.rect.y + 144, w = 48}, "FF00FF", "Hex value of the selected color.", "hex", "input", PaletteOffset(0))
     self.colorHexInputData.highlighterTheme = highlighterTheme
 
     self.colorHexInputData.forceCase = "upper"
@@ -149,7 +149,7 @@ function EditColorModal:Configure()
     table.insert(self.invalidateUI, self.colorHexInputData)
 
     -- Red input
-    self.redInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 80, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.redInputData = editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 80, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
     self.redInputData.highlighterTheme = highlighterTheme
     
     self.redInputData.min = 0
@@ -158,7 +158,7 @@ function EditColorModal:Configure()
     table.insert(self.invalidateUI, self.redInputData)
 
     -- Green input
-    self.greenInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 112, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.greenInputData = editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 112, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
     self.greenInputData.highlighterTheme = highlighterTheme
 
     self.greenInputData.min = 0
@@ -167,7 +167,7 @@ function EditColorModal:Configure()
     table.insert(self.invalidateUI, self.greenInputData)
 
     -- blue input
-    self.blueInputData = self.editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 144, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
+    self.blueInputData = editorUI:CreateInputField({x = self.rect.x + 200, y = self.rect.y + 144, w = 24}, "000", "Hex value of the selected color.", "number", "input", PaletteOffset(0))
     self.blueInputData.highlighterTheme = highlighterTheme
 
     self.blueInputData.min = 0
@@ -176,7 +176,7 @@ function EditColorModal:Configure()
     table.insert(self.invalidateUI, self.blueInputData)
 
     -- Red slider
-    self.redSlider = self.editorUI:CreateSlider(
+    self.redSlider = editorUI:CreateSlider(
         { x = self.rect.x + 108, y = self.rect.y + 75, w = 80, h = 16},
         "hsliderhandle",
         "Adjust the red value.",
@@ -184,7 +184,7 @@ function EditColorModal:Configure()
     )
 
     -- Green slider
-    self.greenSlider = self.editorUI:CreateSlider(
+    self.greenSlider = editorUI:CreateSlider(
         { x = self.rect.x + 108, y = self.rect.y + 107, w = 80, h = 16},
         "hsliderhandle",
         "Adjust the green value.",
@@ -192,7 +192,7 @@ function EditColorModal:Configure()
     )
 
     -- Blue slider
-    self.blueSlider = self.editorUI:CreateSlider(
+    self.blueSlider = editorUI:CreateSlider(
         { x = self.rect.x + 108, y = self.rect.y + 139, w = 80, h = 16},
         "hsliderhandle",
         "Adjust the Red value.",
@@ -200,7 +200,7 @@ function EditColorModal:Configure()
     )
 
     -- Check boxes
-    self.colorModeRadioGroupData = self.editorUI:CreateToggleGroup(true)
+    self.colorModeRadioGroupData = editorUI:CreateToggleGroup(true)
     self.colorModeRadioGroupData.onAction = function(value)
         -- self:OnChangeTrackInstrument(data, value)
         self:ChangeColorMode(value)
@@ -211,11 +211,11 @@ function EditColorModal:Configure()
 
     end
 
-    local rgbButton = self.editorUI:ToggleGroupButton(self.colorModeRadioGroupData, {x = self.rect.x + 184 + 8, y = self.rect.y + 40, w = 8, h = 8}, "radiobutton", "Change the current track's instrument to ", true)
+    local rgbButton = editorUI:ToggleGroupButton(self.colorModeRadioGroupData, {x = self.rect.x + 184 + 8, y = self.rect.y + 40, w = 8, h = 8}, "radiobutton", "Change the current track's instrument to ", true)
 
     table.insert(self.invalidateUI, rgbButton)
 
-    local hsvButton = self.editorUI:ToggleGroupButton(self.colorModeRadioGroupData, {x = self.rect.x + 184 + 8, y = self.rect.y + 48, w = 8, h = 8}, "radiobutton", "Change the current track's instrument to ", true)
+    local hsvButton = editorUI:ToggleGroupButton(self.colorModeRadioGroupData, {x = self.rect.x + 184 + 8, y = self.rect.y + 48, w = 8, h = 8}, "radiobutton", "Change the current track's instrument to ", true)
 
     table.insert(self.invalidateUI, hsvButton)
 
@@ -315,22 +315,22 @@ function EditColorModal:Open()
 
     -- Invalidate all of the UI buttons so they display correctly when re-opening the modal
     for i = 1, #self.buttons do
-        self.editorUI:Invalidate(self.buttons[i])
+        editorUI:Invalidate(self.buttons[i])
     end
 
     local total = #self.invalidateUI
     for i = 1, total do
-        self.editorUI:Invalidate(self.invalidateUI[i])
+        editorUI:Invalidate(self.invalidateUI[i])
     end
 
     -- Save last color mode selection
     local previousSelection = self.colorModeRadioGroupData.currentSelection
 
     -- Clear previous selection
-    self.editorUI:ClearGroupSelections(self.colorModeRadioGroupData)
+    editorUI:ClearGroupSelections(self.colorModeRadioGroupData)
 
     -- Force the color space to redraw
-    self.editorUI:SelectToggleButton(self.colorModeRadioGroupData, previousSelection > 0 and previousSelection or 1)
+    editorUI:SelectToggleButton(self.colorModeRadioGroupData, previousSelection > 0 and previousSelection or 1)
 
 end
 
@@ -485,19 +485,19 @@ function EditColorModal:Update(timeDelta)
     end
 
     for i = 1, #self.buttons do
-        self.editorUI:UpdateButton(self.buttons[i])
+        editorUI:UpdateButton(self.buttons[i])
     end
     --
-    self.editorUI:UpdateInputField(self.colorHexInputData)
-    self.editorUI:UpdateInputField(self.redInputData)
-    self.editorUI:UpdateInputField(self.greenInputData)
-    self.editorUI:UpdateInputField(self.blueInputData)
+    editorUI:UpdateInputField(self.colorHexInputData)
+    editorUI:UpdateInputField(self.redInputData)
+    editorUI:UpdateInputField(self.greenInputData)
+    editorUI:UpdateInputField(self.blueInputData)
 
-    self.editorUI:UpdateSlider(self.redSlider)
-    self.editorUI:UpdateSlider(self.greenSlider)
-    self.editorUI:UpdateSlider(self.blueSlider)
+    editorUI:UpdateSlider(self.redSlider)
+    editorUI:UpdateSlider(self.greenSlider)
+    editorUI:UpdateSlider(self.blueSlider)
 
-    self.editorUI:UpdateToggleGroup(self.colorModeRadioGroupData)
+    editorUI:UpdateToggleGroup(self.colorModeRadioGroupData)
 
 end
 

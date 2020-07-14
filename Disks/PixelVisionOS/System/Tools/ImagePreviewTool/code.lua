@@ -277,7 +277,7 @@ function Draw()
     if(displayInvalid == true and pixelVisionOS:IsModalActive() == false) then
 
         -- Draw the pixel data in the upper left hand cornver of the tool's window
-        imageCanvas:DrawPixels(8, 24, DrawMode.TilemapCache, 1, -1, -1, viewportRect)
+        imageCanvas:DrawPixels(8, 24, DrawMode.TilemapCache, 1, -1, -1, 0, viewportRect)
 
         if(debugMode) then
             colorMemoryCanvas:DrawPixels(8, 24, DrawMode.UI, 3)

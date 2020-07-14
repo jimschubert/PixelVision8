@@ -2,6 +2,10 @@ local spritePanelID = "SpritePanelUI"
 
 function DrawTool:CreateSpritePanel()
    
+    self.colorLayerTime = 0
+    self.colorLayerDelay = 500
+    self.showIsolatedColor = false
+
     self.selectionSizes = {
         {x = 1, y = 1, scale = 16},
         {x = 1, y = 2, scale = 8},
@@ -319,7 +323,7 @@ function DrawTool:OnSpritePickerDrop(src, dest)
             self:InvalidateData()
 
         end
-    elseif(src.name == self.systemColorPickerData.name) then
+    elseif(src.name == self.systemColorPickerData.name and self.changingColorIndex ~= true) then
 
         -- Get the current color
         -- local colorOffset = src.pressSelection.index

@@ -657,7 +657,6 @@ function OnSelectChip(value)
 
   if(editorMode == 0) then
 
-
     editorUI:CloseChipPicker(chipPicker)
 
     editorUI:ClearGroupSelections(chipEditorGroup)

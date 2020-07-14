@@ -37,23 +37,25 @@ namespace PixelVision8.Runner.Parsers
         protected int maxSprites;
         protected SpriteChip spriteChip;
         protected int[] spriteData;
-        protected int spriteHeight;
+        protected int spriteHeight = 8;
         protected int spritesAdded;
-        protected int spriteWidth;
+        protected int spriteWidth = 8;
         protected int totalSprites;
         protected int x, y;
-        protected Image image;
+        public Image image;
 
-        public SpriteImageParser(IImageParser parser, ColorChip colorChip, SpriteChip spriteChip) : base(parser)
+        public SpriteImageParser(IImageParser parser, ColorChip colorChip, SpriteChip spriteChip = null) : base(parser)
         {
 
             // this.chips = chips;
             this.spriteChip = spriteChip;
             this.colorChip = colorChip;
 
-
-            spriteWidth = this.spriteChip.width;
-            spriteHeight = this.spriteChip.height;
+            if (spriteChip != null)
+            {
+                spriteWidth = this.spriteChip.width;
+                spriteHeight = this.spriteChip.height;
+            }
 
         }
 
@@ -63,11 +65,15 @@ namespace PixelVision8.Runner.Parsers
 
             steps.Add(CreateImage);
 
-            steps.Add(PrepareSprites);
+            if (spriteChip != null)
+            {
+                steps.Add(PrepareSprites);
 
-            steps.Add(CutOutSprites);
+                steps.Add(CutOutSprites);
 
-            steps.Add(PostCutOutSprites);
+                steps.Add(PostCutOutSprites);
+
+            }
         }
 
         public virtual void PrepareSprites()
@@ -133,25 +139,11 @@ namespace PixelVision8.Runner.Parsers
                 {
                     orphanColors.Add(color);
                 }
-                
-
-                
-                //
-                // if (index > -1 && colorMap[index] == null)
-                // {
-                //     colorMap[index] = color;
-                // }
-                // else
-                // {
-                //     orphanColors.Add(color);
-                // }
 
             }
 
             // Sort colors
             uniqueColorIDs.Sort();
-
-            // Debug.WriteLine(Parser.FileName + " Unique Colors " + string.Join(",", uniqueColorIDs.ToArray()));
 
             var indexes = new List<int>();
             
@@ -182,27 +174,6 @@ namespace PixelVision8.Runner.Parsers
                     colorMap[i] = colorRefs[i];
                 }
             }
-
-            // var indexes = new List<int>();
-            //
-            // // find open slots
-            // for (int i = 0; i < colorMap.Length; i++)
-            // {
-            //     if (colorMap[i] == null)
-            //     {
-            //         indexes.Add(i);
-            //     }
-            // }
-            //
-            // var totalOrphanColors = orphanColors.Count;
-            //
-            // for (int i = 0; i < index; i++)
-            // {
-            //     if (i < totalOrphanColors)
-            //     {
-            //         colorMap[indexes[i]] = orphanColors[i];
-            //     }
-            // }
 
             // Convert all of the pixels into color ids
             var pixelIDs = Parser.colorPixels.Select(c => Array.IndexOf(colorMap, ColorUtils.RgbToHex(c.R, c.G, c.B))).ToArray();

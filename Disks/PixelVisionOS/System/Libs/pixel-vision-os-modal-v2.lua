@@ -81,7 +81,8 @@ function PixelVisionOS:UpdateModal(timeDelta)
       if(self.onCloseCallback ~= nil) then
         self.onCloseCallback()
 
-        self.onCloseCallback = nil
+        -- TODO disabled this because of a race condition when one modal is called after another
+        -- self.onCloseCallback = nil
       end
 
       -- Enable the menu button in the toolbar

@@ -8,19 +8,25 @@
 	distributing is allowed.
 ]]--
 
+-- Global UI used by this tool
 LoadScript("pixel-vision-os-item-picker-v3")
 LoadScript("pixel-vision-os-color-picker-v3")
 LoadScript("pixel-vision-os-sprite-picker-v4")
 LoadScript("pixel-vision-os-canvas-v3")
+LoadScript("pixel-vision-os-progress-modal-v2")
 
 -- Create table to store the workspace tool logic
 DrawTool = {}
 DrawTool.__index = DrawTool
 
+-- Custom code used by this tool
+LoadScript("code-fix-sprite-modal")
 LoadScript("code-color-editor-modal")
 LoadScript("code-drop-down-menu")
 LoadScript("code-color-panel")
--- LoadScript("code-color-selector")
+LoadScript("code-process-sprites")
+LoadScript("code-optimize-sprites")
+LoadScript("code-sprite-builder")
 LoadScript("code-palette-panel")
 LoadScript("code-sprite-panel")
 LoadScript("code-canvas-panel")
@@ -44,66 +50,91 @@ function DrawTool:Init()
         colorOffset = 0,
         lastMode = nil,
         showBGColor = false,
-        panelInFocus = nil
+        panelInFocus = nil,
+        ignoreProcessing = false
     }
 
     -- Reset the undo history so it's ready for the tool
     pixelVisionOS:ResetUndoHistory(self)
   
-    -- TODO need to figure out mode based on file
-
     -- Create a global reference of the new workspace tool
     setmetatable(_drawTool, DrawTool)
 
     if(_drawTool.rootDirectory ~= nil) then
 
+        -- These are the default files the tool will load
+        local flags = {SaveFlags.System, SaveFlags.Meta, SaveFlags.Colors}
+
+        -- Before we load any files, we need to check the metadata to see if we need to parse the sprites
+
+        -- Build the path to the metadata file
+        local metadataPath = NewWorkspacePath(_drawTool.rootDirectory).AppendFile("info.json")
+
+        -- Make sure the file path exists first
+        if(PathExists(metadataPath)) then
+
+            -- Read the raw metadata json file
+            local metadata = ReadJson(metadataPath)
+
+            -- Set the ignore process flag to the metadata value or to false
+            _drawTool.ignoreProcessing = metadata["ignoreProcessing"] or "False"
+
+        end
+
+        -- If the left or right ctrl key is down, reset the processing flag
+        if(Key(Keys.LeftControl, InputState.Down) == true or Key(Keys.RightControl, InputState.Down) == true) then
+
+            -- override the flag value by setting it to false
+            _drawTool.ignoreProcessing = "False"
+
+        end
+
+        -- Check to see if there is a flag to ignore the sprite processing
+        if(_drawTool.ignoreProcessing == "True") then
+
+            -- Add the sprites  to the list of files to load
+            table.insert(flags, SaveFlags.Sprites)
+        
+        end
+
         -- Load only the game data we really need
-        _drawTool.success = gameEditor.Load(_drawTool.rootDirectory, {SaveFlags.System, SaveFlags.Meta, SaveFlags.Colors, SaveFlags.Sprites})
+        _drawTool.success = gameEditor.Load(_drawTool.rootDirectory, flags)
 
     end
 
+    -- _drawTool.success = false
+    -- _drawTool.success = false
     -- If data load fails
     if(_drawTool.success ~= true) then
         
+        -- Display the load error
         _drawTool:LoadError()
-
         
     else
 
-        -- TODO need to manually load the image, display a progress bar and process each sprite
-        -- local image = ReadImage(NewWorkspacePath(_drawTool.rootDirectory.."sprites.png"))
+        -- The first thing we need to do is rebuild the tool's color table to include the game's system and game colors.
+        pixelVisionOS:ImportColorsFromGame()
 
-        -- local total = image.TotalSprites
-
-        -- for i = 1, total do
-        --     local id = i-1
-        --     gameEditor:Sprite(id, image.GetSpriteData(id))
-        -- end
-
+        -- Kick off the new part of the tool's boot process
         _drawTool:LoadSuccess()
 
-        -- print("Total Sprites", image.TotalSprites)
-        
     end
-  
-    -- Change the title
-    -- pixelVisionOS:ChangeTitle(_drawTool.toolName, "toolbaricontool")
-    -- _drawTool:OnInit()
 
+    -- Return the draw tool data
     return _drawTool
   
 end
 
 function DrawTool:LoadError()
 
-    -- Left panel
-    DrawRect(32, 32, 128, 128, 0, DrawMode.TilemapCache)
-    DrawRect(152+24, 32, 64, 128, 0, DrawMode.TilemapCache)
-    DrawRect(152+24, 208, 32, 8, 0, DrawMode.TilemapCache)
-    DrawRect(32, 192-8, 128, 32, 0, DrawMode.TilemapCache)
-    DrawRect(8, 17, 16, 200, BackgroundColor(), DrawMode.TilemapCache)
-    DrawRect(176, 16, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
-    DrawRect(216, 192, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
+    -- -- Cover up the 
+    -- DrawRect(32, 32, 128, 128, 0, DrawMode.TilemapCache)
+    -- DrawRect(152+24, 32, 64, 128, 0, DrawMode.TilemapCache)
+    -- DrawRect(152+24, 208, 32, 8, 0, DrawMode.TilemapCache)
+    -- DrawRect(32, 192-8, 128, 32, 0, DrawMode.TilemapCache)
+    -- DrawRect(8, 17, 16, 200, BackgroundColor(), DrawMode.TilemapCache)
+    -- DrawRect(176, 16, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
+    -- DrawRect(216, 192, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
 
     pixelVisionOS:ChangeTitle(self.toolName, "toolbaricontool")
 
@@ -119,8 +150,7 @@ function DrawTool:LoadSuccess()
 
     -- Everything loaded so finish initializing the tool
     
-    -- The first thing we need to do is rebuild the tool's color table to include the game's system and game colors.
-    pixelVisionOS:ImportColorsFromGame()
+    
 
     -- Get the target file
     local targetFile = ReadMetadata("file", nil)
@@ -132,9 +162,6 @@ function DrawTool:LoadSuccess()
     local pathSplit = string.split(targetFile, "/")
 
     self.titlePath = pathSplit[#pathSplit - 1] .. "/"
-
-    -- Update title with file path
-    -- self.toolTitle =  .. pathSplit[#pathSplit]
 
     self:CreateDropDownMenu()
 
@@ -166,7 +193,7 @@ function DrawTool:LoadSuccess()
     local defaultToolID = 1
     local defaultMode = colorMode == true and ColorMode or SpriteMode
 
-    local defaultSpriteID = 0
+    self.lastSpriteID = 0
     self.lastSystemColorID = 0
     self.lastPaletteColorID = 0
 
@@ -176,7 +203,7 @@ function DrawTool:LoadSuccess()
     if(SessionID() == ReadSaveData("sessionID", "") and self.rootDirectory == ReadSaveData("rootDirectory", "")) then
 
         self.spriteMode = Clamp(tonumber(ReadSaveData("lastSpriteSize", "1")) - 1, 0, #self.selectionSizes)
-        defaultSpriteID = tonumber(ReadSaveData("lastSpriteID", "0"))
+        self.lastSpriteID = tonumber(ReadSaveData("lastSpriteID", "0"))
         defaultToolID = tonumber(ReadSaveData("lastSelectedToolID", "1"))
 
         self.lastSystemColorID = tonumber(ReadSaveData("lastSystemColorID", "0"))
@@ -188,7 +215,7 @@ function DrawTool:LoadSuccess()
     self:OnNextSpriteSize()
 
     -- Select the start sprite
-    self:ChangeSpriteID(defaultSpriteID)
+    self:ChangeSpriteID(self.lastSpriteID)
 
     -- print("SCALE", self.spriteMode)
     self:ConfigureSpritePickerSelector(self.spriteMode)
@@ -204,13 +231,74 @@ function DrawTool:LoadSuccess()
     -- print("Test", self.systemColorPickerData)
 
     self:ForcePickerFocus(self.systemColorPickerData)
+    
+    -- Need to read the project meta data to see if it should be called
+    if(self.ignoreProcessing == "False") then
 
+        -- Create the path to the default sprite.png file
+        self.spritesPath = NewWorkspacePath(self.rootDirectory.."sprites.png")
+
+        -- Check to see if the path exist
+        if(PathExists(self.spritesPath) == true) then
+             
+            -- Start the process delay by setting the value to 0
+            self.processSpriteDelay = 0
+            
+            pixelVisionOS:RegisterUI({name = "DelayProcessDialog"}, "DelayProcessDialog", self, true)
+
+        end
+
+    end
 
 end
 
-function DrawTool:Update(timeDelta)
+function DrawTool:DelayProcessDialog()
 
-  
+    -- Look to see if the timer is past the delay (this lets the background draw first)
+    if(self.processSpriteDelay > 500) then
+        
+        -- TODO this should come from a file to help localize text later on
+        local title = "Analyze Sprites"
+        local message = "Analyzing the sprites will take a few moments and unlocks the ability to make changes to the color index values assigned by the parser. You can skip this process the next time you load the project if there isn't a need to make changes to the default assigned system colors. You can always re-enable this message by holding down the CTRL key while the tool loads up.\n\n#  Skip sprite analyzation in the future"
+        -- Create the new modal
+        local warningModal = FixSpriteModal:Init(title, message, 216, false)
+
+        -- Open the modal
+        pixelVisionOS:OpenModal(
+            warningModal,
+
+            -- Callback for the motel when it is closed
+            function() 
+
+                -- Check to see if ok was pressed on the model
+                if(warningModal.selectionValue == true) then
+                    
+                    gameEditor:WriteMetadata("ignoreProcessing",  warningModal.optionGroupData.currentSelection == 1 and "True" or "False")
+                        
+                    -- Force the meta data to save 
+                    gameEditor:Save(self.rootDirectory, {SaveFlags.Meta})
+
+                    -- Kick off the process sprites logic
+                    self:ProcessSprites()
+
+                end
+
+                -- TODO need to check that this shouldn't be shown again
+
+            end
+        )
+
+        -- Remove the callback from the UI update loop
+        pixelVisionOS:RemoveUI("DelayProcessDialog")
+
+    else
+
+        -- TODO need to multiply but 1000 since the UI runs on legacy milliseconds
+
+        -- Increment the counter by the timeDelta each frame
+        self.processSpriteDelay = self.processSpriteDelay + (editorUI.timeDelta * 1000)
+
+    end
 
 end
 
@@ -418,24 +506,22 @@ function DrawTool:Shutdown()
     editorUI:Shutdown()
 
     -- Kill the canvas
-    self.canvasData.onAction = nil
+    if(self.canvasData ~= nil) then
+        self.canvasData.onAction = nil
+    end
 
-    -- Save the current session ID
-    WriteSaveData("sessionID", SessionID())
-    WriteSaveData("rootDirectory", self.rootDirectory)
+    -- Save the state of the tool if it was correctly loaded
+    if(self.success == true) then
+        -- Save the current session ID
+        WriteSaveData("sessionID", SessionID())
+        WriteSaveData("rootDirectory", self.rootDirectory)
 
-    WriteSaveData("lastSpriteSize", self.spriteMode)
-    WriteSaveData("lastSpriteID", self.spritePickerData.currentSelection)
-    WriteSaveData("lastSelectedToolID", self.lastSelectedToolID)
+        WriteSaveData("lastSpriteSize", self.spriteMode)
+        WriteSaveData("lastSpriteID", self.spritePickerData.currentSelection)
+        WriteSaveData("lastSelectedToolID", self.lastSelectedToolID)
 
-
-    WriteSaveData("lastSystemColorID", self.lastSystemColorID)
-    WriteSaveData("lastPaletteColorID", self.lastPaletteColorID)
-    
-    
-
-    -- print("Save",self.spriteMode, self.lastSelectedToolID)
-
-    
+        WriteSaveData("lastSystemColorID", self.lastSystemColorID)
+        WriteSaveData("lastPaletteColorID", self.lastPaletteColorID)
+    end
 
 end

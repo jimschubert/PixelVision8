@@ -89,7 +89,7 @@ namespace PixelVision8.Runner.Exporters
             sb.Append("\"layers\": [");
             JsonUtil.GetLineBreak(sb, 2);
 
-            var idOffset = 1 + spriteChip.totalSprites;
+            var idOffset = 1 + spriteChip.TotalSprites;
 
             // Layer start
             sb.Append("{");
@@ -291,7 +291,7 @@ namespace PixelVision8.Runner.Exporters
             {
                 {
                     "sprites.png",
-                    new SpriteVector(spriteChip.texture.width, spriteChip.texture.height, spriteChip.totalSprites)
+                    new SpriteVector(spriteChip.texture.width, spriteChip.texture.height, spriteChip.TotalSprites)
                 }
             };
 
@@ -393,7 +393,7 @@ namespace PixelVision8.Runner.Exporters
             sb.Append("\"layers\": [");
             JsonUtil.GetLineBreak(sb, 2);
 
-            var idOffset = 1 + spriteChip.totalSprites;
+            var idOffset = 1 + spriteChip.TotalSprites;
 
             // Layer start
             sb.Append("{");

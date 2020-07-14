@@ -65,6 +65,7 @@ function PixelVisionOS:CreateSpritePicker(rect, itemSize, columns, rows, colorOf
 end
 
 function PixelVisionOS:RebuildSpritePickerCache(data)
+
   -- Get all the sprite pixel data
   local pixelData = gameEditor:ReadGameSpriteData(0, data.columns, data.rows)
 

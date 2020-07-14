@@ -40,7 +40,7 @@ function PixelVisionOS:CreateIconButton(point, spriteName, label, toolTip, bgCol
 
     data.onClick = function(tmpData)
         
-        if(editorUI.inFocusUI.name == tmpData.name) then
+        if(editorUI.inFocusUI ~= nil and editorUI.inFocusUI.name == tmpData.name) then
             -- Toggle the button's action
             --#5 | #1
             self:ToggleIconButton(tmpData)

@@ -955,7 +955,7 @@ namespace PixelVision8.Runner.Editors
             tmpSpriteChip.Resize(spriteChip.textureWidth, spriteChip.textureHeight);
 
             // Loop through all the sprites and copy them to the new chip
-            var total = spriteChip.totalSprites;
+            var total = spriteChip.TotalSprites;
 
             var tmpPixelData = new int[8 * 8];
             var nextSpriteID = 0;
@@ -975,7 +975,7 @@ namespace PixelVision8.Runner.Editors
 
             spriteChip.Clear();
 
-            total = tmpSpriteChip.spritesInRam;
+            total = tmpSpriteChip.SpritesInMemory;
 
             for (var i = 0; i < total; i++)
             {
@@ -991,7 +991,7 @@ namespace PixelVision8.Runner.Editors
         /// <returns></returns>
         public int SpritesInRam()
         {
-            return spriteChip.spritesInRam;
+            return spriteChip.SpritesInMemory;
         }
 
         /// <summary>
@@ -2310,5 +2310,19 @@ namespace PixelVision8.Runner.Editors
         }
 
         #endregion
+
+
+        // TODO adding some extra APIs to work directly with the chip but maybe these should be opened up?
+
+        public int FindSprites(int[] pixels, bool emptyCheck)
+        {
+            return spriteChip.FindSprite(pixels, emptyCheck);
+        }
+
+        public bool IsSpriteEmpty(int index)
+        {
+            return spriteChip.IsEmptyAt(index);
+        }
+
     }
 }

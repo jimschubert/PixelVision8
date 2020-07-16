@@ -438,8 +438,6 @@ namespace PixelVision8.Runner.Services
 
             if (!string.IsNullOrEmpty(file))
             {
-                // var fileContents = Encoding.UTF8.GetString(ReadAllBytes(file));
-
                 AddParser(new SystemParser(file, _fileLoadHelper, targetEngine));
             }
         }

@@ -2314,7 +2314,7 @@ namespace PixelVision8.Runner.Editors
 
         // TODO adding some extra APIs to work directly with the chip but maybe these should be opened up?
 
-        public int FindSprites(int[] pixels, bool emptyCheck)
+        public int FindSprite(int[] pixels, bool emptyCheck)
         {
             return spriteChip.FindSprite(pixels, emptyCheck);
         }

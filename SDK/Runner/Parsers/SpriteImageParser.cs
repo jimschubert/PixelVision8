@@ -93,7 +93,7 @@ namespace PixelVision8.Runner.Parsers
 
         }
 
-        protected virtual void CreateImage()
+        public virtual void CreateImage()
         {
             // Get the chip colors and replace any transparent ones with the first color so we don't parse transparency
             var colorData = ColorUtils.ConvertColors(colorChip.hexColors, colorChip.maskColor);

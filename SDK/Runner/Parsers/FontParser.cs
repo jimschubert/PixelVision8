@@ -42,7 +42,7 @@ namespace PixelVision8.Runner.Parsers
             name = parser.FileName.Split('.').First();
         }
 
-        protected override void CreateImage()
+        public override void CreateImage()
         {
 
             // Get all the colors from the image

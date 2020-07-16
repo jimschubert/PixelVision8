@@ -2204,6 +2204,24 @@ namespace PixelVision8.Engine.Chips
             return new SpriteCollection(name, sprites);
         }
 
+        public SpriteCollection NewMetaSprite(int id, string name, int[] spriteIDs, int width, int colorOffset = 0)
+        {
+            var collection = NewSpriteCollection(name);
+        
+            for (int i = 0; i < spriteIDs.Length; i++)
+            {
+        
+                var pos = CalculatePosition(i, width);
+               
+                collection.AddSprite(spriteIDs[i], pos.X * spriteSize.X, pos.Y * spriteSize.Y, false, false, colorOffset);
+            }
+        
+            // TODO need to figure out how to do this better where meta sprites 
+            
+        
+            return MetaSprite(id, collection);
+        }
+
         #endregion
     }
 }

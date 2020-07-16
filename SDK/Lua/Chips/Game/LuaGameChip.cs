@@ -252,6 +252,10 @@ namespace PixelVision8.Engine.Chips
             LuaScript.Globals["NewSpriteCollection"] =
                 new Func<string, SpriteData[], SpriteCollection>(NewSpriteCollection);
 
+            LuaScript.Globals["NewMetaSprite"] =
+                new Func<int, string, int[], int, int, SpriteCollection>(NewMetaSprite);
+
+
         }
 
         #region Lifecycle

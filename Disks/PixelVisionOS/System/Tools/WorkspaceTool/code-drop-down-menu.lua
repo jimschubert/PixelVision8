@@ -7,8 +7,9 @@ WindowFocus, DesktopIconFocus, WindowIconFocus, MultipleFiles, NoFocus = 1, 2, 3
 function WorkspaceTool:CreateDropDownMenu()
 
     local tmpProjectPath = ReadBiosData("ProjectTemplate")
-    self.fileTemplatePath = tmpProjectPath == nil and NewWorkspacePath(self.rootPath .. self.gameName .. "/ProjectTemplate/") or NewWorkspacePath(tmpProjectPath)
+    self.fileTemplatePath = tmpProjectPath == nil and NewWorkspacePath(ReadMetadata("RootPath", "/")).AppendDirectory(ReadMetadata("GameName", "untitled")).AppendDirectory("ProjectTemplate") or NewWorkspacePath(tmpProjectPath)
 
+    print("Template Path", self.fileTemplatePath)
     -- Create some enums for the focus typess
     
     -- TODO need to see if the log file actually exists
@@ -68,7 +69,7 @@ function WorkspaceTool:CreateDropDownMenu()
 
         table.insert(menuOptions, addAt, {name = "New Project", key = Keys.P, action = function() self:OnNewProject() end, enabled = false, toolTip = "Create a new file."})
 
-        NewGameShortcut = "New Project"
+        -- NewGameShortcut = "New Project"
 
         addAt = addAt + 1
 

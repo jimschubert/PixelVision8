@@ -263,33 +263,33 @@ namespace PixelVision8.Runner.Services
 
             var tmpColorChip = new ColorChip();
 
+            
+
+            var imageParser = new SpriteImageParser(reader, tmpColorChip);
+            
+            // Manually call each step
+            imageParser.ParseImageData();
+
             // If no colors are passed in, used the image's palette
             if (colorRefs == null)
             {
                 colorRefs = reader.colorPalette.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
             }
 
+            // Resize the color chip
             tmpColorChip.total = colorRefs.Length;
 
+            // Add the colors
             for (int i = 0; i < colorRefs.Length; i++)
             {
                 tmpColorChip.UpdateColorAt(i, colorRefs[i]);
             }
 
-            var imageParser = new SpriteImageParser(reader, tmpColorChip);
-            imageParser.CalculateSteps();
+            // Parse the image with the new colors
+            imageParser.CreateImage();
 
-            while (imageParser.completed == false) imageParser.NextStep();
-
-            
-            // colorRefs = colors ?? reader.colorPalette.ToArray();
-            //
-            // var colorRefs = srcColors.Select(c => ColorUtils.RgbToHex(c.R, c.G, c.B)).ToArray();
-
-            // Convert all of the pixels into color ids
-            // var pixelIDs = reader.colorPixels.Select(c => Array.IndexOf(colorRefs, ColorUtils.RgbToHex(c.R, c.G, c.B))).ToArray();
-
-            return imageParser.image;//new Image(reader.width, reader.height, colorRefs, pixelIDs);
+            // Return the new image from the parser
+            return imageParser.image;
 
         }
 

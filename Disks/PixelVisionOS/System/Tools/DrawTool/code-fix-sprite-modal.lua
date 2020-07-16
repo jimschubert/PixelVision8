@@ -77,6 +77,7 @@ function FixSpriteModal:Open()
     local startX = 8
     local startY = 16
   
+    self.selectionGroupData = editorUI:CreateToggleGroup(true)
     self.optionGroupData = editorUI:CreateToggleGroup(false)
 
     self.buttons = {}
@@ -86,12 +87,15 @@ function FixSpriteModal:Open()
 
       local newY = (startY + ((i - 1) * 8))
 
-      if(string.sub(self.lines[i], 0, 1) == "#") then
+      local firstChar = string.sub(self.lines[i], 0, 1)
 
-        -- TODO these need to be check boxes
+      -- # are check boxes
+      if(firstChar == "#") then
         editorUI:ToggleGroupButton(self.optionGroupData, {x = startX + self.rect.x, y = newY + self.rect.y, w = 8, h = 8}, "checkbox", "Select" .. string.sub(self.lines[i], 3), true)
-        -- tmpButton.selected = true
 
+      -- * are radio buttons
+      elseif(firstChar == "*") then
+        editorUI:ToggleGroupButton(self.selectionGroupData, {x = startX + self.rect.x, y = newY + self.rect.y, w = 8, h = 8}, "radiobutton", "Select" .. string.sub(self.lines[i], 3), true)
       end
 
       self.canvas:DrawText(self.lines[i]:upper(), startX, newY, "medium", 0, - 4)
@@ -164,7 +168,8 @@ function FixSpriteModal:Update(timeDelta)
   end
 
   editorUI:UpdateToggleGroup(self.optionGroupData)
-
+  editorUI:UpdateToggleGroup(self.selectionGroupData)
+  
   if(Key(Keys.Enter, InputState.Released)) then
     self.selectionValue = true
     self.onParentClose()

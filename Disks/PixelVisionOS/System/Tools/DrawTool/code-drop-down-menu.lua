@@ -9,11 +9,12 @@ AddShortcut = 12
 EditShortcut = 13
 DeleteShortcut = 14
 SetBGShortcut = 15
-SelectAllShortcut = 17
-FillShortcut = 18
-ShowGrid = 20
-ShowBGShortcut = 21
-QuitShortcut = 25
+SetMaskColor = 16
+SelectAllShortcut = 18
+FillShortcut = 19
+ShowGrid = 21
+ShowBGShortcut = 22
+QuitShortcut = 27
 
 function DrawTool:CreateDropDownMenu()
 
@@ -44,6 +45,7 @@ function DrawTool:CreateDropDownMenu()
         {name = "Edit", action = function() self:OnEditColor() end, enabled = false, key = Keys.E, toolTip = "Edit the currently selected system color."},
         {name = "Delete", action = function() self:OnDelete() end, enabled = false, key = Keys.D, toolTip = "Remove the currently selected system color."},
         {name = "Set BG Color", action = function() self:OnSetBGColor() end, enabled = false, toolTip = "Set the current system color as the background."}, -- Reset all the values
+        {name = "Mask Color", action = function() self:OnEditMaskColor() end, enabled = false, toolTip = "Change the mask color used in the game."}, -- Reset all the values
         -- Pixel Selection
         {divider = true},
         {name = "Select All", action = function() self:OnSelectAll() end, enabled = false, key = Keys.A, toolTip = "Select all of the pixels in the current sprite."}, -- Reset all the values
@@ -58,9 +60,10 @@ function DrawTool:CreateDropDownMenu()
         {name = "Quit", key = Keys.Q, action = function () self:OnQuit() end, toolTip = "Quit the current game."}, -- Quit the current game
     }
 
-    print("self.rootDirectory", self.rootDirectory)
     if(PathExists(NewWorkspacePath(self.rootDirectory).AppendFile("code.lua"))) then
-        table.insert(menuOptions, #menuOptions, {name = "Run Game", action = OnRunGame, key = Keys.R, toolTip = "Run the code for this game."})
+        table.insert(menuOptions, #menuOptions, {name = "Run Game", action = function() self:OnRunGame() end, key = Keys.R, toolTip = "Run the code for this game."})
+        -- Increase quit shortcut value
+        QuitShortcut = 27
     end
 
     pixelVisionOS:CreateTitleBarMenu(menuOptions, "See menu options for this tool.")
@@ -89,6 +92,27 @@ end
 function DrawTool:ToggleGrid(value)
 
     self.canvasData.showGrid = value
+
+end
+
+function DrawTool:OnRunGame()
+
+    if(self.invalid == true) then
+
+        pixelVisionOS:ShowMessageModal("Unsaved Changes", "You have unsaved changes. You will lose those changes if you run the game now?", 160, true,
+                function()
+                    if(pixelVisionOS.messageModal.selectionValue == true) then
+                        LoadGame(NewWorkspacePath(self.rootDirectory))
+                    end
+
+                end
+        )
+
+    else
+
+        LoadGame(NewWorkspacePath(self.rootDirectory))
+
+    end
 
 end
 
@@ -309,6 +333,110 @@ function DrawTool:OnDelete()
     end
 
 end
+
+function DrawTool:OnEditMaskColor()
+
+    if(self.editBGColorModal == nil) then
+        self.editBGColorModal = EditColorModal:Init(editorUI, pixelVisionOS.maskColor, "Edit Mask Color")
+    end
+
+    self.editBGColorModal:SetColor(pixelVisionOS.emptyColorID)
+
+    pixelVisionOS:OpenModal(self.editBGColorModal,
+        function()
+
+            if(self.editBGColorModal.selectionValue == true) then
+
+                local newColorHex = "#"..self.editBGColorModal.colorHexInputData.text
+
+                -- Test to see if the color is the same as the current mask
+                if(newColorHex == pixelVisionOS.maskColor) then
+ 
+                    -- There is nothing to do so exit
+                    return
+
+                end
+
+
+
+                local title = "Change Mask Color"
+                local message = "You are about to change the game's mask color. This is the color that the sprite parser will treat as transparent. If you make this change, the sprites will be reloaded and the new mask value will be used. Do you want to continue?"
+
+                -- TODO test if this is the same color
+                
+                -- Make sure this color doesn't already exist
+                local matchingColorIndex = table.indexOf(pixelVisionOS.systemColors, newColorHex)
+                
+                -- Add a warning that the system color will be overwritten
+                if(matchingColorIndex > -1) then
+                    message = "It looks like you are setting the new mask color to system color " .. matchingColorIndex .. ". " .. message
+                end
+
+                
+                pixelVisionOS:ShowMessageModal(title, message, 160, true, function ()
+
+                    -- Test to see if the user hits ok
+                    if(pixelVisionOS.messageModal.selectionValue == true) then
+                        
+                        -- Change the mask color
+                        gameEditor:MaskColor(newColorHex)
+
+                        -- Manually change the mask color in the OS (before it is updated visually)
+                        pixelVisionOS.maskColor = newColorHex
+                        
+                        -- Mask off the sprite picker
+                        DrawRect(self.spritePickerData.rect.x, self.spritePickerData.rect.y, self.spritePickerData.rect.w, self.spritePickerData.rect.h, pixelVisionOS.emptyColorID, DrawMode.TilemapCache)
+
+                        -- Create the path to the default sprite.png file
+                        self.spritesPath = NewWorkspacePath(self.rootDirectory.."sprites.png", DrawMode.TilemapCache)
+
+                        -- Check to see if the path exist
+                        if(PathExists(self.spritesPath) == true) then
+
+                            -- Start the process delay by setting the value to 0
+                            self.processSpriteDelay = 0
+                            
+                            -- Start the delay to change the maks color
+                            pixelVisionOS:RegisterUI({name = "DelayChangeMaskColor"}, "DelayChangeMaskColor", self, true)
+                            
+                        end
+
+                    end
+                    
+                end)
+
+            end
+        end
+    )
+    
+end
+
+function DrawTool:DelayChangeMaskColor()
+
+    -- Look to see if the timer is past the delay (this lets the background draw first)
+    if(self.processSpriteDelay > 500) then
+
+        self.maskInvalidated = true
+        
+        self:ProcessSprites()
+
+        -- Remove the callback from the UI update loop
+        pixelVisionOS:RemoveUI("DelayChangeMaskColor")
+
+    else
+        self.processSpriteDelay = self.processSpriteDelay + (editorUI.timeDelta * 1000)
+    end
+    
+    
+end
+
+-- function DrawTool:ChangeMaskColor(value)
+
+--     gameEditor:MaskCOlor(value)
+
+
+
+-- end
 
 function DrawTool:OnSetBGColor()
 

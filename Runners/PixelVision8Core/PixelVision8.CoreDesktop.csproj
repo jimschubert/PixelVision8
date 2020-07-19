@@ -14,6 +14,8 @@
 
   <ItemGroup>
     <None Remove="Content\bios.json" />
+    <None Remove="Content\PixelVisionOS\Tools\ColorTool\**" />
+    <None Remove="Content\PixelVisionOS\Tools\SpriteTool\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +28,8 @@
     <EmbeddedResource Include="Icon.icns">
       <LogicalName>Icon.icns</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Remove="Content\PixelVisionOS\Tools\ColorTool\**" />
+    <EmbeddedResource Remove="Content\PixelVisionOS\Tools\SpriteTool\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,7 +70,6 @@
     <Compile Include="..\..\SDK\Workspace\**\*.cs">
       <Link>SDK\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
-
   </ItemGroup>
 
   <ItemGroup>

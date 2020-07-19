@@ -372,7 +372,7 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(EditShortcut, true)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, true)
-        
+        pixelVisionOS:EnableMenuItem(SetMaskColor, true)
         
         -- Restore last system color
         if(self.lastSystemColorID ~= nil) then
@@ -404,7 +404,7 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(EditShortcut, false)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, true)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, false)
-
+        pixelVisionOS:EnableMenuItem(SetMaskColor, false)
         -- print("paletteColorPickerData sel", self.paletteColorPickerData.currentSelection)
 
     elseif(src.name == self.spritePickerData.name) then
@@ -424,6 +424,7 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(EditShortcut, false)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, false)
+        pixelVisionOS:EnableMenuItem(SetMaskColor, false)
 
         print("Restore palette", self.lastPaletteColorID)
 
@@ -448,6 +449,7 @@ function DrawTool:ForcePickerFocus(src)
         pixelVisionOS:EnableMenuItem(EditShortcut, false)
         pixelVisionOS:EnableMenuItem(DeleteShortcut, false)
         pixelVisionOS:EnableMenuItem(SetBGShortcut, false)
+        pixelVisionOS:EnableMenuItem(SetMaskColor, false)
 
     end
 

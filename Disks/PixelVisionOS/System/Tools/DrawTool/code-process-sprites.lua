@@ -136,6 +136,13 @@ function DrawTool:SpriteProcessingComplete()
 
     self:OnOptimizeSprites()
 
+    if(self.maskInvalidated == true) then
+        
+        Color(pixelVisionOS.emptyColorID, pixelVisionOS.maskColor)
+        self.maskInvalidated = false
+        
+    end
+
 end
 
 function DrawTool:ReIndexSprites(prevValue, newValue)
@@ -211,7 +218,7 @@ function DrawTool:UpdateSpriteProgress()
         self.currentParsedSpriteID = self.currentParsedSpriteID + 1
 
         -- Make sure we are able to work on the next sprite
-        if(self.currentParsedSpriteID >= self.totalSpritesToProcess) then
+        if(self.currentParsedSpriteID > self.totalSpritesToProcess) then
             
             -- Stop the process on the next frame
             self.processingSprites = false

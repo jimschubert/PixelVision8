@@ -210,6 +210,7 @@ project.lock.json
 
 # Rider
 .idea/
+.run/
 
 # Visual Studio Code
 .vscode/

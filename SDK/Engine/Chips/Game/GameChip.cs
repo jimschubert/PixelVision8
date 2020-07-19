@@ -176,11 +176,21 @@ namespace PixelVision8.Engine.Chips
 
         protected MusicChip MusicChip => engine.MusicChip;
 
-        public int TotalMetaSprites
+        protected int _TotalMetaSprites
         {
             // TODO do we need to save the previous values?
             set => Array.Resize(ref metaSprites, MathHelper.Clamp(value, 0, 96));
             get => metaSprites.Length;
+        }
+
+        public int TotalMetaSprites(int? total = null)
+        {
+            if (total.HasValue)
+            {
+                _TotalMetaSprites = total.Value;
+            }
+
+            return _TotalMetaSprites;
         }
 
         //        private readonly int[] _singlePixel = { 0 };
@@ -1925,6 +1935,12 @@ namespace PixelVision8.Engine.Chips
         /// <returns></returns>
         public string WordWrap(string text, int width)
         {
+
+            if (text == null)
+            {
+                return "";
+            }
+            
             int pos, next;
 
             // Reset the string builder

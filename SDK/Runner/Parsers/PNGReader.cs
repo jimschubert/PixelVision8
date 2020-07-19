@@ -32,6 +32,8 @@ namespace PixelVision8.Runner.Importers
 {
     public class PNGReader : IImageParser
     {
+        public string MaskHex => maskHex;
+
         protected List<Color> _colorPalette;
         protected Color[] _colors;
         protected int bitsPerSample;

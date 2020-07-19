@@ -54,7 +54,7 @@ function DrawTool:OnOptimizeSprites()
 
     if(self.colorsOutOfBound == true) then
 
-        message = message .. "#  Expand Colors Per Sprite\n"
+        message = message .. "#  Resize Colors Per Sprite\n"
 
         table.insert(self.optimizationActions, function() self.expandCPS = true end)
 
@@ -85,20 +85,18 @@ function DrawTool:OnOptimizeSprites()
             -- Check to see if ok was pressed on the model
             if(warningModal.selectionValue == true) then
                     
-                print("Options", dump(editorUI:ToggleGroupSelections(warningModal.optionGroupData)))
-
-
+                -- Get the current selection
                 local selections = editorUI:ToggleGroupSelections(warningModal.optionGroupData)
+
+                -- Test to see if there are selections
+                if(#selections < 1) then
+                    -- If there are no selections, then exit
+                    return
+                end
 
                 for i = 1, #selections do
                     self.optimizationActions[selections[i]]()
                 end
-
-                -- Update the project's meta data
-                -- gameEditor:WriteMetadata("ignoreOptimizeWarning",  warningModal.optionGroupData.currentSelection == 1 and "True" or "False")
-                    
-                -- -- Force the meta data to save 
-                -- gameEditor:Save(self.rootDirectory, {SaveFlags.Meta})
 
                 -- Kick off the process sprites logic
                 self:StartOptimizingSprites()
@@ -204,7 +202,7 @@ function DrawTool:FinalizeSpriteOptimization()
 
         local totalSprites = gameEditor:TotalSprites(true)
 
-        local percent = tostring(math.floor((1 - (#self.usedSprites / totalSprites)) * 100)).."%"
+        local percent = tostring(100 - math.floor((#self.usedSprites / totalSprites) * 100)).."%"
 
         message = message .. string.format("#  Free %s of sprite memory.\n", percent)
     end

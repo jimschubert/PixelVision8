@@ -40,6 +40,8 @@ function WorkspaceTool:OpenWindow(path, scrollTo, selection)
 
     end
 
+    
+
     -- self.runIconUp = {table.unpack(filerunup.spritesIDs)}
     -- self.runIconSelectedUp = {table.unpack(filerunselectedup.spritesIDs)}
 
@@ -104,6 +106,9 @@ function WorkspaceTool:OpenWindow(path, scrollTo, selection)
 
     -- save the current directory
     self.currentPath = path
+
+    -- TODO make sure the trash path check is valid
+    self.isGameDir = pixelVisionOS:ValidateGameInDir(self.currentPath, requiredFiles) and self:TrashOpen() == false
 
     -- Draw the window chrome
     DrawSprites(windowchrome.spriteIDs, 8, 16, windowchrome.width, false, false, DrawMode.TilemapCache)
@@ -700,8 +705,7 @@ function WorkspaceTool:DrawWindow()
     --     table.insert(requiredFiles, "info.json")
     -- end
 
-    -- TODO make sure the trash path check is valid
-    local isGameDir = pixelVisionOS:ValidateGameInDir(self.currentPath, requiredFiles) and self:TrashOpen() == false
+    
 
     -- local tmpPath = NewWorkspacePath(item.path)
     local pathParts = self.currentPath.GetDirectorySegments()
@@ -741,7 +745,7 @@ function WorkspaceTool:DrawWindow()
             item = self.files[fileID]
 
             -- Find the right type for the file
-            self:UpdateFileType(item, isGameDir)
+            self:UpdateFileType(item, self.isGameDir)
 
             spriteName = item.sprite ~= nil and item.sprite or self:GetIconSpriteName(item)
 

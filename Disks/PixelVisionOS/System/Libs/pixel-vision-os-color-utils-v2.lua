@@ -28,7 +28,11 @@ function PixelVisionOS:ImportColorsFromGame()
     -- Games are capped at 256 colors
     self.totalColors = 256
 
+    -- Set the last color to the empty color ID (which accounts for -1 in game color space)
     self.emptyColorID = self.totalColors - 1
+
+    -- Change the empty color to match the game's mask color
+    Color(self.emptyColorID, self.maskColor)
 
     -- The color offset is the first position where a game's colors are stored in the tool's memory
     self.colorOffset = self.totalColors

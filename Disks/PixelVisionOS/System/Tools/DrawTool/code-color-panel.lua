@@ -352,7 +352,11 @@ function DrawTool:UpdateHexColor(value)
 
         -- TODO this are is throwing an error
         -- print("MASK COLOR ERROR")
-        pixelVisionOS:ShowMessageModal(self.toolName .." Error", self.maskColorError, 160, false)
+
+        local title = self.toolName .." Error"
+        local message = "This color is reserved for transparency and can not be assigned to a system color."
+
+        pixelVisionOS:ShowMessageModal(title, message, 160, false)
 
         return false
 

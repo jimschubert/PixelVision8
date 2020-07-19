@@ -31,7 +31,7 @@ namespace PixelVision8.Runner.Parsers
     public class SpriteImageParser : ImageParser
     {
         protected ColorChip colorChip;
-        protected Color[] colorData;
+        // protected Color[] colorData;
         protected int cps;
         protected int index;
         protected int maxSprites;
@@ -121,7 +121,7 @@ namespace PixelVision8.Runner.Parsers
                 // var color = imageColors[i];
                 var color = imageColors[i];
                 
-                if (color == colorChip.maskColor) continue;
+                if (color == Parser.MaskHex) continue;
 
                 var id = Array.IndexOf(colorRefs, color);
 

@@ -256,7 +256,7 @@ namespace PixelVision8.Runner.Exporters
 
             // Total Meta Sprites
             sb.Append("\"totalMetaSprites\":");
-            sb.Append(gameChip.TotalMetaSprites);
+            sb.Append(gameChip.TotalMetaSprites());
             sb.Append(",");
             JsonUtil.GetLineBreak(sb, 1);
 

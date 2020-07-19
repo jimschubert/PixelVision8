@@ -15,6 +15,15 @@
 -- Shawn Rakowski - @shwany
 --
 
+local patterns = {
+  hex = '%x',
+  number = '%d',
+  file = '[_%-%w ]',
+  keys = '%a',
+  note = '[A-G#]',
+  variable = '[%w]'
+}
+
 function EditorUI:CreateInputField(rect, text, toolTip, pattern, font, colorOffset)
 
   -- Set the edit flag if it's not yet set
@@ -44,13 +53,6 @@ function EditorUI:CreateInputField(rect, text, toolTip, pattern, font, colorOffs
   data.colorize = false
 
   data.pattern = pattern
-  data.patterns = {
-    hex = '%x',
-    number = '%d',
-    file = '[_%-%w ]',
-    keys = '%a',
-    note = '[A-G#]'
-  }
 
   -- Remap return
   data.keymap["return"] = function(targetData)
@@ -94,14 +96,14 @@ function EditorUI:CreateInputField(rect, text, toolTip, pattern, font, colorOffs
 
 end
 
-function EditorUI:ValidateInputFieldText(targetData,inputString)
+function EditorUI:ValidateInputFieldText(targetData, inputString, pattern, forceCase)
 
-  -- local inputString = InputString()
   local outputString = ""
 
-  for char in inputString:gmatch"." do
+  pattern = pattern ~= nil and patterns[pattern] or patterns[targetData.pattern]
+  forceCase = targetData ~= nil and targetData.forceCase or forceCase
 
-    local pattern = targetData.patterns[targetData.pattern]
+  for char in inputString:gmatch"." do
 
     if(pattern ~= nil) then
       char = string.match(char, pattern)
@@ -109,12 +111,12 @@ function EditorUI:ValidateInputFieldText(targetData,inputString)
 
     if(char ~= nil) then
 
-      if(targetData.forceCase ~= nil) then
-        char = string[targetData.forceCase](char)
+      if(forceCase ~= nil) then
+        char = string[forceCase](char)
       end
 
       -- Text to see if the input field is a single character and clear it
-      if(targetData.tiles.w == 1) then
+      if(targetData ~= nil and targetData.tiles.w == 1) then
         targetData.buffer[1] = char
       else
         outputString = outputString .. char
@@ -125,6 +127,7 @@ function EditorUI:ValidateInputFieldText(targetData,inputString)
   end
 
   return outputString
+
 end
 
 function EditorUI:OnEditTextInputField(data, value)

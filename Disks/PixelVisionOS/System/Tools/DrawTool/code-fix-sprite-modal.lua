@@ -78,7 +78,25 @@ function FixSpriteModal:Open()
     local startY = 16
   
     self.selectionGroupData = editorUI:CreateToggleGroup(true)
+
     self.optionGroupData = editorUI:CreateToggleGroup(false)
+    self.optionGroupData.onAction = function(value)
+
+      local selected  = self.optionGroupData.buttons[value].selected
+      
+      print("Click value", value, selected)
+      
+      if(Key(Keys.LeftShift) or Key(Keys.RightShift)) then
+
+        for i = 1, #self.optionGroupData.buttons do
+            
+          editorUI:ToggleButton(self.optionGroupData.buttons[i], value, false)
+
+        end
+
+      end
+
+    end
 
     self.buttons = {}
 

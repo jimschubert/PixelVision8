@@ -16,12 +16,6 @@ function DrawTool:OnSpriteBuilder()
         return
     end
 
-
-    -- self.sbTemplate  = "%s={width=%d,spriteIDs={%s}}\n" -- name, width, spriteList (string)
-    -- self.metaTemplate = "NewMetaSprite(%s, {%s}, %d, 0)\n" -- name, spriteList (string), width
-    
-    
-
     -- Configure the title and message
     local title = "Sprite Builder"
     local message = "It's important to note that performing this optimization may break any places where you have hardcoded references to sprite IDs. You will have the option to apply the optimization after the sprites are processed. \n\nDo you want to perform the following?\n\n"
@@ -71,6 +65,10 @@ function DrawTool:OnSpriteBuilder()
             if(warningModal.selectionValue == true) then
 
                 local filePath = self.spriteBuilderTemplates[warningModal.selectionGroupData.currentSelection]
+
+                -- Save selection for future use
+                WriteSaveData( "lastSpriteBuilderTemplateID", tostring(warningModal.selectionGroupData.currentSelection) )
+
                 local templatePath = filePath.ParentPath.AppendFile(filePath.EntityNameWithoutExtension .. "-" .. string.sub(filePath.GetExtension(), 2) .. "-template.txt") 
 
                 if(PathExists(templatePath) == false) then
@@ -79,51 +77,13 @@ function DrawTool:OnSpriteBuilder()
                     return
                 end
 
-                print("Templates", filePath.Path, templatePath.Path)
-
-                -- local templatePath = NewWorkspacePath(self.spriteBuilderTemplates.EntityNameWithoutExtension .. " - " )
-                -- if()
-
                 self.spriteFile = ReadTextFile(filePath)
                 self.spriteFilePath = NewWorkspacePath(self.rootDirectory .. filePath.EntityName)
                 self.spriteFileTemplate = ReadTextFile(templatePath)
                 self.spriteFileContents = ""
 
-                print("Templates", self.spriteFile, self.spriteFileTemplate)
-
                 -- Kick off the process sprites logic
                 self:StartSpriteBuilder()
-
-                -- -- TODO need to add some kind of version to this file, maybe a global variable?
-
-                
-                
-                -- if(warningModal.selectionGroupData.currentSelection == 1) then
-                --     self.spriteFile ="-- spritelib-start\n%s\n-- spritelib-end"
-                                        
-                --     self.spriteFilePath = NewWorkspacePath(self.rootDirectory .. "sb-sprites.lua")
-                --     self.spriteFileTemplate = "%s={spriteIDs={%s}, width=%d}\n" -- name, width, spriteList (string)
-                
-                -- elseif(warningModal.selectionGroupData.currentSelection == 2) then
-
-                --     -- TODO need to load the template file
-                --     self.spriteFile = "{\n    \"MetaSprites\": {\n        \"version\": \"v1\",\n        \"total\": 96,\n        \"collections\": [\n%s\n        ]\n    }\n}"
-                    
-                --     self.spriteFilePath = NewWorkspacePath(self.rootDirectory .. "meta-sprites.json")
-                    
-                --     self.spriteFileTemplate = "            {\n                \"name\": \"%s\",\n                \"spriteIDs\": [%s],\n                \"width\": %d\n            },\n"
-                
-                -- elseif(warningModal.selectionGroupData.currentSelection == 3) then
-
-                --     self.spriteFile = "{\n    \"MetaSprites\": {\n        \"version\": \"v1\",\n        \"total\": 96,\n        \"collections\": [\n%s\n        ]\n    }\n}"
-                    
-                --     self.spriteFilePath = NewWorkspacePath(self.rootDirectory .. "meta-sprites.json")
-                    
-                --     self.spriteFileTemplate = "            {\n                \"name\": \"%s\",\n                \"spriteIDs\": [%s],\n                \"width\": %d\n            },\n"
-                    
-                -- end
-
-                
 
             end
         
@@ -132,20 +92,29 @@ function DrawTool:OnSpriteBuilder()
 
     -- Select the default file template
     editorUI:SelectToggleButton(warningModal.selectionGroupData, 1, false)
-    warningModal.optionGroupData.buttons[1].selected = true
+
+    -- TODO this should only be restored if we are editing the same project
+    local lastSelection = Clamp(tonumber(ReadSaveData( "lastSpriteBuilderTemplateID", "1" )) or 1, 1, #warningModal.optionGroupData.buttons, ReadSaveData( "lastSpriteBuilderTemplateID", "1" ))
+
+    print("lastSelection", lastSelection)
+
+    warningModal.optionGroupData.buttons[lastSelection].selected = true
 end
 
 function DrawTool:StartSpriteBuilder()
     
     self:ResetProcessSprites()
 
+
+    self.totalSpriteCount = 0
     local files = GetEntities(self.spriteBuilderPath)
 
     self.spriteBuilderFiles = {}
 
     for i = 1, #files do
-        if(files[i].GetExtension() == ".png") then
-            table.insert(self.spriteBuilderFiles, files[i])
+        local file = files[i]
+        if(file.IsFile and file.GetExtension() == ".png") then
+            table.insert(self.spriteBuilderFiles, file)
         end
     end
 
@@ -179,10 +148,16 @@ end
 function DrawTool:SpriteBuilderStep()
 
     local path = self.spriteBuilderFiles[self.currentParsedSpriteID]
-    
+
+    -- Only load the image if the path is not nil
+    if(path == nil) then
+        return
+    end
+
     -- TODO pass in system colors?
     local image = ReadImage(path, pixelVisionOS.maskColor, pixelVisionOS.systemColors)
 
+    
     local spriteIDs = ""
     local index = -1
     local spriteData = nil
@@ -227,25 +202,43 @@ function DrawTool:SpriteBuilderStep()
 
     if(empty == false) then
 
-        local name = string.match(string.lower(path.EntityNameWithoutExtension), '[_%-%w ]')
+        local name = editorUI:ValidateInputFieldText(nil, path.EntityNameWithoutExtension, "variable", "lower")
+
+        self.totalSpriteCount = self.totalSpriteCount + 1
+
         self.spriteFileContents = self.spriteFileContents .. string.format(self.spriteFileTemplate, name, spriteIDs, image.Columns)
     end
-
-    -- print("self.spriteFileTemplate", self.spriteFile)
 
 end
 
 function DrawTool:FinalizeSpriteBuilderFile()
 
+    -- Stop the progress from updating
     pixelVisionOS:RemoveUI("ProgressUpdate")
 
-    -- Close the file
-    self.spriteFile = string.format(self.spriteFile, self.spriteFileContents)
+    -- Insert the sprite template values and the final count
+    self.spriteFile = string.format(self.spriteFile, self.spriteFileContents, self.totalSpriteCount)
 
+    -- Test to see if the file already exists
     if(PathExists(self.spriteFilePath) == true) then
-        -- TODO display a warning
+        
+        -- Configure warning message
+        local title = "Warning"
+        local message = string.format("It looks like a sprite builder file already exists at: \n\n%s\n\nDo you want to overwrite the following file?\n\n", self.spriteFilePath.Path)
+        
+        -- Display warning message
+        pixelVisionOS:ShowMessageModal(title, message, 160 + 32, true, function()
+            self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
+        end
+        ,"yes"
+        )
+
+        -- Exit out of this function so the save call at the end isn't triggered
+        return
+
     end
 
+    -- Save the file
     self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
 
 end

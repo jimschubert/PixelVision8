@@ -38,7 +38,7 @@ namespace PixelVision8.Runner.Exporters
 
         public override void CalculateSteps()
         {
-            if (targetEngine.GameChip.TotalMetaSprites < 1) return;
+            if (targetEngine.GameChip.TotalMetaSprites() < 1) return;
 
             base.CalculateSteps();
 
@@ -66,7 +66,7 @@ namespace PixelVision8.Runner.Exporters
 
             // var savedData = gameChip.savedData;
 
-            for (var i = 0; i < gameChip.TotalMetaSprites; i++)
+            for (var i = 0; i < gameChip.TotalMetaSprites(); i++)
             {
                 var metaSprite = gameChip.MetaSprite(i);
                 var childrenSprites = metaSprite.Sprites;

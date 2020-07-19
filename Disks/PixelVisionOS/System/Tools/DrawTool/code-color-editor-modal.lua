@@ -3,11 +3,12 @@ local editColorModal = nil
 EditColorModal = {}
 EditColorModal.__index = EditColorModal
 
-function EditColorModal:Init(editorUI, maskColor)
+function EditColorModal:Init(editorUI, maskColor, title)
 
     local _editColorModal = {} -- our new object
     setmetatable(_editColorModal, EditColorModal) -- make Account handle lookup
 
+    _editColorModal.title = title or "Edit Color"
     _editColorModal.editorUI = editorUI
     _editColorModal.maskColor = maskColor
 
@@ -34,7 +35,7 @@ function EditColorModal:Configure()
 
     local displaySize = Display()
 
-    self.title = "Edit Color"
+    -- self.title = "Edit Color"
 
     self.rect = {
         x = math.floor(((displaySize.x - width) * .5) / 8) * 8,

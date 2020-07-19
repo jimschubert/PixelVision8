@@ -369,7 +369,7 @@ function PixelVisionOS:UpdateItemPicker(data)
         self:UpdateItemPickerSelection(data)
 
         -- Calculate the bg color
-        local bgColor = data.showBGColor and gameEditor:BackgroundColor() or (self.emptyColorID - data.colorOffset - 1)
+        local bgColor = data.showBGColor and gameEditor:BackgroundColor() or (self.emptyColorID - data.colorOffset)
 
         data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, 1, -1, bgColor, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h), data.isolateSpriteColors)
 

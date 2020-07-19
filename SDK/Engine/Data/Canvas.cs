@@ -606,7 +606,7 @@ namespace PixelVision8.Engine
             // Calculate the index
             var index = x + y * _width;
 
-            if (index > pixels.Length) return -1;
+            if (index >= pixels.Length) return -1;
 
             return pixels[index];
         }

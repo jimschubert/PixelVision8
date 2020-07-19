@@ -47,7 +47,7 @@ namespace PixelVision8.CoreDesktop
             _graphics.PreferredBackBufferHeight = pngReader.height * scale;
             _graphics.ApplyChanges();
 
-            var imageParser = new ImageParser(pngReader, maskHex);
+            var imageParser = new ImageParser(pngReader);
             imageParser.CalculateSteps();
 
             while (imageParser.completed == false) imageParser.NextStep();

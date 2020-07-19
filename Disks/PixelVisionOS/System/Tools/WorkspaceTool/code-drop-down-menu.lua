@@ -9,7 +9,7 @@ function WorkspaceTool:CreateDropDownMenu()
     local tmpProjectPath = ReadBiosData("ProjectTemplate")
     self.fileTemplatePath = tmpProjectPath == nil and NewWorkspacePath(ReadMetadata("RootPath", "/")).AppendDirectory(ReadMetadata("GameName", "untitled")).AppendDirectory("ProjectTemplate") or NewWorkspacePath(tmpProjectPath)
 
-    print("Template Path", self.fileTemplatePath)
+    print("Template Path", self.fileTemplatePath, PathExists(self.fileTemplatePath))
     -- Create some enums for the focus typess
     
     -- TODO need to see if the log file actually exists
@@ -69,9 +69,11 @@ function WorkspaceTool:CreateDropDownMenu()
 
         table.insert(menuOptions, addAt, {name = "New Project", key = Keys.P, action = function() self:OnNewProject() end, enabled = false, toolTip = "Create a new file."})
 
-        -- NewGameShortcut = "New Project"
+         NewGameShortcut = "New Project"
 
         addAt = addAt + 1
+        
+        print("New Project")
 
     end
 
@@ -211,6 +213,7 @@ function WorkspaceTool:UpdateContextMenu()
     -- Check to see if currentPath is a game
     local canRun = self.focus == true and self.isGameDir--and pixelVisionOS:ValidateGameInDir(self.currentPath, {"code.lua"})-- and selections
     
+    print("canRun", self.focus, self.isGameDir)
     -- Look to see if the selection is a special file (parent dir or run)
     local specialFile = false
 
@@ -264,6 +267,7 @@ function WorkspaceTool:UpdateContextMenu()
 
     pixelVisionOS:EnableMenuItemByName(NewGameShortcut, canCreateProject)
 
+    print("canCreateProject", canRun)
     pixelVisionOS:EnableMenuItemByName(NewFolderShortcut, canCreateFile)
 
     pixelVisionOS:EnableMenuItemByName(RunShortcut, canRun)

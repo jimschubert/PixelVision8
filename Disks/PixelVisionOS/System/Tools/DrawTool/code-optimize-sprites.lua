@@ -1,3 +1,13 @@
+--[[
+	Pixel Vision 8 - Draw Tool
+	Copyright (C) 2017, Pixel Vision 8 (http://pixelvision8.com)
+	Created by Jesse Freeman (@jessefreeman)
+
+	Please do not copy and distribute verbatim copies
+	of this license document, but modifications without
+	distributing is allowed.
+]]--
+
 function DrawTool:OnOptimizeSprites()
 
     if(self.colorMap == nil or self.analysisInvalid == true) then
@@ -37,9 +47,14 @@ function DrawTool:OnOptimizeSprites()
     self.optimizationActions = {}
 
     message = message .. "#  Remove Empty Sprites\n"
-    -- set this always available since we always want the option to remove duplicates
+    -- set this always available since we always want the option to remove empty
     table.insert(self.optimizationActions, function() self.removeEmptySprites = true end)
     self.removeEmptySprites = false
+
+    message = message .. "#  Remove Duplicate Sprites\n"
+    -- set this always available since we always want the option to remove duplicates
+    table.insert(self.optimizationActions, function() self.removeDuplicatedSprites = true end)
+    self.removeDuplicatedSprites = false
 
     -- test to see if the colors need to be re-mapped
     if(#self.spritesOutOfBounds > 0) then
@@ -182,7 +197,7 @@ function DrawTool:OptimizeSpriteStep()
     end
 
     if(empty == false) then
-
+        
         table.insert(self.usedSprites, pixelData)
 
     end
@@ -254,13 +269,11 @@ function DrawTool:FinalizeSpriteOptimization()
                 self.spritesPerLoop = 16
                 self.optimizeSpriteCounter = 0
                 self.totalSpritesToProcess = gameEditor:TotalSprites()
-            
-                -- Create an empty sprite template
-                self.emptySprite = {}
-                for i = 1, 64 do
-                    table.insert(self.emptySprite, -1)    
-                end
-
+                self.destSpriteID = 0
+                
+                -- Clear the sprite chip
+                gameEditor:ClearSprites()
+                
                 -- The action to preform on each step of the sprite progress loop
                 self.onSpriteProcessAction = function()
                     self:ClearEmptySpriteStep()
@@ -291,20 +304,27 @@ function DrawTool:FinalizeSpriteOptimization()
 
     end
 
-
 end
 
 
 function DrawTool:ClearEmptySpriteStep()
     
-    if(self.currentParsedSpriteID < self.totalUsedSprites) then
+    -- TODO need to create a tmpPixelData value instead of creating on each loop
     
-        gameEditor:Sprite(self.currentParsedSpriteID, self.usedSprites[self.currentParsedSpriteID+1])
+    -- Get the pixel data for the current sprite
+    local pixelData = self.usedSprites[self.currentParsedSpriteID+1]
 
-    else
-        gameEditor:Sprite(self.currentParsedSpriteID, self.emptySprite)
-
+    -- Exit if the sprite data is nil or the duplicate flag is true and triggered
+    if(pixelData == nil or (self.removeDuplicatedSprites and gameEditor:FindSprite(pixelData, false) > -1)) then
+        return
     end
+
+    -- Save the sprite's pixel data
+    gameEditor:Sprite(self.destSpriteID, pixelData)
+
+    -- Increment the dest sprite ID
+    self.destSpriteID = self.destSpriteID + 1
+
 end
 
 function DrawTool:OnOptimizeSpritesComplete() 
@@ -339,5 +359,7 @@ function DrawTool:OnOptimizeSpritesComplete()
     -- Reset the colors to make sure all the values are correct for the next pass
     pixelVisionOS:CopyToolColorsToGameMemory()
     pixelVisionOS:ImportColorsFromGame()
+    
+    self:InvalidateData()
 
 end

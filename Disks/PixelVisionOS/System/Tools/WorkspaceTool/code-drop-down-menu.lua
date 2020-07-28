@@ -213,7 +213,6 @@ function WorkspaceTool:UpdateContextMenu()
     -- Check to see if currentPath is a game
     local canRun = self.focus == true and self.isGameDir--and pixelVisionOS:ValidateGameInDir(self.currentPath, {"code.lua"})-- and selections
     
-    print("canRun", self.focus, self.isGameDir)
     -- Look to see if the selection is a special file (parent dir or run)
     local specialFile = false
 
@@ -267,7 +266,6 @@ function WorkspaceTool:UpdateContextMenu()
 
     pixelVisionOS:EnableMenuItemByName(NewGameShortcut, canCreateProject)
 
-    print("canCreateProject", canRun)
     pixelVisionOS:EnableMenuItemByName(NewFolderShortcut, canCreateFile)
 
     pixelVisionOS:EnableMenuItemByName(RunShortcut, canRun)

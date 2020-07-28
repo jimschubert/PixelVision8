@@ -1,5 +1,5 @@
 --[[
-	Pixel Vision 8 - Display Tool
+	Pixel Vision 8 - Draw Tool
 	Copyright (C) 2017, Pixel Vision 8 (http://pixelvision8.com)
 	Created by Jesse Freeman (@jessefreeman)
 
@@ -10,7 +10,7 @@
 
 -- Global UI used by this tool
 LoadScript("pixel-vision-os-item-picker-v3")
-LoadScript("pixel-vision-os-color-picker-v3")
+LoadScript("pixel-vision-os-color-picker-v4")
 LoadScript("pixel-vision-os-sprite-picker-v4")
 LoadScript("pixel-vision-os-canvas-v3")
 LoadScript("pixel-vision-os-progress-modal-v2")
@@ -126,15 +126,6 @@ function DrawTool:Init()
 end
 
 function DrawTool:LoadError()
-
-    -- -- Cover up the 
-    -- DrawRect(32, 32, 128, 128, 0, DrawMode.TilemapCache)
-    -- DrawRect(152+24, 32, 64, 128, 0, DrawMode.TilemapCache)
-    -- DrawRect(152+24, 208, 32, 8, 0, DrawMode.TilemapCache)
-    -- DrawRect(32, 192-8, 128, 32, 0, DrawMode.TilemapCache)
-    -- DrawRect(8, 17, 16, 200, BackgroundColor(), DrawMode.TilemapCache)
-    -- DrawRect(176, 16, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
-    -- DrawRect(216, 192, 32, 9, BackgroundColor(), DrawMode.TilemapCache)
 
     pixelVisionOS:ChangeTitle(self.toolName, "toolbaricontool")
 

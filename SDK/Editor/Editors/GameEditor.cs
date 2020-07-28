@@ -412,6 +412,11 @@ namespace PixelVision8.Runner.Editors
             colorChip.Clear(color);
         }
 
+        public void ClearSprites()
+        {
+            spriteChip.Clear();
+        }
+
         /// <summary>
         ///     Get the TotalDisks colors or change the limit for how many colors the color chip can store.
         /// </summary>
@@ -702,7 +707,7 @@ namespace PixelVision8.Runner.Editors
         {
             var tileData = gameChip.Tile(column, row, spriteID, colorOffset, flag);
 
-            RenderTile(tileData, column, row);
+            // RenderTile(tileData, column, row);
 
             return tileData;
         }
@@ -945,45 +950,45 @@ namespace PixelVision8.Runner.Editors
         /// <summary>
         ///     This will go through the Sprite Chip memory and remove any duplicate sprites it finds.
         /// </summary>
-        public void OptimizeSprites()
-        {
-            //            Console.WriteLine("Optimize sprites " + spriteChip.width + " " + spriteChip.height);
-
-            var tmpSpriteChip = new SpriteChip { width = 8, height = 8 };
-
-
-            tmpSpriteChip.Resize(spriteChip.textureWidth, spriteChip.textureHeight);
-
-            // Loop through all the sprites and copy them to the new chip
-            var total = spriteChip.TotalSprites;
-
-            var tmpPixelData = new int[8 * 8];
-            var nextSpriteID = 0;
-            
-            // Copy the sprites to the temp chip
-            for (var i = 0; i < total; i++)
-            {
-                spriteChip.ReadSpriteAt(i, ref tmpPixelData);
-
-                if (tmpSpriteChip.FindSprite(tmpPixelData) == -1)
-                {
-                    tmpSpriteChip.UpdateSpriteAt(nextSpriteID, tmpPixelData);
-
-                    nextSpriteID++;
-                }
-            }
-
-            spriteChip.Clear();
-
-            total = tmpSpriteChip.SpritesInMemory;
-
-            for (var i = 0; i < total; i++)
-            {
-                tmpSpriteChip.ReadSpriteAt(i, ref tmpPixelData);
-                spriteChip.UpdateSpriteAt(i, tmpPixelData);
-            }
-
-        }
+        // public void OptimizeSprites()
+        // {
+        //     //            Console.WriteLine("Optimize sprites " + spriteChip.width + " " + spriteChip.height);
+        //
+        //     var tmpSpriteChip = new SpriteChip { width = 8, height = 8 };
+        //
+        //
+        //     tmpSpriteChip.Resize(spriteChip.textureWidth, spriteChip.textureHeight);
+        //
+        //     // Loop through all the sprites and copy them to the new chip
+        //     var total = spriteChip.TotalSprites;
+        //
+        //     var tmpPixelData = new int[8 * 8];
+        //     var nextSpriteID = 0;
+        //     
+        //     // Copy the sprites to the temp chip
+        //     for (var i = 0; i < total; i++)
+        //     {
+        //         spriteChip.ReadSpriteAt(i, ref tmpPixelData);
+        //
+        //         if (tmpSpriteChip.FindSprite(tmpPixelData) == -1)
+        //         {
+        //             tmpSpriteChip.UpdateSpriteAt(nextSpriteID, tmpPixelData);
+        //
+        //             nextSpriteID++;
+        //         }
+        //     }
+        //
+        //     spriteChip.Clear();
+        //
+        //     total = tmpSpriteChip.SpritesInMemory;
+        //
+        //     for (var i = 0; i < total; i++)
+        //     {
+        //         tmpSpriteChip.ReadSpriteAt(i, ref tmpPixelData);
+        //         spriteChip.UpdateSpriteAt(i, tmpPixelData);
+        //     }
+        //
+        // }
 
         /// <summary>
         ///     Returns the TotalDisks number of sprites in memory.
@@ -2059,120 +2064,120 @@ namespace PixelVision8.Runner.Editors
             return new Canvas(width, height, gameChip);
         }
 
-        private Canvas tmpCanvas;
-        public bool RenderingMap { get; private set; }
-        private int[] tmpPixelData = new int[0];
-        private int totalTiles;
-        private int totalLoops;
-        private readonly int maxPerLoop = 100;
-        private int currentLoop;
-
-        private readonly Canvas[] layerCache = new Canvas[2];
+        // private Canvas tmpCanvas;
+        // public bool RenderingMap { get; private set; }
+        // private int[] tmpPixelData = new int[0];
+        // private int totalTiles;
+        // private int totalLoops;
+        // private readonly int maxPerLoop = 100;
+        // private int currentLoop;
+        //
+        // private readonly Canvas[] layerCache = new Canvas[2];
         private SfxrMusicGeneratorChip songGenerator;
-
-        public int RenderPercent => MathHelper.Clamp((int)(currentLoop / (float)totalLoops * 100), 0, 100);
-
-        /// <summary>
-        ///     Draws the map to a layer
-        /// </summary>
-        /// <param name="mode"></param>
-        public void RenderMapLayer(int mode)
-        {
-            var realWidth = spriteChip.width * tilemapChip.columns;
-            var realHeight = spriteChip.height * tilemapChip.rows;
-
-
-            if (layerCache[mode] == null)
-            {
-                layerCache[mode] = new Canvas(realWidth, realHeight, gameChip);
-                RenderingMap = true;
-            }
-
-            // Set the tmpCanvas to the cache
-            tmpCanvas = layerCache[mode];
-
-            // Rebuild the map if it hasn't been rendered yet.
-            if (RenderingMap)
-            {
-                tmpCanvas.Clear(mode == 0 ? colorChip.backgroundColor : -2);
-
-                totalTiles = tilemapChip.total;
-
-                Array.Resize(ref tmpPixelData, spriteChip.width * spriteChip.height);
-
-                RenderingMap = true;
-
-                totalLoops = MathUtil.CeilToInt(tilemapChip.total / (float)maxPerLoop);
-
-                currentLoop = 0;
-            }
-        }
-
-        /// <summary>
-        ///     Moves to the next render step
-        /// </summary>
-        public void NextRenderStep()
-        {
-            var offset = currentLoop * maxPerLoop;
-
-            for (var i = 0; i < maxPerLoop; i++)
-            {
-                var index = i + offset;
-                if (index >= totalTiles)
-                {
-                    RenderingMap = false;
-                    break;
-                }
-
-                var pos = gameChip.CalculatePosition(index, tilemapChip.columns);
-
-                var tileData = gameChip.Tile(pos.X, pos.Y);
-
-                RenderTile(tileData, pos.X, pos.Y);
-            }
-
-            currentLoop++;
-        }
-
-        /// <summary>
-        ///     Draw a specific tile
-        /// </summary>
-        /// <param name="tileData"></param>
-        /// <param name="col"></param>
-        /// <param name="row"></param>
-        private void RenderTile(TileData tileData, int col, int row)
-        {
-            int[] spriteData;
-            int[] flagData;
-
-            col *= spriteChip.width;
-            row *= spriteChip.height;
-
-            var totalPixels = spriteChip.width * spriteChip.height;
-
-            if (layerCache[0] != null)
-            {
-                // 
-
-                if (tileData.spriteID == -1)
-                    spriteData = Enumerable.Repeat(-1, totalPixels).ToArray();
-                else
-                    spriteData = gameChip.Sprite(tileData.spriteID);
-
-                // Shift the pixel data
-                for (var j = 0; j < spriteData.Length; j++) spriteData[j] += tileData.colorOffset;
-
-                //
-                layerCache[0].SetPixels(col, row, spriteChip.width, spriteChip.height, spriteData);
-            }
-
-            if (layerCache[1] != null)
-            {
-                flagData = Enumerable.Repeat((int)tileData.flag, spriteChip.width * spriteChip.height).ToArray();
-
-                layerCache[1].SetPixels(col, row, spriteChip.width, spriteChip.height, flagData);
-            }
-        }
+        //
+        // public int RenderPercent => MathHelper.Clamp((int)(currentLoop / (float)totalLoops * 100), 0, 100);
+        //
+        // /// <summary>
+        // ///     Draws the map to a layer
+        // /// </summary>
+        // /// <param name="mode"></param>
+        // public void RenderMapLayer(int mode)
+        // {
+        //     var realWidth = spriteChip.width * tilemapChip.columns;
+        //     var realHeight = spriteChip.height * tilemapChip.rows;
+        //
+        //
+        //     if (layerCache[mode] == null)
+        //     {
+        //         layerCache[mode] = new Canvas(realWidth, realHeight, gameChip);
+        //         RenderingMap = true;
+        //     }
+        //
+        //     // Set the tmpCanvas to the cache
+        //     tmpCanvas = layerCache[mode];
+        //
+        //     // Rebuild the map if it hasn't been rendered yet.
+        //     if (RenderingMap)
+        //     {
+        //         tmpCanvas.Clear(mode == 0 ? colorChip.backgroundColor : -2);
+        //
+        //         totalTiles = tilemapChip.total;
+        //
+        //         Array.Resize(ref tmpPixelData, spriteChip.width * spriteChip.height);
+        //
+        //         RenderingMap = true;
+        //
+        //         totalLoops = MathUtil.CeilToInt(tilemapChip.total / (float)maxPerLoop);
+        //
+        //         currentLoop = 0;
+        //     }
+        // }
+        //
+        // /// <summary>
+        // ///     Moves to the next render step
+        // /// </summary>
+        // public void NextRenderStep()
+        // {
+        //     var offset = currentLoop * maxPerLoop;
+        //
+        //     for (var i = 0; i < maxPerLoop; i++)
+        //     {
+        //         var index = i + offset;
+        //         if (index >= totalTiles)
+        //         {
+        //             RenderingMap = false;
+        //             break;
+        //         }
+        //
+        //         var pos = gameChip.CalculatePosition(index, tilemapChip.columns);
+        //
+        //         var tileData = gameChip.Tile(pos.X, pos.Y);
+        //
+        //         RenderTile(tileData, pos.X, pos.Y);
+        //     }
+        //
+        //     currentLoop++;
+        // }
+        //
+        // /// <summary>
+        // ///     Draw a specific tile
+        // /// </summary>
+        // /// <param name="tileData"></param>
+        // /// <param name="col"></param>
+        // /// <param name="row"></param>
+        // private void RenderTile(TileData tileData, int col, int row)
+        // {
+        //     int[] spriteData;
+        //     int[] flagData;
+        //
+        //     col *= spriteChip.width;
+        //     row *= spriteChip.height;
+        //
+        //     var totalPixels = spriteChip.width * spriteChip.height;
+        //
+        //     if (layerCache[0] != null)
+        //     {
+        //         // 
+        //
+        //         if (tileData.spriteID == -1)
+        //             spriteData = Enumerable.Repeat(-1, totalPixels).ToArray();
+        //         else
+        //             spriteData = gameChip.Sprite(tileData.spriteID);
+        //
+        //         // Shift the pixel data
+        //         for (var j = 0; j < spriteData.Length; j++) spriteData[j] += tileData.colorOffset;
+        //
+        //         //
+        //         layerCache[0].SetPixels(col, row, spriteChip.width, spriteChip.height, spriteData);
+        //     }
+        //
+        //     if (layerCache[1] != null)
+        //     {
+        //         flagData = Enumerable.Repeat((int)tileData.flag, spriteChip.width * spriteChip.height).ToArray();
+        //
+        //         layerCache[1].SetPixels(col, row, spriteChip.width, spriteChip.height, flagData);
+        //     }
+        // }
 
         /// <summary>
         ///     Fast copy of render to the display
@@ -2183,35 +2188,35 @@ namespace PixelVision8.Runner.Editors
         /// <param name="height"></param>
         /// <param name="colorOffset"></param>
         /// <param name="maskColor"></param>
-        public void CopyRenderToDisplay(int x, int y, int width, int height, int colorOffset, int maskColor = -1)
-        {
-            // Only render when a canvas exists
-            if (tmpCanvas == null) return;
-
-            // Should have some kind of invalidation test
-
-            // Get scroll position for tmpX/Y position
-            var scrollPos = gameChip.ScrollPosition();
-            var tmpX = scrollPos.X;
-            var tmpY = scrollPos.Y;
-
-            // Copy the pixels from the canvas
-            tmpCanvas.CopyPixels(ref tmpPixelData, tmpX, tmpY, width, height);
-
-            //            if (useBGColor)
-            //            {
-            var size = tmpPixelData.Length;
-
-            // Replace empty colors with the background
-            for (var i = 0; i < size; i++)
-                if (tmpPixelData[i] < 0)
-                    tmpPixelData[i] = maskColor; //useBGColor ? colorChip.backgroundColor : -1 - colorOffset;
-            //            }
-
-            // Copy to the active game's tilemap layer
-            runner.ActiveEngine.GameChip.DrawPixels(tmpPixelData, x, y, width, height, false, false,
-                DrawMode.TilemapCache, colorOffset);
-        }
+        // public void CopyRenderToDisplay(int x, int y, int width, int height, int colorOffset, int maskColor = -1)
+        // {
+        //     // Only render when a canvas exists
+        //     if (tmpCanvas == null) return;
+        //
+        //     // Should have some kind of invalidation test
+        //
+        //     // Get scroll position for tmpX/Y position
+        //     var scrollPos = gameChip.ScrollPosition();
+        //     var tmpX = scrollPos.X;
+        //     var tmpY = scrollPos.Y;
+        //
+        //     // Copy the pixels from the canvas
+        //     tmpCanvas.CopyPixels(ref tmpPixelData, tmpX, tmpY, width, height);
+        //
+        //     //            if (useBGColor)
+        //     //            {
+        //     var size = tmpPixelData.Length;
+        //
+        //     // Replace empty colors with the background
+        //     for (var i = 0; i < size; i++)
+        //         if (tmpPixelData[i] < 0)
+        //             tmpPixelData[i] = maskColor; //useBGColor ? colorChip.backgroundColor : -1 - colorOffset;
+        //     //            }
+        //
+        //     // Copy to the active game's tilemap layer
+        //     runner.ActiveEngine.GameChip.DrawPixels(tmpPixelData, x, y, width, height, false, false,
+        //         DrawMode.TilemapCache, colorOffset);
+        // }
 
         /// <summary>
         ///     Fast canvas copy to the display
@@ -2226,37 +2231,37 @@ namespace PixelVision8.Runner.Editors
         /// <param name="offsetX"></param>
         /// <param name="offsetY"></param>
         /// <param name="useScrollPos"></param>
-        public void CopyCanvasToDisplay(Canvas srcCanvas, int x, int y, int width, int height, int colorOffset,
-            int maskColor = -1, int offsetX = 0, int offsetY = 0, bool useScrollPos = true)
-        {
-            // Only render when a canvas exists
-            //            if (tmpCanvas == null)
-            //                return;
-
-            // Should have some kind of invalidation test
-
-            // Get scroll position for tmpX/Y position
-            var scrollPos = gameChip.ScrollPosition();
-            var tmpX = scrollPos.X + offsetX;
-            var tmpY = scrollPos.Y + offsetY;
-
-            // Copy the pixels from the canvas
-            srcCanvas.CopyPixels(ref tmpPixelData, tmpX, tmpY, width, height);
-
-            //            if (useBGColor)
-            //            {
-            var size = tmpPixelData.Length;
-
-            // Replace empty colors with the background
-            for (var i = 0; i < size; i++)
-                if (tmpPixelData[i] < 0)
-                    tmpPixelData[i] = maskColor; //useBGColor ? colorChip.backgroundColor : -1 - colorOffset;
-            //            }
-
-            // Copy to the active game's tilemap layer
-            runner.ActiveEngine.GameChip.DrawPixels(tmpPixelData, x, y, width, height, false, false,
-                DrawMode.TilemapCache, colorOffset);
-        }
+        // public void CopyCanvasToDisplay(Canvas srcCanvas, int x, int y, int width, int height, int colorOffset,
+        //     int maskColor = -1, int offsetX = 0, int offsetY = 0, bool useScrollPos = true)
+        // {
+        //     // Only render when a canvas exists
+        //     //            if (tmpCanvas == null)
+        //     //                return;
+        //
+        //     // Should have some kind of invalidation test
+        //
+        //     // Get scroll position for tmpX/Y position
+        //     var scrollPos = gameChip.ScrollPosition();
+        //     var tmpX = scrollPos.X + offsetX;
+        //     var tmpY = scrollPos.Y + offsetY;
+        //
+        //     // Copy the pixels from the canvas
+        //     srcCanvas.CopyPixels(ref tmpPixelData, tmpX, tmpY, width, height);
+        //
+        //     //            if (useBGColor)
+        //     //            {
+        //     var size = tmpPixelData.Length;
+        //
+        //     // Replace empty colors with the background
+        //     for (var i = 0; i < size; i++)
+        //         if (tmpPixelData[i] < 0)
+        //             tmpPixelData[i] = maskColor; //useBGColor ? colorChip.backgroundColor : -1 - colorOffset;
+        //     //            }
+        //
+        //     // Copy to the active game's tilemap layer
+        //     runner.ActiveEngine.GameChip.DrawPixels(tmpPixelData, x, y, width, height, false, false,
+        //         DrawMode.TilemapCache, colorOffset);
+        // }
 
         #endregion
 

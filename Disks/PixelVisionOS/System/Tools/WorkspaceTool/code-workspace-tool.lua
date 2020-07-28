@@ -74,12 +74,12 @@ function WorkspaceTool:RestoreLastPath()
   local lastScrollPos = tonumber(ReadSaveData("scrollPos", "0"))
   local lastSelection = tonumber(ReadSaveData("selection", "0"))
 
-  print("newPath", newPath)
+  --print("newPath", newPath)
 
   -- Read metadata last path and default to the newPath
   local lastPath = ReadMetadata("overrideLastPath", newPath)
 
-  print("lastPath 1", lastPath)
+  --print("lastPath 1", lastPath)
 
   if(lastPath ~= "none") then
 
@@ -93,14 +93,14 @@ function WorkspaceTool:RestoreLastPath()
 
   end
 
-  print("overrideLastPath 2", ReadMetadata("overrideLastPath", "Cleared"))
+  --print("overrideLastPath 2", ReadMetadata("overrideLastPath", "Cleared"))
 
   -- Convert the path to a Workspace Path
   newPath = newPath == "none" and self.workspacePath or NewWorkspacePath(newPath)
 
   -- Open the window to the new path
 
-  print("final path", newPath)
+  --print("final path", newPath)
 
   if(newPath.Path == self.workspacePath.Path and #GetEntities(self.workspacePath) == 0) then
     self:AutoCreateFirstProject()
@@ -112,7 +112,7 @@ end
 
 function WorkspaceTool:AutoCreateFirstProject()
 
-  pixelVisionOS:ShowMessageModal("Welcome to Pixel Vision 8", "It looks like you are running Pixel Vision 8 for the first time. We have automatically created a new 'Workspace drive' for you on your computer at: \n\n" .. DocumentPath().."\n\nYou can learn more about the Workspace and using PV8 by reading the documentation at:\n\nhttps://www.pixelvision8.com/documentation\n\nBefore getting started, would you like to creating a new project?", 224, true,
+  pixelVisionOS:ShowMessageModal("Welcome to Pixel Vision 8", "It looks like you are running Pixel Vision 8 for the first time. We have automatically created a new 'Workspace drive' for you on your computer at: \n\n" .. DocumentPath().."\n\nYou can learn more about the Workspace and using PV8 by reading the documentation at:\n\nhttps://www.pixelvision8.com/documentation\n\nBefore getting started, would you like to create a new project?", 224, true,
     function()
 
       local defaultPath = self.workspacePath

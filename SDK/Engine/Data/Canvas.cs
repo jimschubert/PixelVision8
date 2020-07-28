@@ -704,7 +704,7 @@ namespace PixelVision8.Engine
         /// <param name="maskColor"></param>
         /// <param name="maskColorID"></param>
         /// <param name="viewport"></param>
-        public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, int scale = 1,
+        public void DrawPixels(int x = 0, int y = 0, DrawMode drawMode = DrawMode.TilemapCache, float scale = 1f,
             int maskColor = -1, int maskColorID = -1, int colorOffset = 0, Rectangle? viewport = null, int[] isolateColors = null)
         {
             // This only works when the canvas has a reference to the gameChip
@@ -744,8 +744,9 @@ namespace PixelVision8.Engine
                 }
             }
 
-            var newWidth = tmpW * scale;
-            var newHeight = tmpH * scale;
+            // Covert the width and height into ints based on scale
+            var newWidth = (int)(tmpW * scale);
+            var newHeight = (int)(tmpH * scale);
 
             var destPixels = scale > 1 ? ResizePixels(srcPixels, tmpW, tmpH, newWidth, newHeight) : srcPixels;
 

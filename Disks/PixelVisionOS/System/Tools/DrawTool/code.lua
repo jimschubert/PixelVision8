@@ -1,5 +1,5 @@
 --[[
-	Pixel Vision 8 - Debug Tool
+	Pixel Vision 8 - Draw Tool
 	Copyright (C) 2016, Pixel Vision 8 (http://pixelvision8.com)
 	Created by Jesse Freeman (@jessefreeman)
 

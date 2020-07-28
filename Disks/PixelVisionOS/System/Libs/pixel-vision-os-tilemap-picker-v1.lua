@@ -23,7 +23,7 @@ function PixelVisionOS:CreateTilemapPicker(rect, itemSize, columns, rows, colorO
     data.name = "TilemapPicker" .. data.name
     data.mode = 1
     data.layerCache = {}
-    data.maxPerLoop = 400
+    data.maxPerLoop = 10
     data.paintTileIndex = 0
     data.paintFlagIndex = 0
     data.paintColorOffset = 0
@@ -148,14 +148,14 @@ function PixelVisionOS:UpdateFlagID(data, col, row, flagID)
     local size = data.scale
 
     -- Calculate the total tiles affected
-    local total = size * size
+    local total = size.x * size.y
 
     local tileHistory = {}
 
     -- Loop through all the tiles that need to be updated
     for i = 1, total do
 
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextCol = col + offset.x
         local nextRow = row + offset.y
@@ -195,7 +195,7 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
 
     local size = scale or data.scale
 
-    local total = size * size
+    local total = size.x * size.y
 
     local spriteCols = 128 / 8
 
@@ -205,7 +205,7 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
 
     for i = 1, total do
 
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextCol = col + offset.x
         local nextRow = row + offset.y
@@ -241,13 +241,13 @@ function PixelVisionOS:SwapTiles(data, srcTile, destTile)
 
     local size = data.scale
 
-    local total = size * size
+    local total = size.x * size.y
 
     local tileHistory = {}
 
     for i = 1, total do
         --
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextSrcCol = srcPos.x + offset.x
         local nextSrcRow = srcPos.y + offset.y
@@ -321,7 +321,7 @@ function PixelVisionOS:PreRenderMapLayer(data, mode)
 
         self.editorUI:Enable(data.picker, false)
 
-        data.layerCache[data.mapRenderMode] = data.mapRenderMode == 0 and gameEditor:NewCanvas(realWidth, realHeight) or NewCanvas(realWidth, realHeight)
+        data.layerCache[data.mapRenderMode] = data.mapRenderMode == 0 and NewCanvas(realWidth, realHeight) or NewCanvas(realWidth, realHeight)
 
         data.renderingMap = true
 
@@ -410,13 +410,13 @@ function PixelVisionOS:RenderTile(data, tileData, col, row)
         if(data.mapRenderMode == 0) then
             if (tileData.spriteID > - 1) then
 
-                if(pixelVisionOS.paletteMode == true) then
+                --if(pixelVisionOS.paletteMode == true) then
                     local spriteData = gameEditor:Sprite(tileData.spriteID)
 
                     layer:MergePixels(col, row, 8, 8, spriteData, false, false, tileData.colorOffset, true)
-                else
-                    layer:DrawSprite(tileData.spriteID, col, row, false, false, tileData.colorOffset)
-                end
+                --else
+                --    layer:DrawSprite(tileData.spriteID, col, row, false, false, tileData.colorOffset)
+                --end
             end
         elseif(data.mapRenderMode == 1) then
             if (tileData.flag > - 1) then
@@ -480,7 +480,7 @@ function PixelVisionOS:ChangeTilemapPaintFlag(data, value, updatePreview)
 
     data.paintFlagIndex = value
 
-    local size = NewPoint(data.scale * 8, data.scale * 8)
+    local size = NewPoint(data.scale.x * 8, data.scale.y * 8)
 
     local tmpCanvas = NewCanvas(size.x, size.y)
 
@@ -501,7 +501,7 @@ function PixelVisionOS:ChangeTilemapPaintSpriteID(data, value, updatePreview)
 
     data.paintTileIndex = value
 
-    data.overTilePixelData = gameEditor:ReadGameSpriteData(data.paintTileIndex, data.scale, data.scale)
+    data.overTilePixelData = gameEditor:ReadGameSpriteData(data.paintTileIndex, data.scale.x, data.scale.y)
 
     if(updatePreview ~= false) then
         -- Force the over item draw to display the new pixel data

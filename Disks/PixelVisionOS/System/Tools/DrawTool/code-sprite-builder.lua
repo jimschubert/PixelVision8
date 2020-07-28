@@ -1,3 +1,13 @@
+--[[
+	Pixel Vision 8 - Draw Tool
+	Copyright (C) 2017, Pixel Vision 8 (http://pixelvision8.com)
+	Created by Jesse Freeman (@jessefreeman)
+
+	Please do not copy and distribute verbatim copies
+	of this license document, but modifications without
+	distributing is allowed.
+]]--
+
 function DrawTool:EnableSpriteBuilder()
 
     if(self.spriteBuilderPath == nil) then
@@ -219,27 +229,34 @@ function DrawTool:FinalizeSpriteBuilderFile()
     -- Insert the sprite template values and the final count
     self.spriteFile = string.format(self.spriteFile, self.spriteFileContents, self.totalSpriteCount)
 
+    local title = self.toolTitle
+    local message = string.format("The sprite builder has generated %d meta sprites.", self.totalSpriteCount)
+
     -- Test to see if the file already exists
     if(PathExists(self.spriteFilePath) == true) then
+        message = string.format("%s\n\nIt looks like a sprite builder file already exists at: \n\n%s\n\nDo you want to overwrite the following file?\n\n", message, self.spriteFilePath.Path)
+    else
+        message = string.format("%s\n\nDo you want to save the file?", message)
+    end
+    
+    -- Display warning message
+    pixelVisionOS:ShowMessageModal(title, message, 160 + 32, true, function()
         
-        -- Configure warning message
-        local title = "Warning"
-        local message = string.format("It looks like a sprite builder file already exists at: \n\n%s\n\nDo you want to overwrite the following file?\n\n", self.spriteFilePath.Path)
+            if(pixelVisionOS.messageModal.selectionValue == true) then
+                self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
+            end
         
-        -- Display warning message
-        pixelVisionOS:ShowMessageModal(title, message, 160 + 32, true, function()
-            self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
         end
         ,"yes"
-        )
+    )
 
-        -- Exit out of this function so the save call at the end isn't triggered
-        return
-
-    end
+    --    -- Exit out of this function so the save call at the end isn't triggered
+    --    return
+    --
+    --end
 
     -- Save the file
-    self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
+    --self:SaveSpriteFile(self.spriteFilePath, self.spriteFile)
 
 end
 

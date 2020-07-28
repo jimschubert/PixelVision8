@@ -50,6 +50,7 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
     data.displaySize = Display()
 
     data.maxScale = 4
+    data.zoom = 1
 
     -- Scroll values
     data.scrollScale = NewPoint(math.ceil((data.columns - data.visibleColumns) / data.maxScale), math.ceil((data.rows - data.visibleRows) / data.maxScale))
@@ -156,7 +157,8 @@ function PixelVisionOS:CreateItemPicker(rect, itemSize, columns, rows, colorOffs
 
     end
 
-    if(_G["vsliderhandle"] ~= nil and data.viewport.height < data.realHeight) then
+    --print(data.name, "scroller", data.viewport.height < data.realHeight, _G["vsliderhandle"])
+    if(_G["vsliderhandleup"] ~= nil and data.viewport.height < data.realHeight) then
 
         data.vSlider = editorUI:CreateSlider(
             { x = rect.x + rect.w + 1, y = rect.y, w = 16, h = rect.h},
@@ -369,9 +371,12 @@ function PixelVisionOS:UpdateItemPicker(data)
         self:UpdateItemPickerSelection(data)
 
         -- Calculate the bg color
-        local bgColor = data.showBGColor and gameEditor:BackgroundColor() or (self.emptyColorID - data.colorOffset)
-
-        data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, 1, -1, bgColor, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h), data.isolateSpriteColors)
+        local bgColor = data.showBGColor and gameEditor:BackgroundColor() or self.emptyColorID
+        
+        -- TODO need to optimize this, the bg color isn't rendering correctly because of the color offset
+        DrawRect(data.visibleRect.x, data.visibleRect.y, data.visibleRect.w, data.visibleRect.h, bgColor, DrawMode.TilemapCache);
+        
+        data.canvas:DrawPixels( data.visibleRect.x, data.visibleRect.y, DrawMode.TilemapCache, data.zoom, -1, -1, data.colorOffset, NewRect(data.viewport.x + data.lastStartX, data.viewport.y + data.lastStartY, data.visibleRect.w, data.visibleRect.h), data.isolateSpriteColors)
 
         -- Reset the display invalidation
         data.invalidateDisplay = false
@@ -615,7 +620,7 @@ function PixelVisionOS:ChangeItemPickerScale(data, scale, selection)
 
     data.scale = selection--{x = scale, y = scale}
 
-    local tmpItemSize = scale * data.itemSize.x
+    --local tmpItemSize = scale * data.itemSize
 
     -- Resize picker
     data.picker.itemWidth = selection.x * data.itemSize.x

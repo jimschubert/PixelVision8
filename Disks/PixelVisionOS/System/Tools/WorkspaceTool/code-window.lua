@@ -921,6 +921,7 @@ end
 
 function WorkspaceTool:UpdateFileType(item, isGameFile)
 
+    --print("self.editorMapping", item.type, isGameFile)
     local key = item.type--item.isDirectory and item.type or item.ext
 
     key = item.type
@@ -1094,7 +1095,7 @@ function WorkspaceTool:GetDirectoryContents(workspacePath)
     -- Check to see if this is a game directory and we should display the run exe
     if(pixelVisionOS:ValidateGameInDir(workspacePath, {"code.lua"}) and self:TrashOpen() == false) then
 
-        if((srcSeg[1] == "Disks" and totalSeg < 3) or (srcSeg[1] == "Workspace" and totalSeg ~= 1)) then
+        if((srcSeg[1] == "Disks") or (srcSeg[1] == "Workspace" and totalSeg ~= 1)) then
             
             -- Add an entity to run the game
             table.insert(

@@ -6,15 +6,14 @@
 	Please do not copy and distribute verbatim copies
 	of this license document, but modifications without
 	distributing is allowed.
-]]--
-
+--]]--
+--
 -- API Bridge
 LoadScript("sb-sprites")
 LoadScript("pixel-vision-os-v2")
-LoadScript("pixel-vision-os-color-picker-v3")
-LoadScript("pixel-vision-os-item-picker-v1")
-LoadScript("pixel-vision-os-sprite-picker-v3")
-LoadScript("pixel-vision-os-canvas-v2")
+LoadScript("pixel-vision-os-color-picker-v4")
+LoadScript("pixel-vision-os-item-picker-v3")
+LoadScript("pixel-vision-os-sprite-picker-v4")
 LoadScript("code-render-map-layer")
 LoadScript("pixel-vision-os-tilemap-picker-v1")
 LoadScript("pixel-vision-os-file-modal-v1")
@@ -22,7 +21,7 @@ LoadScript("pixel-vision-os-file-modal-v1")
 local toolName = "Tilemap Tool"
 
 local colorOffset = 0
-local systemColorsPerPage = 64
+--local systemColorsPerPage = 64
 local success = false
 local viewport = {x = 8, y = 80, w = 224, h = 128}
 local lastBGState = false
@@ -32,13 +31,23 @@ local flagPicker = nil
 local flagModeActive = false
 local showBGColor = false
 local spriteSize = 1
-local maxSpriteSize = 4
+
 local lastTileSelection = -1
 local enabledUI = {}
 local SaveShortcut, UndoShortcut, RedoShortcut, CopyShortcut, PasteShortcut, BGColorShortcut, QuitShortcut = 5, 7, 8, 9, 10, 12, 18
 local uiLock = false
 local tools = {"pointer", "pen", "eraser", "fill"}
 local toolKeys = {Keys.v, Keys.P, Keys.E, Keys.F}
+local selectionSizes = {
+    {x = 1, y = 1, scale = 16},
+    {x = 1, y = 2, scale = 8},
+    {x = 2, y = 1, scale = 8},
+    {x = 2, y = 2, scale = 8},
+    -- {x = 3, y = 3, scale = 4},
+    {x = 4, y = 4, scale = 4}
+}
+
+local maxSpriteSize = #selectionSizes
 
 function InvalidateData()
 
@@ -76,19 +85,13 @@ end
 
 function Init()
 
-    BackgroundColor(22)
+    BackgroundColor(5)
 
     -- Disable the back key in this tool
     EnableBackKey(false)
 
     -- Create an global instance of the Pixel Vision OS
     _G["pixelVisionOS"] = PixelVisionOS:Init()
-
-    -- Reset the undo history so it's ready for the tool
-    -- pixelVisionOS:ResetUndoHistory()
-
-    -- Get a reference to the Editor UI
-    -- editorUI = pixelVisionOS.editorUI
 
     newFileModal = NewFileModal:Init(editorUI)
     newFileModal.editorUI = editorUI
@@ -192,67 +195,68 @@ function Init()
             "SpritePicker"
         )
 
+        spritePickerData.picker.borderOffset = 8
+        
         -- table.insert(enabledUI, spritePickerData.picker)
         table.insert(enabledUI, spritePickerData.vSlider)
         table.insert(enabledUI, spritePickerData.picker)
 
-        -- TODO had to disable these buttons because it breaks the arrow keys on the sprite picker
-
-        -- for i = 1, #spritePickerData.pages.buttons do
-        --   table.insert(enabledUI, spritePickerData.pages.buttons[i])
-        -- end
-
-        -- spritePickerData.scrollScale = 4
         spritePickerData.onPress = OnSelectSprite
-
-        -- Check the game editor if palettes are being used
-        usePalettes = pixelVisionOS.paletteMode
-
-        local totalColors = gameEditor:TotalColors(true)--pixelVisionOS.realSystemColorTotal + 1
-        local totalPerPage = 16--pixelVisionOS.systemColorsPerPage
-        local maxPages = 8
-        local colorOffset = pixelVisionOS.colorOffset
-
-        -- Configure tool for palette mode
-        if(usePalettes == true) then
-
-            -- Change the total colors when in palette mode
-            totalColors = 128
-            colorOffset = colorOffset + 128
-
-        end
-
-
-        -- TODO if using palettes, need to replace this with palette color value
 
         local pickerRect = {x = 184, y = 24, w = 64, h = 16}
 
         -- TODO setting the total to 0
         paletteColorPickerData = pixelVisionOS:CreateColorPicker(
-            pickerRect,
-            {x = 8, y = 8},
-            totalColors,
-            totalPerPage,
-            maxPages,
-            colorOffset,
-            "spritepicker",
-            "Select a color."
+                pickerRect,
+                {x = 8, y = 8},
+                pixelVisionOS.totalPaletteColors,
+                16, -- Total per page
+                8, -- Max pages
+                pixelVisionOS.colorOffset + 128,
+                "itempicker",
+                "palette color",
+                false,
+                true,
+                false
         )
 
-        if(usePalettes == true) then
-            -- Force the palette picker to only display the total colors per sprite
-            paletteColorPickerData.visiblePerPage = pixelVisionOS.paletteColorsPerPage
+        paletteColorPickerData.onDrawColor = function(data, id, x, y)
 
-            paletteButton = editorUI:CreateButton(pickerRect, nil, "Apply color palette")
+            if(id < data.total and (id % data.totalPerPage) < data.visiblePerPage) then
+                local colorID = id + data.altColorOffset
 
-            paletteButton.onAction = ApplyTilePalette
+                if(Color(colorID) == pixelVisionOS.maskColor) then
+                    data.canvas.DrawSprites(emptymaskcolor.spriteIDs, x, y, emptymaskcolor.width, false, false)
+                else
+                    data.canvas.Clear(colorID, x, y, data.itemSize.x, data.itemSize.y)
+                end
+
+            else
+                data.canvas.DrawSprites(emptycolor.spriteIDs, x, y, emptycolor.width, false, false)
+            end
 
         end
+
+        pixelVisionOS:ColorPickerVisiblePerPage(paletteColorPickerData, pixelVisionOS.colorsPerSprite)
+
+        pixelVisionOS:RebuildColorPickerCache(paletteColorPickerData)
+
+        paletteColorPickerData.visiblePerPage = pixelVisionOS.paletteColorsPerPage
+        
+        --if(usePalettes == true) then
+            -- Force the palette picker to only display the total colors per sprite
+            --paletteColorPickerData.visiblePerPage = pixelVisionOS.paletteColorsPerPage
+
+        paletteButton = editorUI:CreateButton(pickerRect, nil, "Apply color palette")
+
+        paletteButton.onAction = ApplyTilePalette
+
+        --end
 
         -- Wire up the picker to change the color offset of the sprite picker
         paletteColorPickerData.onPageAction = function(value)
 
-            if(usePalettes == true) then
+            --if(usePalettes == true) then
 
                 -- Calculate the new color offset
                 local newColorOffset = pixelVisionOS.colorOffset + pixelVisionOS.totalPaletteColors + ((value - 1) * 16)
@@ -264,7 +268,7 @@ function Init()
                 tilePickerData.paintColorOffset = ((value - 1) * 16) + 128
 
                 ApplyTilePalette()
-            end
+            --end
 
         end
 
@@ -415,6 +419,9 @@ function OnInitCompleated()
         true,
         "tilemap"
     )
+
+    tilePickerData.picker.borderOffset = 8
+    
     --
     -- table.insert(enabledUI, tilePickerData.picker)
     -- table.insert(enabledUI, tilePickerData.hSlider)
@@ -571,19 +578,35 @@ end
 
 function ConfigureSpritePickerSelector(size)
 
-    if(size < 1) then
-        return
-    end
 
-    _G["spritepickerover"] = {spriteIDs = _G["spriteselection"..tostring(size) .."x"].spriteIDs, width = _G["spriteselection"..tostring(size) .."x"].width, colorOffset = 28}
+    local selectionSize = selectionSizes[size]
 
-    _G["spritepickerselectedup"] = {spriteIDs = _G["spriteselection"..tostring(size) .."x"].spriteIDs, width = _G["spriteselection"..tostring(size) .."x"].width, colorOffset = (_G["spritepickerover"].colorOffset + 2)}
+    local x = selectionSize.x
+    local y = selectionSize.y
 
-    -- pixelVisionOS:ChangeSpritePickerSize(spritePickerData, size)
-    pixelVisionOS:ChangeItemPickerScale(spritePickerData, size)
+    local spriteName = "selection"..x.."x" .. y
 
+    _G["spritepickerover"] = {spriteIDs = _G[spriteName .. "over"].spriteIDs, width = _G[spriteName .. "over"].width, colorOffset = 0}
+
+    _G["spritepickerselectedup"] = {spriteIDs = _G[spriteName .. "selected"].spriteIDs, width = _G[spriteName .. "selected"].width, colorOffset = 0}
+
+    pixelVisionOS:ChangeItemPickerScale(spritePickerData, size, selectionSize)
+
+
+
+    --if(size < 1) then
+    --    return
+    --end
+    --
+    --_G["spritepickerover"] = {spriteIDs = _G["spriteselection"..tostring(size) .."x"].spriteIDs, width = _G["spriteselection"..tostring(size) .."x"].width, colorOffset = 28}
+    --
+    --_G["spritepickerselectedup"] = {spriteIDs = _G["spriteselection"..tostring(size) .."x"].spriteIDs, width = _G["spriteselection"..tostring(size) .."x"].width, colorOffset = (_G["spritepickerover"].colorOffset + 2)}
+    --
+    ---- pixelVisionOS:ChangeSpritePickerSize(spritePickerData, size)
+    --pixelVisionOS:ChangeItemPickerScale(spritePickerData, size)
+    --
     if(tilePickerData ~= nil) then
-        pixelVisionOS:ChangeItemPickerScale(tilePickerData, size)
+        pixelVisionOS:ChangeItemPickerScale(tilePickerData, size, selectionSize)
     end
 
 end
@@ -739,7 +762,7 @@ function SelectLayer(value)
 
 
 
-    gameEditor:RenderMapLayer(layerMode)
+    --gameEditor:RenderMapLayer(layerMode)
 
     uiLock = true
 
@@ -785,6 +808,7 @@ function OnSelectTool(value)
 
 
 end
+
 
 function OnNextSpriteSize(reverse)
 

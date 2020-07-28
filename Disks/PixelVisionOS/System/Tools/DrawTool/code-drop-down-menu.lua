@@ -1,4 +1,14 @@
--- TODO these need to be merged
+--[[
+	Pixel Vision 8 - Draw Tool
+	Copyright (C) 2017, Pixel Vision 8 (http://pixelvision8.com)
+	Created by Jesse Freeman (@jessefreeman)
+
+	Please do not copy and distribute verbatim copies
+	of this license document, but modifications without
+	distributing is allowed.
+]]--
+
+-- TODO This needs to be changed to names
 SaveShortcut = 4
 UndoShortcut = 6
 RedoShortcut = 7

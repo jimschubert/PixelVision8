@@ -1,3 +1,13 @@
+--[[
+	Pixel Vision 8 - Draw Tool
+	Copyright (C) 2017, Pixel Vision 8 (http://pixelvision8.com)
+	Created by Jesse Freeman (@jessefreeman)
+
+	Please do not copy and distribute verbatim copies
+	of this license document, but modifications without
+	distributing is allowed.
+]]--
+
 local colorPanelID = "ColorPanelUI"
 
 -- Now we need to create the item picker over sprite by using the color selection spriteIDs and changing the color offset
@@ -171,7 +181,6 @@ function DrawTool:CreateColorPanel()
         end
 
     end
-
 
 end
 

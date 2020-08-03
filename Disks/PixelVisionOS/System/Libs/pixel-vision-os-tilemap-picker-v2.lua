@@ -22,17 +22,15 @@ function PixelVisionOS:CreateTilemapPicker(rect, itemSize, columns, rows, colorO
 
     data.name = "TilemapPicker" .. data.name
     data.mode = 1
-    data.layerCache = nil
-    data.maxPerLoop = 400
+    data.layerCache = {}
+    data.maxPerLoop = 64
     data.paintTileIndex = 0
     data.paintFlagIndex = 0
     data.paintColorOffset = 0
     data.lastOverPos = NewPoint(-1, - 1)
 
-    data.zoom = 1
-
-    data.onOverRender = function(tmpData, tmpX, tmpY)
-        return self:ReadTilePickerOverPixelData(tmpData, tmpX, tmpY)
+    data.onOverRender = function(data, tmpX, tmpY)
+        return self:ReadTilePickerOverPixelData(data, tmpX, tmpY)
     end
 
     -- Create mask pixel data for the eraser preview
@@ -50,26 +48,26 @@ function PixelVisionOS:CreateTilemapPicker(rect, itemSize, columns, rows, colorO
 
         table.insert(data.maskPixelData, tmpPixelData)
     end
-    
+
     return data
 
 end
 
 function PixelVisionOS:ReadTilePickerOverPixelData(data, tmpX, tmpY)
 
-    --if(data.mode == 3) then
-    --    return data.maskPixelData[data.scale]
-    --elseif(data.mode == 2 or data.mode == 4) then
-    --
-    --    if(data.mapRenderMode == 0) then
-    --        return data.overTilePixelData
-    --
-    --    elseif(data.mapRenderMode == 1) then
-    --        return data.overFlagPixelData
-    --    end
-    --else
+    if(data.mode == 3) then
+        return data.maskPixelData[data.scale]
+    elseif(data.mode == 2 or data.mode == 4) then
+
+        if(data.mapRenderMode == 0) then
+            return data.overTilePixelData
+
+        elseif(data.mapRenderMode == 1) then
+            return data.overFlagPixelData
+        end
+    else
         return self:ReadItemPickerOverPixelData(data, tmpX, tmpY)
-    --end
+    end
 
 end
 
@@ -113,11 +111,11 @@ function PixelVisionOS:UpdateTilemapPicker(data)
                     self:UpdateFlagID(data, overPos.x, overPos.y, data.paintFlagIndex)
                 end
 
-                self:ClearItemPickerSelection(tilePickerData)
+                self:ClearItemPickerSelection(data)
 
             elseif(data.mode == 4) then
 
-                gameEditor:FloodFillTilemap(data.mapRenderMode == 0 and data.paintTileIndex or data.paintFlagIndex, overPos.x, overPos.y, data.mapRenderMode, data.scale, data.scale, data.paintColorOffset)
+                gameEditor:FloodFillTilemap(data.mapRenderMode == 0 and data.paintTileIndex or data.paintFlagIndex, overPos.x, overPos.y, data.mapRenderMode, data.scale.x, data.scale.y, data.paintColorOffset)
 
                 -- Clear the current layer's cache
                 data.layerCache[data.mapRenderMode] = null
@@ -135,7 +133,7 @@ function PixelVisionOS:UpdateTilemapPicker(data)
 
     self:UpdateItemPicker(data)
 
-     --Clear selection on release if we are not in selection mode
+    -- Clear selection on release if we are not in selection mode
     if(self.editorUI.collisionManager.mouseReleased == true and data.mode > 1 and data.picker.inFocus == true) then
 
         -- Remove tile selection
@@ -150,14 +148,14 @@ function PixelVisionOS:UpdateFlagID(data, col, row, flagID)
     local size = data.scale
 
     -- Calculate the total tiles affected
-    local total = size * size
+    local total = size.x * size.y
 
     local tileHistory = {}
 
     -- Loop through all the tiles that need to be updated
     for i = 1, total do
 
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextCol = col + offset.x
         local nextRow = row + offset.y
@@ -167,6 +165,7 @@ function PixelVisionOS:UpdateFlagID(data, col, row, flagID)
         if(currentTile.flag ~= flagID) then
 
             local nextSpriteID = currentTile.spriteID
+            local nextColorOffset = currentTile.colorOffset
             local nextColorOffset = currentTile.colorOffset
 
             local savedTile = {
@@ -184,7 +183,8 @@ function PixelVisionOS:UpdateFlagID(data, col, row, flagID)
         end
 
     end
-    --
+
+    -- TODO There should be a call to the history API or a callback the tool can use to save state
     --UpdateHistory(tileHistory)
 
 end
@@ -196,7 +196,7 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
 
     local size = scale or data.scale
 
-    local total = size * size
+    local total = size.x * size.y
 
     local spriteCols = 128 / 8
 
@@ -206,7 +206,7 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
 
     for i = 1, total do
 
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextCol = col + offset.x
         local nextRow = row + offset.y
@@ -230,8 +230,8 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
 
         end
     end
-    --
-    --UpdateHistory(tileHistory)
+
+    
 
 end
 
@@ -242,13 +242,13 @@ function PixelVisionOS:SwapTiles(data, srcTile, destTile)
 
     local size = data.scale
 
-    local total = size * size
+    local total = size.x * size.y
 
     local tileHistory = {}
 
     for i = 1, total do
         --
-        local offset = CalculatePosition(i - 1, size)
+        local offset = CalculatePosition(i - 1, size.x)
 
         local nextSrcCol = srcPos.x + offset.x
         local nextSrcRow = srcPos.y + offset.y
@@ -284,20 +284,20 @@ function PixelVisionOS:SwapTiles(data, srcTile, destTile)
         self:OnChangeTile(data, srcTileData.col, srcTileData.row, destTileData.spriteID, destTileData.colorOffset, destTileData.flag)
 
     end
-    --
-    --UpdateHistory(tileHistory)
+
+    
 
 end
 
 function PixelVisionOS:OnChangeTile(data, col, row, spriteID, colorOffset, flag)
 
-    --local tile = gameEditor:Tile(col, row, spriteID, colorOffset, flag)
-    --
-    --self:RenderTile(tilePickerData, tile, col, row)
-    --
-    --self:InvalidateMap(tilePickerData)
-    --
-    --InvalidateData()
+    local tile = gameEditor:Tile(col, row, spriteID, colorOffset, flag)
+
+    self:RenderTile(data, tile, col, row)
+
+    self:InvalidateMap(data)
+
+    
 
 end
 
@@ -305,54 +305,48 @@ function PixelVisionOS:ReadRenderPercent(data)
     return Clamp(((data.currentLoop / data.totalLoops) * 100), 0, 100)
 end
 
-function PixelVisionOS:PreRenderTilemap(data)
+function PixelVisionOS:PreRenderMapLayer(data, mode)
 
-    -- Test to see if the layer cache has already been created
-    if(data.layerCache ~= nil) then
-        
-        -- Exit function if the cache has already been built
-        return
-    end
-    
-    -- Save the sprite size to use later during rendering
     data.spriteSize = gameEditor:SpriteSize()
 
-    -- calculate the total pixels of a single sprite
     data.totalPixels = data.spriteSize.x * data.spriteSize.y
 
-    -- Get the tilemap's size
     data.mapSize = gameEditor:TilemapSize()
 
-    -- TODO this may already be passed into the component
     local realWidth = data.spriteSize.x * data.mapSize.x
     local realHeight = data.spriteSize.y * data.mapSize.y
 
-    -- Create layer cache to match the two modes
-    data.layerCache = {
-        -- The tiles will come from the game
-        gameEditor:NewCanvas(realWidth, realHeight),
-        -- The flags will come from the tool
-        NewCanvas(realWidth, realHeight)
-    }
-    
-    -- Create pointers to layers
-    self.tileLayer = data.canvas--layerCache[1]
-    self.flagLayer = data.layerCache[2]
-    
-    -- Disable the picker while rendering
-    self.editorUI:Enable(data.picker, false)
+    data.mapRenderMode = mode
 
-    -- set the rending flag to true
-    data.renderingMap = true
+    if (data.layerCache[mode] == null) then
 
-    -- Calculate how many tiles there are to render1
-    data.totalTiles = data.mapSize.x * data.mapSize.y
+        self.editorUI:Enable(data.picker, false)
 
-    -- Calculate how many loops it will take to render all of the tiles
-    data.totalLoops = math.ceil(data.totalTiles / data.maxPerLoop)
+        data.layerCache[data.mapRenderMode] = data.mapRenderMode == 0 and NewCanvas(realWidth, realHeight) or NewCanvas(realWidth, realHeight)
 
-    -- Set the start loop
-    data.currentLoop = 0
+        data.renderingMap = true
+
+    end
+
+    -- Set the tmpCanvas to the cache
+    data.canvas = data.layerCache[data.mapRenderMode]
+
+    -- Rebuild the map if it hasn't been rendered yet.
+    if (data.renderingMap) then
+
+        data.canvas.Clear(-1)
+
+        data.totalTiles = data.mapSize.x * data.mapSize.y
+
+        data.renderingMap = true
+
+        data.totalLoops = math.ceil(data.totalTiles / data.maxPerLoop)
+
+        data.currentLoop = 0
+
+    end
+
+    self:InvalidateItemPickerDisplay(data)
 
 end
 
@@ -360,8 +354,6 @@ function PixelVisionOS:NextRenderStep(data)
 
     local offset = data.currentLoop * data.maxPerLoop;
 
-    print("Loop", data.currentLoop)
-    
     for i = 1, data.maxPerLoop do
 
         local index = (i - 1) + offset;
@@ -370,18 +362,28 @@ function PixelVisionOS:NextRenderStep(data)
 
             data.renderingMap = false;
             self.editorUI:Enable(data.picker, true)
-            
-            print("Finished")
+
             break;
 
         end
 
-        -- Calculate the position based on the tile index
         local pos = CalculatePosition(index, data.mapSize.x)
 
-        -- Read the tile data from the game
         local tileData = gameEditor:Tile(pos.x, pos.y);
-        
+
+        -- Check for palette mode
+        if(pixelVisionOS.paletteMode) then
+
+            -- Check to see if the tile is in a palette
+            if(tileData.colorOffset < 128) then
+
+                -- Update the tile with the new palette offset
+                tileData = gameEditor:Tile(pos.x, pos.y, tileData.spriteID, 128, tileData.flag)
+
+            end
+
+        end
+
         -- Render the tile to the display
         self:RenderTile(data, tileData, pos.x, pos.y);
 
@@ -393,72 +395,77 @@ end
 
 function PixelVisionOS:RenderTile(data, tileData, col, row)
 
-    -- TODO these should be tmp variables on the data object instead of being recreated each time
     local spriteData = nil
-    
-    -- Calculate the real column and row position
+    local flagData = nil
+
     col = col * data.spriteSize.x;
     row = row * data.spriteSize.y;
 
-    -- Make sure the area is cleared first
-    self.tileLayer:Clear(-1, col, row, 8, 8)
-    self.flagLayer:Clear(-1, col, row, 8, 8)
-    
-    if (tileData.spriteID > - 1) then
+    local layer = data.layerCache[data.mapRenderMode]
 
-        spriteData = gameEditor:Sprite(tileData.spriteID)
+    if (layer ~= null) then
 
-        self.tileLayer:MergePixels(col, row, 8, 8, spriteData, false, false, tileData.colorOffset, true)
-       
-    end
+        -- Make sure the area is cleared first
+        layer:Clear(-1, col, row, 8, 8)
 
-    if (tileData.flag > - 1) then
+        if(data.mapRenderMode == 0) then
+            if (tileData.spriteID > - 1) then
 
-        spriteData = _G["flag"..(tileData.flag + 1).."small"]
-        
-        if(spriteData ~= nil) then
-            self.flagLayer:DrawSprite(spriteData.spriteIDs[1], col, row)
+                --if(pixelVisionOS.paletteMode == true) then
+                    local spriteData = gameEditor:Sprite(tileData.spriteID)
+
+                    layer:MergePixels(col, row, 8, 8, spriteData, false, false, tileData.colorOffset, true)
+                --else
+                --    layer:DrawSprite(tileData.spriteID, col, row, false, false, tileData.colorOffset)
+                --end
+            end
+        elseif(data.mapRenderMode == 1) then
+            if (tileData.flag > - 1) then
+
+                local spriteData = _G["flag"..(tileData.flag + 1).."small"]
+                if(spriteData ~= nil) then
+                    layer:DrawSprite(spriteData.spriteIDs[1], col, row)
+                end
+            end
         end
-        
+
     end
-         
+
     self:InvalidateItemPickerDisplay(data)
 
 end
 
 function PixelVisionOS:ChangeTilemapPickerMode(data, value)
 
-    --print("ChangeTilemapPickerMode", value)
-    --
-    --data.mode = value
-    --
-    --if(data.mode == 1) then
-    --    data.enableDragging = true
-    --
-    --    data.picker.focusCursor = 2
-    --
-    --else
-    --    data.enableDragging = false
-    --
-    --    if(value == 2) then
-    --        data.picker.focusCursor = 6
-    --    elseif(value == 3) then
-    --        data.picker.focusCursor = 7
-    --    elseif(value == 4) then
-    --        data.picker.focusCursor = 8
-    --    end
-    --
-    --end
-    --
-    --if(data.picker.inFocus == true) then
-    --
-    --    -- Force the picker to change the cursor if it's in focus
-    --    self.editorUI:SetFocus(data.picker, data.picker.focusCursor)
-    --
-    --    -- Invalidate the last over ID so it redraws
-    --    data.lastOverID = -1
-    --
-    --end
+    data.mode = value
+
+    if(data.mode == 1) then
+        data.enableDragging = true
+
+        data.picker.focusCursor = 2
+
+    else
+        data.enableDragging = false
+
+        if(value == 2) then
+            data.picker.focusCursor = 6
+        elseif(value == 3) then
+            data.picker.focusCursor = 7
+        elseif(value == 4) then
+            data.picker.focusCursor = 8
+        end
+
+    end
+
+    if(data.picker.inFocus == true) then
+
+        -- Force the picker to change the cursor if it's in focus
+        self.editorUI:SetFocus(data.picker, data.picker.focusCursor)
+
+        -- Invalidate the last over ID so it redraws
+        data.lastOverID = -1
+
+    end
 
 end
 
@@ -474,7 +481,7 @@ function PixelVisionOS:ChangeTilemapPaintFlag(data, value, updatePreview)
 
     data.paintFlagIndex = value
 
-    local size = NewPoint(data.scale * 8, data.scale * 8)
+    local size = NewPoint(data.scale.x * 8, data.scale.y * 8)
 
     local tmpCanvas = NewCanvas(size.x, size.y)
 
@@ -495,7 +502,7 @@ function PixelVisionOS:ChangeTilemapPaintSpriteID(data, value, updatePreview)
 
     data.paintTileIndex = value
 
-    data.overTilePixelData = gameEditor:ReadGameSpriteData(data.paintTileIndex, data.scale, data.scale)
+    data.overTilePixelData = gameEditor:ReadGameSpriteData(data.paintTileIndex, data.scale.x, data.scale.y)
 
     if(updatePreview ~= false) then
         -- Force the over item draw to display the new pixel data

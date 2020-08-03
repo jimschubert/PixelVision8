@@ -133,7 +133,6 @@ function ProgressModal:UpdatePercentage(percent)
 
 end
 
-
 function ProgressModal:UpdateMessage(message, percent)
 
   -- local message = action .. " "..string.lpad(tostring(currentItem), string.len(tostring(total)), "0") .. " of " .. fileActionActiveTotal .. ".\n\n\nDo not restart or shut down Pixel Vision 8."

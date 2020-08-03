@@ -23,7 +23,7 @@ function PixelVisionOS:CreateTilemapPicker(rect, itemSize, columns, rows, colorO
     data.name = "TilemapPicker" .. data.name
     data.mode = 1
     data.layerCache = {}
-    data.maxPerLoop = 10
+    data.maxPerLoop = 64
     data.paintTileIndex = 0
     data.paintFlagIndex = 0
     data.paintColorOffset = 0
@@ -111,11 +111,11 @@ function PixelVisionOS:UpdateTilemapPicker(data)
                     self:UpdateFlagID(data, overPos.x, overPos.y, data.paintFlagIndex)
                 end
 
-                self:ClearItemPickerSelection(tilePickerData)
+                self:ClearItemPickerSelection(data)
 
             elseif(data.mode == 4) then
 
-                gameEditor:FloodFillTilemap(data.mapRenderMode == 0 and data.paintTileIndex or data.paintFlagIndex, overPos.x, overPos.y, data.mapRenderMode, data.scale, data.scale, data.paintColorOffset)
+                gameEditor:FloodFillTilemap(data.mapRenderMode == 0 and data.paintTileIndex or data.paintFlagIndex, overPos.x, overPos.y, data.mapRenderMode, data.scale.x, data.scale.y, data.paintColorOffset)
 
                 -- Clear the current layer's cache
                 data.layerCache[data.mapRenderMode] = null
@@ -184,7 +184,8 @@ function PixelVisionOS:UpdateFlagID(data, col, row, flagID)
 
     end
 
-    UpdateHistory(tileHistory)
+    -- TODO There should be a call to the history API or a callback the tool can use to save state
+    --UpdateHistory(tileHistory)
 
 end
 
@@ -230,7 +231,7 @@ function PixelVisionOS:ChangeTile(data, col, row, spriteID, colorOffset, flagID,
         end
     end
 
-    UpdateHistory(tileHistory)
+    
 
 end
 
@@ -284,7 +285,7 @@ function PixelVisionOS:SwapTiles(data, srcTile, destTile)
 
     end
 
-    UpdateHistory(tileHistory)
+    
 
 end
 
@@ -292,11 +293,11 @@ function PixelVisionOS:OnChangeTile(data, col, row, spriteID, colorOffset, flag)
 
     local tile = gameEditor:Tile(col, row, spriteID, colorOffset, flag)
 
-    self:RenderTile(tilePickerData, tile, col, row)
+    self:RenderTile(data, tile, col, row)
 
-    self:InvalidateMap(tilePickerData)
+    self:InvalidateMap(data)
 
-    InvalidateData()
+    
 
 end
 

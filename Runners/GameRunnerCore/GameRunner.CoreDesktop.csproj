@@ -10,6 +10,7 @@
     <PackageId>PixelVision8Runner</PackageId>
     <PackageIcon>Icon.png</PackageIcon>
     <Copyright>Jesse Freeman 2020</Copyright>
+    <UseAppHost>true</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>

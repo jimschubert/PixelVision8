@@ -20,13 +20,13 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet publish -o Builds/macOS -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true
-    - name: Build
-      run: dotnet publish -o Builds/win64 -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-    - name: Build
-      run: dotnet publish -o Builds/linux64 -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
-    - name: Build
-      run: dotnet publish -o Builds/linuxARM -c Release -r linux-arm --self-contained true -p:PublishSingleFile=true
+      run: dotnet publish -o Builds/macOS -c Release -r osx-x64 --self-contained false -p:PublishSingleFile=true
+#     - name: Build
+#       run: dotnet publish -o Builds/win64 -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+#     - name: Build
+#       run: dotnet publish -o Builds/linux64 -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
+#     - name: Build
+#       run: dotnet publish -o Builds/linuxARM -c Release -r linux-arm --self-contained true -p:PublishSingleFile=true
     - name: Upload a Mac Artifact
       uses: actions/upload-artifact@v2
       with:
@@ -36,30 +36,30 @@ jobs:
         path: Builds/macOS/
         # The desired behavior if no files are found using the provided path.
         if-no-files-found: warn
-    - name: Upload a Win Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        # Artifact name
-        name: win-Build
-        # A file, directory or wildcard pattern that describes what to upload
-        path: Builds/win64/
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: warn
-    - name: Upload a Linux 64 Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        # Artifact name
-        name: linux64-Build
-        # A file, directory or wildcard pattern that describes what to upload
-        path: Builds/linux64/
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: warn
-    - name: Upload a Linux ARM Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        # Artifact name
-        name: linux64-Build
-        # A file, directory or wildcard pattern that describes what to upload
-        path: Builds/linux-arm/
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: warn
+#     - name: Upload a Win Artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         # Artifact name
+#         name: win-Build
+#         # A file, directory or wildcard pattern that describes what to upload
+#         path: Builds/win64/
+#         # The desired behavior if no files are found using the provided path.
+#         if-no-files-found: warn
+#     - name: Upload a Linux 64 Artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         # Artifact name
+#         name: linux64-Build
+#         # A file, directory or wildcard pattern that describes what to upload
+#         path: Builds/linux64/
+#         # The desired behavior if no files are found using the provided path.
+#         if-no-files-found: warn
+#     - name: Upload a Linux ARM Artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         # Artifact name
+#         name: linux64-Build
+#         # A file, directory or wildcard pattern that describes what to upload
+#         path: Builds/linux-arm/
+#         # The desired behavior if no files are found using the provided path.
+#         if-no-files-found: warn

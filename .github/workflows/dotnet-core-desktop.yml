@@ -2,19 +2,15 @@ name: .NET Core
 
 on:
   push:
-    branches: [ master ]
+    branches: [ v1.9.8-features ]
   pull_request:
-    branches: [ master ]
+    branches: [ v1.9.8-features ]
 
 jobs:
   build:
-    
-    strategy:
-      matrix:
-        configuration: [win-x64, osx-x64, linux-x64, linux-arm64]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core

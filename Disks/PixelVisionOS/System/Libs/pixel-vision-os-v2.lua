@@ -41,7 +41,7 @@ function PixelVisionOS:Init()
         version = _G["PixelVisionOSVersion"] or "v2.6",
         uiComponents = {},
         uiTotal = 0, 
-        displayFPS = true
+        displayFPS = false
     }
     setmetatable(_pixelVisionOS, PixelVisionOS)
 

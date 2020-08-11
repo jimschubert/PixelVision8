@@ -27,7 +27,7 @@ function TilemapTool:ProcessTiles()
     self:ResetProcessTiles()
 
     -- Setup the parser values
-    self.tilesPerLoop = 16
+    self.tilesPerLoop = 128
     
     -- Values to keep track of
     --self.colorsOutOfBound = false

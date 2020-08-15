@@ -57,7 +57,8 @@ namespace PixelVision8.Runner.Services
         {
             ".txt",
             ".json",
-            ".lua"
+            ".lua",
+            ".cs"
         };
 
         protected int TotalParsers => parsers.Count;

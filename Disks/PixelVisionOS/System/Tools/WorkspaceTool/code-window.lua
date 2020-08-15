@@ -12,6 +12,7 @@ FileTypeMap =
         pv8 = "diskempty",
         pvr = "disksystem",
         wav = "filewav",
+        cs = "filecode",
 
         -- TODO these are not core file types
         unknown = "fileunknown",
@@ -87,7 +88,8 @@ function WorkspaceTool:OpenWindow(path, scrollTo, selection)
     ".pv8",
     ".pvr",
     ".wav",
-    ".gif"
+    ".gif",
+    ".cs"
     }
 
     -- Look for the last scroll position of this path

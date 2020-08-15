@@ -23,6 +23,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MoonSharp.Interpreter;
@@ -186,7 +189,7 @@ namespace PixelVision8.Runner
 
             //  Define the valid file extensions from the bios
             workspaceServicePlus.fileExtensions =
-                bios.ReadBiosData("FileExtensions", "png,lua,json,txt,wav", true).Split(',')
+                bios.ReadBiosData("FileExtensions", "png,lua,json,txt,wav,cs", true).Split(',')
                     .ToList();
 
             // Define the files required to make a game valid from the bios
@@ -238,39 +241,42 @@ namespace PixelVision8.Runner
 
         }
 
-        public override void BaseActivateEngine(IEngine engine)
-        {
-            if (engine == null) return;
-
-            // Make the loaded engine active
-            ActiveEngine = engine;
-
-            LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
-            // Kick off the first game script file
-
-            if (server.Current == null)
-            {
-                tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
-
-                var scriptPath = workspaceService.GetPhysicalPath(WorkspacePath.Parse(ActiveEngine.Name + "code.lua"));
-
-                server.AttachToScript(tempQualifier.LuaScript, scriptPath);
-            }
-
-            ActiveEngine.ResetGame();
-
-            // Reset the game
-            if (tempQualifier.LuaScript.Globals["Reset"] != null) tempQualifier.LuaScript.Call(tempQualifier.LuaScript.Globals["Reset"]);
-
-            // After loading the game, we are ready to run it.
-            ActiveEngine.RunGame();
-
-            // Reset the game's resolution
-            ResetResolution();
-
-            // Make sure that the first frame is cleared with the default color
-            ActiveEngine.GameChip.Clear();
-        }
+        // public override void BaseActivateEngine(IEngine engine)
+        // {
+        //     if (engine == null) return;
+        //
+        //     // Make the loaded engine active
+        //     ActiveEngine = engine;
+        //
+        //     if (LuaMode)
+        //     {
+        //         LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
+        //         // Kick off the first game script file
+        //
+        //         if (server.Current == null)
+        //         {
+        //             tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
+        //
+        //             var scriptPath = workspaceService.GetPhysicalPath(WorkspacePath.Parse(ActiveEngine.Name + "code.lua"));
+        //
+        //             server.AttachToScript(tempQualifier.LuaScript, scriptPath);
+        //         }
+        //     }
+        //     
+        //     ActiveEngine.ResetGame();
+        //
+        //     // Reset the game
+        //     // if (tempQualifier.LuaScript.Globals["Reset"] != null) tempQualifier.LuaScript.Call(tempQualifier.LuaScript.Globals["Reset"]);
+        //
+        //     // After loading the game, we are ready to run it.
+        //     ActiveEngine.RunGame();
+        //
+        //     // Reset the game's resolution
+        //     ResetResolution();
+        //
+        //     // Make sure that the first frame is cleared with the default color
+        //     ActiveEngine.GameChip.Clear();
+        // }
 
         private bool AwaitDebuggerAttach()
         {
@@ -708,85 +714,103 @@ namespace PixelVision8.Runner
 
         public override void ConfigureEngine(Dictionary<string, string> metaData = null)
         {
-            base.ConfigureEngine(metaData);
-
-            // Get a reference to the Lua game
-            var game = tmpEngine.GameChip as LuaGameChip;
-
-            // Get the script
-            var luaScript = game.LuaScript;
-
-            luaScript.Globals["EnableAutoRun"] = new Action<bool>(EnableAutoRun);
-            luaScript.Globals["EnableBackKey"] = new Action<bool>(EnableBackKey);
-
-
-            if (mode == RunnerMode.Playing)
+            LuaMode = Array.IndexOf(GameFiles, "code.cs") == -1;
+            if (LuaMode)
             {
-                // Inject the PV8 runner special global function
-                luaScript.Globals["IsExporting"] = new Func<bool>(ExportService.IsExporting);
-                luaScript.Globals["ReadExportPercent"] = new Func<int>(ExportService.ReadExportPercent);
-                luaScript.Globals["ReadExportMessage"] =
-                    new Func<Dictionary<string, object>>(ExportService.ReadExportMessage);
-                luaScript.Globals["ShutdownSystem"] = new Action(ShutdownSystem);
-                luaScript.Globals["QuitCurrentTool"] = (QuitCurrentToolDelagator) QuitCurrentTool;
-                luaScript.Globals["RefreshActionKeys"] = new Action(RefreshActionKeys);
-                luaScript.Globals["DocumentPath"] = new Func<string>(() => documentsPath);
-                luaScript.Globals["TmpPath"] = new Func<string>(() => tmpPath);
-                luaScript.Globals["DiskPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.Disks);
-                luaScript.Globals["SharedLibPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.SharedLibDirectories().ToArray());
-                // luaScript.Globals["SaveActiveDisks"] = new Action(() =>
-                // {
-                //     var disks = workspaceServicePlus.Disks;
-                //
-                //     foreach (var disk in disks) workspaceServicePlus.SaveDisk(disk);
-                // });
-                luaScript.Globals["EjectDisk"] = new Action<string>(EjectDisk);
-                luaScript.Globals["RebuildWorkspace"] = new Action(workspaceServicePlus.RebuildWorkspace);
-                luaScript.Globals["MountDisk"] = new Action<WorkspacePath>(path =>
+                base.ConfigureEngine(metaData);
+                
+                // Get a reference to the Lua game
+                var game = tmpEngine.GameChip as LuaGameChip;
+
+                // Get the script
+                var luaScript = game.LuaScript;
+
+                luaScript.Globals["EnableAutoRun"] = new Action<bool>(EnableAutoRun);
+                luaScript.Globals["EnableBackKey"] = new Action<bool>(EnableBackKey);
+
+                if (mode == RunnerMode.Playing)
                 {
-                    var segments = path.GetDirectorySegments();
-
-                    var systemPath = Path.PathSeparator.ToString();
-
-                    if (segments[0] == "Disk")
+                    // Inject the PV8 runner special global function
+                    luaScript.Globals["IsExporting"] = new Func<bool>(ExportService.IsExporting);
+                    luaScript.Globals["ReadExportPercent"] = new Func<int>(ExportService.ReadExportPercent);
+                    luaScript.Globals["ReadExportMessage"] =
+                        new Func<Dictionary<string, object>>(ExportService.ReadExportMessage);
+                    luaScript.Globals["ShutdownSystem"] = new Action(ShutdownSystem);
+                    luaScript.Globals["QuitCurrentTool"] = (QuitCurrentToolDelagator) QuitCurrentTool;
+                    luaScript.Globals["RefreshActionKeys"] = new Action(RefreshActionKeys);
+                    luaScript.Globals["DocumentPath"] = new Func<string>(() => documentsPath);
+                    luaScript.Globals["TmpPath"] = new Func<string>(() => tmpPath);
+                    luaScript.Globals["DiskPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.Disks);
+                    luaScript.Globals["SharedLibPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.SharedLibDirectories().ToArray());
+                    // luaScript.Globals["SaveActiveDisks"] = new Action(() =>
+                    // {
+                    //     var disks = workspaceServicePlus.Disks;
+                    //
+                    //     foreach (var disk in disks) workspaceServicePlus.SaveDisk(disk);
+                    // });
+                    luaScript.Globals["EjectDisk"] = new Action<string>(EjectDisk);
+                    luaScript.Globals["RebuildWorkspace"] = new Action(workspaceServicePlus.RebuildWorkspace);
+                    luaScript.Globals["MountDisk"] = new Action<WorkspacePath>(path =>
                     {
-                    }
-                    else if (segments[0] == "Workspace")
-                    {
-                        // TODO the workspace could have a different name so we should check the bios
-                        systemPath = Path.Combine(documentsPath, segments[0]);
-                    }
+                        var segments = path.GetDirectorySegments();
 
-                    for (var i = 1; i < segments.Length; i++) systemPath = Path.Combine(systemPath, segments[i]);
+                        var systemPath = Path.PathSeparator.ToString();
 
-                    systemPath = Path.Combine(systemPath,
-                        path.IsDirectory ? Path.PathSeparator.ToString() : path.EntityName);
+                        if (segments[0] == "Disk")
+                        {
+                        }
+                        else if (segments[0] == "Workspace")
+                        {
+                            // TODO the workspace could have a different name so we should check the bios
+                            systemPath = Path.Combine(documentsPath, segments[0]);
+                        }
+
+                        for (var i = 1; i < segments.Length; i++) systemPath = Path.Combine(systemPath, segments[i]);
+
+                        systemPath = Path.Combine(systemPath,
+                            path.IsDirectory ? Path.PathSeparator.ToString() : path.EntityName);
 
 
-                    //                Console.WriteLine("Mount Disk From " + systemPath);
+                        //                Console.WriteLine("Mount Disk From " + systemPath);
 
-                    MountDisk(systemPath);
-                });
+                        MountDisk(systemPath);
+                    });
 
-                luaScript.Globals["OperatingSystem"] = new Func<string>(OperatingSystem);
+                    luaScript.Globals["OperatingSystem"] = new Func<string>(OperatingSystem);
 
-                // Register the game editor with  the lua service
-                UserData.RegisterType<GameEditor>();
-                luaScript.Globals["gameEditor"] = Editor;
+                    // Register the game editor with  the lua service
+                    UserData.RegisterType<GameEditor>();
+                    luaScript.Globals["gameEditor"] = Editor;
+                }
+
+                if (mode == RunnerMode.Booting)
+                {
+                    // Force the lua script to use this boot done logic instead
+                    luaScript.Globals["BootDone"] = new Action<bool>(BootDone);
+                }
+
+                if (mode == RunnerMode.Loading)
+                {
+                    luaScript.Globals["StartUnload"] = new Action(StartUnload);
+                    luaScript.Globals["UnloadProgress"] = new Func<int>(UnloadProgress);
+                    luaScript.Globals["EndUnload"] = new Action(EndUnload);
+                }
+                
             }
-
-            if (mode == RunnerMode.Booting)
+            else
             {
-                // Force the lua script to use this boot done logic instead
-                luaScript.Globals["BootDone"] = new Action<bool>(BootDone);
-            }
+                // Had to disable the active game manually before this is called so copied base logic here
+                tmpEngine = CreateNewEngine(DefaultChips);
 
-            if (mode == RunnerMode.Loading)
-            {
-                luaScript.Globals["StartUnload"] = new Action(StartUnload);
-                luaScript.Globals["UnloadProgress"] = new Func<int>(UnloadProgress);
-                luaScript.Globals["EndUnload"] = new Action(EndUnload);
+                // Pass all meta data into the engine instance
+                if (metaData != null)
+                    foreach (var entry in metaData)
+                        tmpEngine.SetMetadata(entry.Key, entry.Value);
+
+                ConfigureKeyboard();
+                ConfiguredControllers();
             }
+            
         }
 
         protected string OperatingSystem()
@@ -1080,5 +1104,91 @@ namespace PixelVision8.Runner
         }
 
         private delegate void QuitCurrentToolDelagator(Dictionary<string, string> metaData, string tool = null);
+        
+        public bool LuaMode = true;
+        
+        public override void ProcessFiles(IEngine tmpEngine, string[] files, bool displayProgress = false)
+        {
+        
+            // Look for a CS file
+            var csFilePaths = files.Where(p => p.EndsWith(".cs")).ToArray();
+            if (csFilePaths.Length > 0)
+            {
+                //Roslyn mode. Build the game. TODO: correct to use workspace paths. Hardcoded for Proof-Of-Concept
+                CompileFromSource(csFilePaths);
+            }
+            
+            
+            base.ProcessFiles(tmpEngine, files, displayProgress);
+        }
+        
+        //This function and related Roslyn-powered C# support changes contributed by Drake Williams
+        public void CompileFromSource(string[] files)
+        {
+
+            var total = files.Length;
+            
+            SyntaxTree[] syntaxTrees = new SyntaxTree[total];
+
+            for (int i = 0; i < total; i++)
+            {
+                var path = WorkspacePath.Parse(files[i]);
+
+                var data = workspaceService.ReadTextFromFile(path);
+                
+                syntaxTrees[i] = CSharpSyntaxTree.ParseText(data);
+            }
+            
+            //TODO: Loop over multiple C# files and compile them all into the same assembly.
+            //make an array or list of SyntaxTree here, loop over all .cs files, add each to the array/list.
+            // string code = File.ReadAllText(file); //TODO replace with standard file loader. Single file for PoC
+            // var tree = CSharpSyntaxTree.ParseText(code);
+
+            //Compilation options, should line up 1:1 with Visual Studio since it's the same underlying compiler.
+            var options = new CSharpCompilationOptions(outputKind: Microsoft.CodeAnalysis.OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: Microsoft.CodeAnalysis.OptimizationLevel.Release,
+                moduleName: "RoslynGame");
+
+            //All of these are mandatory. This appears to the be minimum needed. Uncertain as of initial PoC if anything else outside of this needs referenced.
+            var references = new MetadataReference[]
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location), //System.Private.CoreLib
+                MetadataReference.CreateFromFile(typeof(Console).Assembly.Location), //System.Console
+                MetadataReference.CreateFromFile(typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location), //System.Runtime
+                MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly.Location), //Microsoft.CSharp
+                MetadataReference.CreateFromFile(typeof(GameChip).Assembly.Location), //PixelVision8Runner
+                MetadataReference.CreateFromFile("MonoGame.Framework.dll"), //MonoGameFramework
+                MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location), //Required due to a .NET Standard 2.0 dependency somewhere.
+            };
+
+            var compiler = CSharpCompilation.Create("LoadedGame", syntaxTrees, references, options);
+
+            //Compile the existing file into memory, or error out.
+            var stream = new MemoryStream();
+            var compileResults = compiler.Emit(stream);
+            if (compileResults.Success)
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+            }
+            else
+            {
+                // TODO Need to get the error from the compiler
+                // var e = "Code could not be compiled";
+                DisplayError(ErrorCode.Exception);//,
+                    // new Dictionary<string, string>
+                    //     {{"@{error}", e is ScriptRuntimeException error ? error.DecoratedMessage : e.Message}}, e);
+                //TODO: error handling, use data from compileResults to show user what's wrong.
+                return;
+            }
+
+            //Get the DLL into active memory so we can use it.
+            byte[] roslynassembly = stream.ToArray();
+            var loadedAsm = Assembly.Load(roslynassembly);
+            var roslynGameChipType = loadedAsm.GetType("PixelVisionRoslyn.RoslynGameChip"); //This type much match what's in code.cs.
+            //Could theoretically iterate over types until once that inherits from GameChip is found, but this Proof of Concept demonstrates the baseline feature.
+
+            // tmpEngine.GameChip.Deactivate(); //Remove the previous LuaGameChip.
+            tmpEngine.ActivateChip("GameChip", (AbstractChip)Activator.CreateInstance(roslynGameChipType)); //Inserts the DLL's GameChip descendent into the engine.
+        }
     }
 }

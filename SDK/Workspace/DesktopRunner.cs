@@ -69,6 +69,7 @@ namespace PixelVision8.Runner
         // protected delegate float SharpnessDelegator(float? sharpness = null);
         // protected IControllerChip controllerChip;
 
+        
         /// <summary>
         ///     This constructor saves the path to the game's files and kicks off the base constructor
         /// </summary>
@@ -97,20 +98,20 @@ namespace PixelVision8.Runner
         ///     The base runner contains a list of the core chips. Here you'll want to add the game chip to the list so it can run.
         ///     This is called when a new game is created by the runner.
         /// </summary>
-        public override List<string> DefaultChips
-        {
-            get
-            {
-                // Get the list of default chips
-                var chips = base.DefaultChips;
-
-                // Add the custom C# game chip
-                chips.Add(typeof(LuaGameChip).FullName);
-
-                // Return the list of chips
-                return chips;
-            }
-        }
+        // public override List<string> DefaultChips
+        // {
+        //     get
+        //     {
+        //         // Get the list of default chips
+        //         var chips = base.DefaultChips;
+        //
+        //         // Add the custom C# game chip
+        //         chips.Add(typeof(LuaGameChip).FullName);
+        //
+        //         // Return the list of chips
+        //         return chips;
+        //     }
+        // }
 
         protected override void ConfigureRunner()
         {
@@ -168,10 +169,25 @@ namespace PixelVision8.Runner
             // Make the loaded engine active
             ActiveEngine = engine;
 
-            LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
+            // LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
+            //
+            // tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
 
-            tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
-
+            if (ActiveEngine?.GameChip is LuaGameChip)
+            {
+                LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
+                tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
+            }
+            // if (LuaMode)
+            // {
+            //     
+            // }
+            // else
+            // {
+            //     //Roslyn Mode
+            //     //The LuaGameChip created by default gets deactivated after the Roslyn chip is compiled.
+            // }
+            
             ActiveEngine.ResetGame();
 
             // After loading the game, we are ready to run it.
@@ -296,22 +312,33 @@ namespace PixelVision8.Runner
                     }
                 }
 
+                
+
+                bool success;
+                
+                // Detect if we should be preloading the archive
+                if (mode == RunnerMode.Booting || mode == RunnerMode.Error || mode == RunnerMode.Loading)
+                    displayProgress = false;
+                else
+                    displayProgress = true;
+
+                if (ActiveEngine != null) ShutdownActiveEngine();
+                
+                // TODO find a better way to do this
+                
+                // Have the workspace run the game from the current path
+                GameFiles = workspaceService.LoadGame(path);
+                
                 // Create a new tmpEngine
                 ConfigureEngine(metaData);
-
 
                 // Path the full path to the engine's name
                 tmpEngine.Name = path;
 
-                bool success;
-
-                // Have the workspace run the game from the current path
-                var files = workspaceService.LoadGame(path);
-
-                if (files != null)
+                if (GameFiles != null)
                 {
                     // Read and Run the disk
-                    ProcessFiles(tmpEngine, files, displayProgress);
+                    ProcessFiles(tmpEngine, GameFiles, displayProgress);
                     success = true;
                 }
                 else
@@ -319,6 +346,8 @@ namespace PixelVision8.Runner
                     DisplayError(ErrorCode.LoadError, new Dictionary<string, string> {{"@{path}", path}});
                     success = false;
                 }
+
+                GameFiles = null;
 
                 // Create new FileSystemPath
                 return success;
@@ -340,50 +369,72 @@ namespace PixelVision8.Runner
 
         public override void ConfigureEngine(Dictionary<string, string> metaData = null)
         {
-            CreateLuaService();
+            var chips = DefaultChips;
+            
+            // Add the Lua game chip
+            // if(LuaMode)
+                chips.Add(typeof(LuaGameChip).FullName);
+            
+            // TODO need to move this to a base config engine method so the parent can be called
+            
+            // Had to disable the active game manually before this is called so copied base logic here
+            tmpEngine = CreateNewEngine(DefaultChips);
 
-            base.ConfigureEngine(metaData);
+            // Pass all meta data into the engine instance
+            if (metaData != null)
+                foreach (var entry in metaData)
+                    tmpEngine.SetMetadata(entry.Key, entry.Value);
 
-            // Get a reference to the    Lua game
-            var game = tmpEngine.GameChip as LuaGameChip;
+            ConfigureKeyboard();
+            ConfiguredControllers();
+            
+            // Configure Lua Mode
+            // if(LuaMode){
+                
+                // The following logic is custom to this runner
+                ConfigureServices();
+                
+                // Get a reference to the    Lua game
+                var game = tmpEngine.GameChip as LuaGameChip;
 
-            // Get the script
-            var luaScript = game.LuaScript;
+                // Get the script
+                var luaScript = game.LuaScript;
 
-            // Limit which APIs are exposed based on the mode for security
-            // if (mode == RunnerMode.Loading)
-            // {
+                // Limit which APIs are exposed based on the mode for security
+                // if (mode == RunnerMode.Loading)
+                // {
                 luaScript.Globals["StartNextPreload"] = new Action(StartNextPreload);
                 luaScript.Globals["PreloaderComplete"] = new Action(RunGame);
                 luaScript.Globals["ReadPreloaderPercent"] = new Func<int>(() => (int)(MathHelper.Clamp(loadService.Percent * 100, 0, 100)));
 
-            // }else
-            if (mode == RunnerMode.Booting)
-            {
-                luaScript.Globals["BootDone"] = new Action<bool>(BootDone);
-            }
-            else
-            {
-                luaScript.Globals["LoadGame"] =
-                    new Func<string, Dictionary<string, string>, bool>((path, metadata) =>
-                        Load(path, RunnerMode.Loading, metadata));
-            }
+                // }else
+                if (mode == RunnerMode.Booting)
+                {
+                    luaScript.Globals["BootDone"] = new Action<bool>(BootDone);
+                }
+                else
+                {
+                    luaScript.Globals["LoadGame"] =
+                        new Func<string, Dictionary<string, string>, bool>((path, metadata) =>
+                            Load(path, RunnerMode.Loading, metadata));
+                }
 
-            // Global System APIs
-            luaScript.Globals["EnableCRT"] = new Func<bool?, bool>(EnableCRT);
-            luaScript.Globals["Brightness"] = new Func<float?, float>(Brightness);
-            luaScript.Globals["Sharpness"] = new Func<float?, float>(Sharpness);
-            luaScript.Globals["SystemVersion"] = new Func<string>(() => SystemVersion);
-            luaScript.Globals["SystemName"] = new Func<string>(() => systemName);
-            luaScript.Globals["SessionID"] = new Func<string>(() => SessionId);
-            luaScript.Globals["ReadBiosData"] = new Func<string, string, string>((key, defaultValue) =>
-                bios.ReadBiosData(key, defaultValue));
-            luaScript.Globals["WriteBiosData"] = new Action<string, string>(bios.UpdateBiosData);
+                // Global System APIs
+                luaScript.Globals["EnableCRT"] = new Func<bool?, bool>(EnableCRT);
+                luaScript.Globals["Brightness"] = new Func<float?, float>(Brightness);
+                luaScript.Globals["Sharpness"] = new Func<float?, float>(Sharpness);
+                luaScript.Globals["SystemVersion"] = new Func<string>(() => SystemVersion);
+                luaScript.Globals["SystemName"] = new Func<string>(() => systemName);
+                luaScript.Globals["SessionID"] = new Func<string>(() => SessionId);
+                luaScript.Globals["ReadBiosData"] = new Func<string, string, string>((key, defaultValue) =>
+                    bios.ReadBiosData(key, defaultValue));
+                luaScript.Globals["WriteBiosData"] = new Action<string, string>(bios.UpdateBiosData);
 
-            luaScript.Globals["ControllerConnected"] = new Func<int, bool>(tmpEngine.ControllerChip.IsConnected);
-
+                luaScript.Globals["ControllerConnected"] = new Func<int, bool>(tmpEngine.ControllerChip.IsConnected);
+            // }
+            
         }
-
+        
         public virtual void DisplayError(ErrorCode code, Dictionary<string, string> tokens = null,
             Exception exception = null)
         {
@@ -657,10 +708,11 @@ namespace PixelVision8.Runner
 
         public override void ConfigureServices()
         {
-                CreateLuaService();
+            CreateLuaService();
         }
 
         protected LuaService luaService;
+        public string[] GameFiles;
 
         public virtual void CreateLuaService()
         {

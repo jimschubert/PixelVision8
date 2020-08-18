@@ -98,20 +98,20 @@ namespace PixelVision8.Runner
         ///     The base runner contains a list of the core chips. Here you'll want to add the game chip to the list so it can run.
         ///     This is called when a new game is created by the runner.
         /// </summary>
-        // public override List<string> DefaultChips
-        // {
-        //     get
-        //     {
-        //         // Get the list of default chips
-        //         var chips = base.DefaultChips;
-        //
-        //         // Add the custom C# game chip
-        //         chips.Add(typeof(LuaGameChip).FullName);
-        //
-        //         // Return the list of chips
-        //         return chips;
-        //     }
-        // }
+        public override List<string> DefaultChips
+        {
+            get
+            {
+                // Get the list of default chips
+                var chips = base.DefaultChips;
+        
+                // Add the custom C# game chip
+                chips.Add(typeof(LuaGameChip).FullName);
+        
+                // Return the list of chips
+                return chips;
+            }
+        }
 
         protected override void ConfigureRunner()
         {
@@ -200,7 +200,7 @@ namespace PixelVision8.Runner
             ActiveEngine.GameChip.Clear();
 
             // Activate the game
-            base.ActivateEngine(engine);
+            // base.ActivateEngine(engine);
         }
 
         //        protected void LoadDefaultGame()
@@ -369,6 +369,8 @@ namespace PixelVision8.Runner
 
         public override void ConfigureEngine(Dictionary<string, string> metaData = null)
         {
+            CreateLuaService();
+            
             var chips = DefaultChips;
             
             // Add the Lua game chip
@@ -379,6 +381,8 @@ namespace PixelVision8.Runner
             
             // Had to disable the active game manually before this is called so copied base logic here
             tmpEngine = CreateNewEngine(DefaultChips);
+            
+            ConfigureServices();
 
             // Pass all meta data into the engine instance
             if (metaData != null)
@@ -392,7 +396,7 @@ namespace PixelVision8.Runner
             // if(LuaMode){
                 
                 // The following logic is custom to this runner
-                ConfigureServices();
+                // ConfigureServices();
                 
                 // Get a reference to the    Lua game
                 var game = tmpEngine.GameChip as LuaGameChip;

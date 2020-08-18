@@ -153,7 +153,7 @@ end
 
 function Init()
 
-  BackgroundColor(22)
+  BackgroundColor(5)
 
   -- Disable the back key in this tool
   EnableBackKey(false)

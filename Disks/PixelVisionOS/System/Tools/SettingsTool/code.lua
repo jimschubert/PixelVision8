@@ -23,7 +23,7 @@ function Init()
   EnableAutoRun(false)
 
   -- Update background
-  BackgroundColor(tonumber(ReadBiosData("DefaultBackgroundColor", "5")))
+  BackgroundColor(5)
 
   -- Create new workspace tool instance
   settingsTool = SettingsTool:Init()

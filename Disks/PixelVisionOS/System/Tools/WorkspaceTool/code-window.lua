@@ -12,7 +12,7 @@ FileTypeMap =
         pv8 = "diskempty",
         pvr = "disksystem",
         wav = "filewav",
-        cs = "filecode",
+        cs = "filetext",
 
         -- TODO these are not core file types
         unknown = "fileunknown",
@@ -28,7 +28,7 @@ FileTypeMap =
         gif = "filegif",
         tiles = "filetiles"
     }
-    
+
 function WorkspaceTool:OpenWindow(path, scrollTo, selection)
 
     -- print("Open", path)
@@ -1094,8 +1094,14 @@ function WorkspaceTool:GetDirectoryContents(workspacePath)
     
     local totalSeg = #srcSeg
     
+    local codeFilename = "code.lua"
+
+    if(PathExists(NewWorkspacePath(self.currentPath).AppendFile("code.cs"))) then
+        codeFilename = "code.cs"
+    end
+    
     -- Check to see if this is a game directory and we should display the run exe
-    if(pixelVisionOS:ValidateGameInDir(workspacePath, {"code.lua"}) and self:TrashOpen() == false) then
+    if(pixelVisionOS:ValidateGameInDir(workspacePath, {codeFilename}) and self:TrashOpen() == false) then
 
         if((srcSeg[1] == "Disks") or (srcSeg[1] == "Workspace" and totalSeg ~= 1)) then
             

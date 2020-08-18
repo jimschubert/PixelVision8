@@ -19,44 +19,40 @@
 //
 
 using System.IO;
-using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
+using System.IO.Compression;
 
 namespace PixelVision8.Runner.Workspace
 {
     public class ZipFileSystem : MemoryFileSystem
     {
         public string PhysicalRoot;
-
-        private ZipFileSystem(ZipFile zf, string extractPath)
+        
+        private ZipFileSystem(ZipArchive zf, string extractPath)
         {
-            
+            PhysicalRoot = Path.GetFullPath(extractPath);
+                
             using (zf)
             {
-                foreach (ZipEntry zipEntry in zf)
+                foreach (ZipArchiveEntry zipEntry in zf.Entries)
                 {
-                    if (!zipEntry.IsFile)
-                        // Ignore directories
-                        continue;
-
-                    var entryFileName = zipEntry.Name;
-
-
-                    var filePath = WorkspacePath.Root.AppendPath(entryFileName);
-
+                    
+                    var filePath = WorkspacePath.Root.AppendPath(zipEntry.FullName);
+                    
                     if (!filePath.Path.StartsWith("/__"))
                         try
                         {
                             if (!Exists(filePath.ParentPath)) this.CreateDirectoryRecursive(filePath.ParentPath);
-
+                    
                             // 4K is optimum
-                            var buffer = new byte[4096];
-
-                            using (var zipStream = zf.GetInputStream(zipEntry))
+                            // var buffer = new byte[4096];
+                    
+                            using (var zipStream = zipEntry.Open())
                             using (var fsOutput = CreateFile(filePath))
                             {
-                                StreamUtils.Copy(zipStream, fsOutput, buffer);
+                                zipStream.CopyTo(fsOutput);
+                                // StreamUtils.Copy(zipStream, fsOutput, buffer);
                             }
+                            
                         }
                         catch
                         {
@@ -74,16 +70,14 @@ namespace PixelVision8.Runner.Workspace
 
         public static ZipFileSystem Open(FileStream s)
         {
-            var fileSystem = new ZipFileSystem(new ZipFile(s), Path.GetFullPath(s.Name))
-            {
-                PhysicalRoot = Path.GetFullPath(s.Name)
-            };
+            var fileSystem = new ZipFileSystem(new ZipArchive(s), Path.GetFullPath(s.Name));
+            
             return fileSystem;
         }
 
         public static ZipFileSystem Open(Stream s, string name)
         {
-            return new ZipFileSystem(new ZipFile(s), Path.GetFullPath(name));
+            return new ZipFileSystem(new ZipArchive(s), Path.GetFullPath(name));
         }
 
     }

@@ -1,5 +1,5 @@
 -- Global sortcut enums
-NewFolderShortcut, EditShortcut, RenameShortcut, CopyShortcut, PasteShortcut, DeleteShortcut, EmptyTrashShortcut, EjectDiskShortcut, NewGameShortcut, RunShortcut, BuildShortcut = "New Folder", "Edit", "Rename", "Copy", "Paste", "Delete", "Empty Trash", "Eject Disk", nil, nil, nil 
+NewFolderShortcut, EditShortcut, RenameShortcut, CopyShortcut, PasteShortcut, DeleteShortcut, EmptyTrashShortcut, EjectDiskShortcut, NewGameShortcut, RunShortcut, BuildShortcut = "New Folder", "Edit", "Rename", "Copy", "Paste", "Delete", "Empty Trash", "Eject Disk", nil, nil, nil
 
 -- Global focus enums
 WindowFocus, DesktopIconFocus, WindowIconFocus, MultipleFiles, NoFocus = 1, 2, 3, 4, 5
@@ -11,23 +11,23 @@ function WorkspaceTool:CreateDropDownMenu()
 
     print("Template Path", self.fileTemplatePath, PathExists(self.fileTemplatePath))
     -- Create some enums for the focus typess
-    
+
     -- TODO need to see if the log file actually exists
     local logExits = PathExists(NewWorkspacePath("/Tmp/Log.txt"))--true
 
     local aboutText = "The ".. self.toolName.. " offers you access to the underlying file system. "
 
-        if(TmpPath() ~= nil) then
-            aboutText = aboutText .. "\n\nTemporary files are stores on your computer at: \n\n" .. TmpPath()
-        end
+    if(TmpPath() ~= nil) then
+        aboutText = aboutText .. "\n\nTemporary files are stores on your computer at: \n\n" .. TmpPath()
+    end
 
-        if(DocumentPath() ~= nil) then
+    if(DocumentPath() ~= nil) then
 
-            aboutText = aboutText .. "\n\nYou can access the 'Workspace' drive on your computer at: \n\n" .. DocumentPath()
+        aboutText = aboutText .. "\n\nYou can access the 'Workspace' drive on your computer at: \n\n" .. DocumentPath()
 
-        end
+    end
 
-    local menuOptions = 
+    local menuOptions =
     {
         -- About ID 1
         {name = "About", action = function() pixelVisionOS:ShowAboutModal(self.toolName, aboutText, 220) end, toolTip = "Learn about PV8."},
@@ -35,7 +35,7 @@ function WorkspaceTool:CreateDropDownMenu()
         {name = "Settings", action = function() self:OnLaunchSettings() end, toolTip = "Configure Pixel Vision OS's Settings."},
         -- Settings ID 3
         {name = "View Log", enabled = logExits, action = function() self:OnLaunchLog() end, toolTip = "Open up the log file."},
-        
+
         {divider = true},
 
         -- New Folder ID 5
@@ -69,10 +69,10 @@ function WorkspaceTool:CreateDropDownMenu()
 
         table.insert(menuOptions, addAt, {name = "New Project", key = Keys.P, action = function() self:OnNewProject() end, enabled = false, toolTip = "Create a new file."})
 
-         NewGameShortcut = "New Project"
+        NewGameShortcut = "New Project"
 
         addAt = addAt + 1
-        
+
         print("New Project")
 
     end
@@ -83,24 +83,25 @@ function WorkspaceTool:CreateDropDownMenu()
 
     -- if(runnerName == DrawVersion or runnerName == TuneVersion) then
 
-        table.insert(menuOptions, addAt, {name = "New Data", action = function() self:OnNewFile("data", "json", "data", false) end, enabled = false, toolTip = "Run the current game."})
-        table.insert(self.newFileOptions, {name = "New Data", file = "data.json"})
-        addAt = addAt + 1
+    table.insert(menuOptions, addAt, {name = "New Data", action = function() self:OnNewFile("data", "json", "data", false) end, enabled = false, toolTip = "Run the current game."})
+    table.insert(self.newFileOptions, {name = "New Data", file = "data.json"})
+    addAt = addAt + 1
 
     -- end
 
     -- Add text options to the menu
     -- if(runnerName ~= PlayVersion and runnerName ~= DrawVersion and runnerName ~= TuneVersion) then
-
+    if(PathExists(self.fileTemplatePath.AppendFile("code.json"))) then
         table.insert(menuOptions, addAt, {name = "New Code", action = function() self:OnNewFile("code", "lua") end, enabled = false, toolTip = "Run the current game."})
         table.insert(self.newFileOptions, {name = "New Code"})
         addAt = addAt + 1
+    end
 
+    if(PathExists(self.fileTemplatePath.AppendFile("json.json"))) then
         table.insert(menuOptions, addAt, {name = "New JSON", action = function() self:OnNewFile("untitled", "json") end, enabled = false, toolTip = "Run the current game."})
         table.insert(self.newFileOptions, {name = "New JSON"})
         addAt = addAt + 1
-
-    -- end
+    end
 
     -- Add draw options
 
@@ -150,7 +151,7 @@ function WorkspaceTool:CreateDropDownMenu()
 
     end
 
-    -- if(runnerName ~= DrawVersion and runnerName ~= TuneVersion) then
+    if(PathExists(self.fileTemplatePath.AppendFile("code.json"))) then
 
         -- TODO need to add to the offset
         addAt = addAt + 6
@@ -167,7 +168,7 @@ function WorkspaceTool:CreateDropDownMenu()
         RunShortcut = "Run"
         BuildShortcut = "Build"
 
-    -- end
+    end
 
     pixelVisionOS:CreateTitleBarMenu(menuOptions, "See menu options for this tool.")
 
@@ -182,23 +183,23 @@ function WorkspaceTool:OnEjectDisk(diskPath)
         if(#selections > 1) then
             return
         end
-        
+
         diskPath = self.files[selections[1]].name
     end
 
     pixelVisionOS:ShowMessageModal("Eject Disk", "Do you want to eject the '".. diskPath.EntityName .."'disk?", 160, true,
-        function()
+            function()
 
-            -- Only perform the copy if the user selects OK from the modal
-            if(pixelVisionOS.messageModal.selectionValue) then
+                -- Only perform the copy if the user selects OK from the modal
+                if(pixelVisionOS.messageModal.selectionValue) then
 
-                EjectDisk(diskPath)
+                    EjectDisk(diskPath)
 
-                ResetGame()
+                    ResetGame()
+
+                end
 
             end
-
-        end
     )
 
 end
@@ -207,42 +208,42 @@ end
 function WorkspaceTool:UpdateContextMenu()
 
     -- print("UpdateContextMenu", inFocus)
-    
+
     local selections = self:CurrentlySelectedFiles()
 
     -- Check to see if currentPath is a game
     local canRun = self.focus == true and self.isGameDir--and pixelVisionOS:ValidateGameInDir(self.currentPath, {"code.lua"})-- and selections
-    
+
     -- Look to see if the selection is a special file (parent dir or run)
     local specialFile = false
 
     -- Get the first file which is the current selection
     local currentSelection = nil
-    
+
     if(selections ~= nil) then
-        
+
         currentSelection = self.files[selections[1]]
-        
+
         for i = 1, self.totalSingleSelectFiles do
-            
+
             local tmpFile = self.files[selections[1]]
-            
+
             if(tmpFile.type == "installer" or tmpFile.type == "updirectory" or tmpFile.type == "run" or tmpFile.type == "trash" or tmpFile.type == "drive" or tmpFile.type == "disk" ) then
                 specialFile = true
                 break
             end
 
         end
-        
+
     end
 
     local trashOpen = self:TrashOpen()
-    
+
     -- Test to see if you can rename
     local canEdit = self.focus == true and selections ~= nil and #selections == 1 and specialFile == false and trashOpen == false
 
     local canEject = self.focus == false and specialFile == true and currentSelection.type == "disk"
-    
+
     local canCreateFile = self.focus == true and trashOpen == false
 
     -- local canCreateFile = canCreateFile == true and self.currentPath.Path ~= self.workspacePath.Path
@@ -253,13 +254,13 @@ function WorkspaceTool:UpdateContextMenu()
 
     local canCopy = self.focus == true and selections ~= nil and #selections > 0 and specialFile == false and trashOpen == false
     local canPaste = canCreateFile == true and pixelVisionOS:ClipboardFull() == true
-    
+
     pixelVisionOS:EnableMenuItemByName(RenameShortcut, canEdit)
 
     pixelVisionOS:EnableMenuItemByName(CopyShortcut, canCopy)
-    
+
     pixelVisionOS:EnableMenuItemByName(PasteShortcut, canPaste)
-    
+
     pixelVisionOS:EnableMenuItemByName(DeleteShortcut, canCopy)
 
     pixelVisionOS:EnableMenuItemByName(BuildShortcut, canBuild)
@@ -365,17 +366,17 @@ function WorkspaceTool:OnShutdown()
     local this = self
 
     pixelVisionOS:ShowMessageModal("Shutdown " .. runnerName, "Are you sure you want to shutdown "..runnerName.."?", 160, true,
-        function()
-            if(pixelVisionOS.messageModal.selectionValue == true) then
+            function()
+                if(pixelVisionOS.messageModal.selectionValue == true) then
 
-                ShutdownSystem()
+                    ShutdownSystem()
 
-                -- Save changes
-                this.shuttingDown = true
+                    -- Save changes
+                    this.shuttingDown = true
+
+                end
 
             end
-
-        end
     )
 
 end

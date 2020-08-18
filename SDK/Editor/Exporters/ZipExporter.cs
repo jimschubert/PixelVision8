@@ -21,8 +21,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Xna.Framework;
+// using ICSharpCode.SharpZipLib.Zip;
+// using ICSharpCode.SharpZipLib.Zip;
 using PixelVision8.Runner.Services;
 using PixelVision8.Runner.Workspace;
 
@@ -33,22 +36,19 @@ namespace PixelVision8.Runner.Exporters
         protected List<KeyValuePair<WorkspacePath, WorkspacePath>> SourceFiles;
         protected MemoryStream ZipFs;
         protected int CurrentFile;
-        protected ZipOutputStream Archive;
-        protected byte[] Buffer;
-        protected int compressionLevel;
+        protected ZipArchive Archive;
+        protected CompressionLevel compressionLevel;
 
 
-        public ZipExporter(string fileName, IFileLoadHelper fileLoadHelper, Dictionary<WorkspacePath, WorkspacePath> srcFiles, int compressionLevel = 4) : base(fileName)
+        public ZipExporter(string fileName, IFileLoadHelper fileLoadHelper, Dictionary<WorkspacePath, WorkspacePath> srcFiles, int compressionLevel = 0) : base(fileName)
         {
-            this.SourceFiles = srcFiles.ToList();
+            SourceFiles = srcFiles.ToList();
 
-            this.FileLoadHelper = fileLoadHelper;
-
-            // TODO convert dictionary into an array
+            FileLoadHelper = fileLoadHelper;
 
             ZipFs = new MemoryStream();
 
-            this.compressionLevel = compressionLevel;
+            this.compressionLevel = (CompressionLevel)MathHelper.Clamp(compressionLevel, 0, 2);
         }
 
         public override void CalculateSteps()
@@ -72,10 +72,8 @@ namespace PixelVision8.Runner.Exporters
 
         public void CreateZip()
         {
-            Archive = new ZipOutputStream(ZipFs);
-            Archive.SetLevel(compressionLevel);
-            Buffer = new byte[4096];
-
+            Archive = new ZipArchive(ZipFs, ZipArchiveMode.Create, true);
+            
             StepCompleted();
         }
 
@@ -91,31 +89,13 @@ namespace PixelVision8.Runner.Exporters
                 // We can only save files
                 if (srcFile.IsFile && !srcFile.EntityName.StartsWith(".") && destFile.IsFile)
                 {
-
-                    // Using GetFileName makes the result compatible with XP
-                    // as the resulting path is not absolute.
-                    var entry = new ZipEntry(destFile.Path.Substring(1))
+                    ZipArchiveEntry archiveEntry = Archive.CreateEntry(destFile.Path.Substring(1), compressionLevel);
+                    using (Stream entryStream = archiveEntry.Open())
                     {
-                        // Could also use the last write time or similar for the file.
-                        DateTime = DateTime.Now
-                    };
-                    
-                    Archive.PutNextEntry(entry);
-
-                    using (var fs = new MemoryStream(FileLoadHelper.ReadAllBytes(srcFile.Path)))
-                    {
-                        // Using a fixed size buffer here makes no noticeable difference for output
-                        // but keeps a lid on memory usage.
-                        int sourceBytes;
-
-                        do
-                        {
-                            sourceBytes = fs.Read(Buffer, 0, Buffer.Length);
-                            Archive.Write(Buffer, 0, sourceBytes);
-                        } while (sourceBytes > 0);
+                        var stream = new MemoryStream(FileLoadHelper.ReadAllBytes(srcFile.Path));
+                        stream.CopyTo(entryStream);
                     }
-
-                    Archive.CloseEntry();
+                    
                 }
 
                 CurrentFile++;
@@ -138,14 +118,15 @@ namespace PixelVision8.Runner.Exporters
             Response.Add("fileSize", ZipFs.Length / 1024);
             Response["success"] = true;
 
-            Archive.Finish();
+            // Archive.Finish();
             
-
+            Archive.Dispose();
+            
             ZipFs.Seek(0, SeekOrigin.Begin);
 
             bytes = ZipFs.ToArray();
 
-            Archive.Close();
+            // Archive.Close();
             ZipFs.Close();
 
             StepCompleted();
@@ -155,7 +136,7 @@ namespace PixelVision8.Runner.Exporters
         {
             base.Dispose();
             
-            Archive.Dispose();
+            
             ZipFs.Dispose();
         }
     }

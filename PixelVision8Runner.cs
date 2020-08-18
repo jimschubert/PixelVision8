@@ -20,7 +20,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +38,7 @@ using PixelVision8.Runner.Workspace;
 
 namespace PixelVision8.Runner
 {
+
     public enum ActionKeys
     {
         //            RunKey,
@@ -68,7 +68,9 @@ namespace PixelVision8.Runner
         //     WorkspacePath.Root.AppendDirectory("Tmp").AppendFile("tmp-recording.gif");
 
         public bool autoRunEnabled = true;
+
         public bool backKeyEnabled = true;
+
         // protected IControllerChip controllerChip;
         protected string documentsPath;
         protected bool mountingDisk;
@@ -87,6 +89,7 @@ namespace PixelVision8.Runner
 
         //        protected string rootPath;
         protected bool shutdown;
+        public bool LuaMode = true;
 
         private MoonSharpVsCodeDebugServer server;
         private bool attachScript = true;
@@ -122,7 +125,7 @@ namespace PixelVision8.Runner
             server = new MoonSharpVsCodeDebugServer(1985);
             server.Start();
         }
-        
+
         protected string Documents => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
         public GameDataExportService ExportService { get; protected set; }
@@ -147,7 +150,7 @@ namespace PixelVision8.Runner
             get
             {
                 return bios.ReadBiosData(BiosSettings.SystemName.ToString(), "Pixel Vision 8 Runner") + " " +
-                    bios.ReadBiosData(BiosSettings.SystemVersion.ToString(), "0.0.0");
+                       bios.ReadBiosData(BiosSettings.SystemVersion.ToString(), "0.0.0");
             }
         }
 
@@ -189,7 +192,7 @@ namespace PixelVision8.Runner
 
             //  Define the valid file extensions from the bios
             workspaceServicePlus.fileExtensions =
-                bios.ReadBiosData("FileExtensions", "png,lua,json,txt,wav,cs", true).Split(',')
+                bios.ReadBiosData("FileExtensions", "png,lua,json,txt,wav", true).Split(',')
                     .ToList();
 
             // Define the files required to make a game valid from the bios
@@ -248,25 +251,23 @@ namespace PixelVision8.Runner
         //     // Make the loaded engine active
         //     ActiveEngine = engine;
         //
-        //     if (LuaMode)
+        //     LuaGameChip tempQualifier = ((LuaGameChip) ActiveEngine.GameChip);
+        //     // Kick off the first game script file
+        //
+        //     if (server.Current == null)
         //     {
-        //         LuaGameChip tempQualifier = ((LuaGameChip)ActiveEngine.GameChip);
-        //         // Kick off the first game script file
+        //         tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
         //
-        //         if (server.Current == null)
-        //         {
-        //             tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
+        //         var scriptPath = workspaceService.GetPhysicalPath(WorkspacePath.Parse(ActiveEngine.Name + "code.lua"));
         //
-        //             var scriptPath = workspaceService.GetPhysicalPath(WorkspacePath.Parse(ActiveEngine.Name + "code.lua"));
-        //
-        //             server.AttachToScript(tempQualifier.LuaScript, scriptPath);
-        //         }
+        //         server.AttachToScript(tempQualifier.LuaScript, scriptPath);
         //     }
-        //     
+        //
         //     ActiveEngine.ResetGame();
         //
         //     // Reset the game
-        //     // if (tempQualifier.LuaScript.Globals["Reset"] != null) tempQualifier.LuaScript.Call(tempQualifier.LuaScript.Globals["Reset"]);
+        //     if (tempQualifier.LuaScript.Globals["Reset"] != null)
+        //         tempQualifier.LuaScript.Call(tempQualifier.LuaScript.Globals["Reset"]);
         //
         //     // After loading the game, we are ready to run it.
         //     ActiveEngine.RunGame();
@@ -286,7 +287,7 @@ namespace PixelVision8.Runner
             if (connected == false && attachScript)
             {
 
-                LuaGameChip tempQualifier = ((LuaGameChip)tmpEngine.GameChip);
+                LuaGameChip tempQualifier = ((LuaGameChip) tmpEngine.GameChip);
                 // Kick off the first game script file
                 tempQualifier.LoadScript(tempQualifier.DefaultScriptPath);
 
@@ -483,7 +484,7 @@ namespace PixelVision8.Runner
                 {
                     base.Draw(gameTime);
 
-                    if (Recording) gifEncoder.AddFrame(timeDelta/1000f);
+                    if (Recording) gifEncoder.AddFrame(timeDelta / 1000f);
                 }
 
                 workspaceServicePlus.SaveLog();
@@ -524,6 +525,7 @@ namespace PixelVision8.Runner
             {
                 // Setup Drag and drop support
                 // Window.FileDropped += (o, e) => OnFileDropped(o, e);
+                // Window.FileDropped += (o, e) => OnFileDropped(o, e);
 
                 // Disable auto run when loading up the default disks
                 autoRunEnabled = false;
@@ -539,13 +541,14 @@ namespace PixelVision8.Runner
 
             AutoLoadDefaultGame();
         }
+
         public override void DisplayWarning(string message)
         {
             base.DisplayWarning(message);
 
             if (server?.GetDebugger() is AsyncDebugger debugger)
             {
-                ((MoonSharpDebugSession)debugger.Client)?.SendText(message);
+                ((MoonSharpDebugSession) debugger.Client)?.SendText(message);
             }
 
         }
@@ -654,8 +657,8 @@ namespace PixelVision8.Runner
                 // Create new meta data for the game. We wan to display the disk insert animation.
                 var metaData = new Dictionary<string, string>
                 {
-                    {"showDiskAnimation",  mountingDisk.ToString().ToLower()},
-                    {"showEjectAnimation",  ejectingDisk.ToString().ToLower()}
+                    {"showDiskAnimation", mountingDisk.ToString().ToLower()},
+                    {"showEjectAnimation", ejectingDisk.ToString().ToLower()}
                 };
 
                 // Load the disk path and play the game
@@ -718,7 +721,7 @@ namespace PixelVision8.Runner
             if (LuaMode)
             {
                 base.ConfigureEngine(metaData);
-                
+
                 // Get a reference to the Lua game
                 var game = tmpEngine.GameChip as LuaGameChip;
 
@@ -727,6 +730,7 @@ namespace PixelVision8.Runner
 
                 luaScript.Globals["EnableAutoRun"] = new Action<bool>(EnableAutoRun);
                 luaScript.Globals["EnableBackKey"] = new Action<bool>(EnableBackKey);
+
 
                 if (mode == RunnerMode.Playing)
                 {
@@ -741,7 +745,8 @@ namespace PixelVision8.Runner
                     luaScript.Globals["DocumentPath"] = new Func<string>(() => documentsPath);
                     luaScript.Globals["TmpPath"] = new Func<string>(() => tmpPath);
                     luaScript.Globals["DiskPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.Disks);
-                    luaScript.Globals["SharedLibPaths"] = new Func<WorkspacePath[]>(() => workspaceServicePlus.SharedLibDirectories().ToArray());
+                    luaScript.Globals["SharedLibPaths"] =
+                        new Func<WorkspacePath[]>(() => workspaceServicePlus.SharedLibDirectories().ToArray());
                     // luaScript.Globals["SaveActiveDisks"] = new Action(() =>
                     // {
                     //     var disks = workspaceServicePlus.Disks;
@@ -795,7 +800,6 @@ namespace PixelVision8.Runner
                     luaScript.Globals["UnloadProgress"] = new Func<int>(UnloadProgress);
                     luaScript.Globals["EndUnload"] = new Action(EndUnload);
                 }
-                
             }
             else
             {
@@ -810,7 +814,6 @@ namespace PixelVision8.Runner
                 ConfigureKeyboard();
                 ConfiguredControllers();
             }
-            
         }
 
         protected string OperatingSystem()
@@ -1078,7 +1081,8 @@ namespace PixelVision8.Runner
         public virtual void UpdateTitle()
         {
             // Window.Title = DefaultWindowTitle + (Recording ? " ⚫" : "") + (screenShotActive ? " 📷" : "");
-            Window.Title = DefaultWindowTitle + ((server != null && server.Connected) ? " 🐞" : "") + (Recording ? " ⚫" : "") + (screenShotActive ? " 📷" : "");
+            Window.Title = DefaultWindowTitle + ((server != null && server.Connected) ? " 🐞" : "") +
+                           (Recording ? " ⚫" : "") + (screenShotActive ? " 📷" : "");
         }
 
         public void StopRecording()
@@ -1104,9 +1108,7 @@ namespace PixelVision8.Runner
         }
 
         private delegate void QuitCurrentToolDelagator(Dictionary<string, string> metaData, string tool = null);
-        
-        public bool LuaMode = true;
-        
+    
         public override void ProcessFiles(IEngine tmpEngine, string[] files, bool displayProgress = false)
         {
         
@@ -1118,27 +1120,26 @@ namespace PixelVision8.Runner
                 CompileFromSource(csFilePaths);
             }
             
-            
             base.ProcessFiles(tmpEngine, files, displayProgress);
         }
-        
-        //This function and related Roslyn-powered C# support changes contributed by Drake Williams
+
         public void CompileFromSource(string[] files)
         {
 
             var total = files.Length;
-            
+
             SyntaxTree[] syntaxTrees = new SyntaxTree[total];
 
-            for (int i = 0; i < total; i++)
+                for (int i = 0; i<total;
+            i++)
             {
                 var path = WorkspacePath.Parse(files[i]);
 
                 var data = workspaceService.ReadTextFromFile(path);
-                
+
                 syntaxTrees[i] = CSharpSyntaxTree.ParseText(data);
             }
-            
+
             //TODO: Loop over multiple C# files and compile them all into the same assembly.
             //make an array or list of SyntaxTree here, loop over all .cs files, add each to the array/list.
             // string code = File.ReadAllText(file); //TODO replace with standard file loader. Single file for PoC
@@ -1154,29 +1155,34 @@ namespace PixelVision8.Runner
             {
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location), //System.Private.CoreLib
                 MetadataReference.CreateFromFile(typeof(Console).Assembly.Location), //System.Console
-                MetadataReference.CreateFromFile(typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location), //System.Runtime
-                MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly.Location), //Microsoft.CSharp
+                MetadataReference.CreateFromFile(typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly
+                    .Location), //System.Runtime
+                MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly
+                    .Location), //Microsoft.CSharp
                 MetadataReference.CreateFromFile(typeof(GameChip).Assembly.Location), //PixelVision8Runner
                 MetadataReference.CreateFromFile("MonoGame.Framework.dll"), //MonoGameFramework
-                MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location), //Required due to a .NET Standard 2.0 dependency somewhere.
+                MetadataReference.CreateFromFile(Assembly.Load("netstandard")
+                    .Location), //Required due to a .NET Standard 2.0 dependency somewhere.
             };
 
             var compiler = CSharpCompilation.Create("LoadedGame", syntaxTrees, references, options);
 
             //Compile the existing file into memory, or error out.
             var stream = new MemoryStream();
+
             var compileResults = compiler.Emit(stream);
-            if (compileResults.Success)
+                if (compileResults.Success)
             {
                 stream.Seek(0, SeekOrigin.Begin);
             }
+
             else
             {
                 // TODO Need to get the error from the compiler
                 // var e = "Code could not be compiled";
-                DisplayError(ErrorCode.Exception);//,
-                    // new Dictionary<string, string>
-                    //     {{"@{error}", e is ScriptRuntimeException error ? error.DecoratedMessage : e.Message}}, e);
+                DisplayError(ErrorCode.Exception); //,
+                // new Dictionary<string, string>
+                //     {{"@{error}", e is ScriptRuntimeException error ? error.DecoratedMessage : e.Message}}, e);
                 //TODO: error handling, use data from compileResults to show user what's wrong.
                 return;
             }
@@ -1184,11 +1190,15 @@ namespace PixelVision8.Runner
             //Get the DLL into active memory so we can use it.
             byte[] roslynassembly = stream.ToArray();
             var loadedAsm = Assembly.Load(roslynassembly);
-            var roslynGameChipType = loadedAsm.GetType("PixelVisionRoslyn.RoslynGameChip"); //This type much match what's in code.cs.
+
+            var roslynGameChipType =
+                loadedAsm.GetType("PixelVisionRoslyn.RoslynGameChip"); //This type much match what's in code.cs.
             //Could theoretically iterate over types until once that inherits from GameChip is found, but this Proof of Concept demonstrates the baseline feature.
 
             // tmpEngine.GameChip.Deactivate(); //Remove the previous LuaGameChip.
-            tmpEngine.ActivateChip("GameChip", (AbstractChip)Activator.CreateInstance(roslynGameChipType)); //Inserts the DLL's GameChip descendent into the engine.
+            tmpEngine.ActivateChip("GameChip", (AbstractChip) Activator.CreateInstance(roslynGameChipType))
+                ; //Inserts the DLL's GameChip descendent into the engine.
         }
     }
 }
+

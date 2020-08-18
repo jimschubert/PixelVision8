@@ -174,26 +174,33 @@ function WorkspaceTool:CreateDropDownMenu()
 
 end
 
-function WorkspaceTool:OnEjectDisk(diskPath)
+function WorkspaceTool:OnEjectDisk()
 
-    if(diskPath == nil) then
-
-        local selections = self:CurrentlySelectedFiles()
-
-        if(#selections > 1) then
-            return
-        end
-
-        diskPath = self.files[selections[1]].name
+    -- Get all of the selected  files
+    local selections = self:CurrentlySelectedFiles()
+    
+    -- If there is more than one selection, exit
+    if(#selections > 1) then
+        return
     end
 
-    pixelVisionOS:ShowMessageModal("Eject Disk", "Do you want to eject the '".. diskPath.EntityName .."'disk?", 160, true,
+    -- Get the first selection
+    local currentSelection = self.files[selections[1]]
+    
+    -- Make sure that the selection is a disk
+    if(currentSelection.type ~= "disk") then
+        
+        return
+    end
+        
+    -- Ask before ejecting a disk
+    pixelVisionOS:ShowMessageModal("Eject Disk", "Do you want to eject the '".. currentSelection.name .."'disk?", 160, true,
             function()
 
                 -- Only perform the copy if the user selects OK from the modal
                 if(pixelVisionOS.messageModal.selectionValue) then
 
-                    EjectDisk(diskPath)
+                    EjectDisk(currentSelection.path)
 
                     ResetGame()
 
